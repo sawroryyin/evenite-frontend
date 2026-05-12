@@ -21,7 +21,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "vite.config.ts",
-    "tailwind.config.ts", 
-    "postcss.config.ts"]
+    "vite.config.ts"]
 }
