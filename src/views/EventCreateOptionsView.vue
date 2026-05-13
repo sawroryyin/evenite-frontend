@@ -38,7 +38,7 @@ const router = useRouter()
       </div>
 
       <!-- Option 3: Manual -->
-      <div @click="router.push({ name: 'create-detail' })" class="border border-gray-200 rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:border-gray-500 hover:bg-gray-100 transition shadow-sm">
+      <div @click="router.push({ name: 'create-manual' })" class="border border-gray-200 rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:border-gray-500 hover:bg-gray-100 transition shadow-sm">
         <div class="bg-gray-200 text-gray-600 p-3 rounded-lg">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
         </div>
