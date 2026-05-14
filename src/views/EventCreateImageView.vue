@@ -34,7 +34,7 @@ const handleImageUpload = async (e: Event) => {
   try {
     const generatedData = await EventService.generateFromImage(file);
     store.setDraftEvent(generatedData as any);
-    router.push({ name: "create-detail" });
+    router.push({ name: "create-manual" });
   } catch (error: any) {
     errorMessage.value =
       error.response?.data?.message ||

@@ -30,8 +30,12 @@ const handleTextGenerate = async () => {
 
   try {
     const generatedData = await EventService.generateFromPrompt(promptText.value)
+    console.log('Generated Event Data:', generatedData)
     store.setDraftEvent(generatedData as any)
-    router.push({ name: 'create-detail' })
+    console.log('stored data in store:', store.draftEvent)
+    console.log('title: ', store.draftEvent?.title)
+    console.log('date: ', store.draftEvent?.description)
+    router.push({ name: 'create-manual' })
   } catch (error: any) {
     errorMessage.value = error.response?.data?.message || "There was an error in creating an event, try creating manually."
   } finally {

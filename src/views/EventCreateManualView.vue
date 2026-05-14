@@ -153,9 +153,32 @@ const isSaving = ref(false)
 const showPublishModal = ref(false)
 const imageError = ref('')
 
+const formatForDateTimeLocal = (isoString: string | undefined) => {
+  if (!isoString) return '';
+  
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return ''; // Return empty string if date is invalid
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  // Returns format: YYYY-MM-DDThh:mm
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 onMounted(() => {
   if (store.draftEvent) {
-    form.value = { ...form.value, ...store.draftEvent }
+    form.value = { ...form.value, ...store.draftEvent };
+  
+    if (form.value.startAt) {
+      form.value.startAt = formatForDateTimeLocal(form.value.startAt);
+    }
+    if (form.value.endAt) {
+      form.value.endAt = formatForDateTimeLocal(form.value.endAt);
+    }
   }
 })
 
@@ -303,29 +326,81 @@ const saveAsDraft = async () => {
     isSaving.value = false
   }
 }
+
+// Add this near your other refs (e.g., const isSaving = ref(false))
+const showLeaveModal = ref(false)
+
+// Replaces your direct router.back() call
+const handleBackClick = () => {
+  // Check if any key fields contain data
+  const hasData = 
+    form.value.title.en.trim() !== '' || 
+    form.value.title.th.trim() !== '' ||
+    form.value.description.en.trim() !== '' || 
+    form.value.description.th.trim() !== '' ||
+    form.value.startAt !== '' || 
+    form.value.endAt !== '' ||
+    form.value.category.length > 0 ||
+    form.value.agenda.length > 0 ||
+    form.value.bannerUrl !== '';
+
+  if (hasData) {
+    // There is data, so show the confirmation modal
+    showLeaveModal.value = true;
+  } else {
+    // The form is completely empty, let them leave immediately
+    router.back();
+  }
+}
+
+// When the user clicks "Quit without saving"
+const confirmLeave = () => {
+  showLeaveModal.value = false
+  
+  // Clear the Pinia store so data doesn't carry over next time
+  // Note: Depending on how your store is set up, you might need to use 
+  // store.$reset(), store.clearDraft(), or store.draftEvent = null
+  store.setDraftEvent(null) 
+  store.hasUnsavedChanges = false 
+  
+  router.back()
+}
+
+// When the user clicks "Cancel"
+const cancelLeave = () => {
+  showLeaveModal.value = false
+}
 </script>
 
 <template>
   <div class="p-6 max-w-2xl mx-auto pb-20">
-    <button
-      @click="router.back()"
-      class="mb-6 text-gray-500 hover:text-gray-800 flex items-center gap-2 font-medium transition cursor-pointer"
-    >
-      <svg
-        class="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M10 19l-7-7m0 0l7-7m-7 7h18"
-        ></path>
-      </svg>
-      Back
-    </button>
+    <!-- Change @click="router.back()" to @click="handleBackClick" -->
+  <button
+    @click="handleBackClick"
+    class="mb-6 text-gray-500 hover:text-gray-800 flex items-center gap-2 font-medium transition cursor-pointer"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+    </svg>
+    Back
+  </button>
+
+  <!-- Leave Confirmation Modal -->
+    <div v-if="showLeaveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full animate-fade-in">
+        <h3 class="text-xl font-bold mb-2">Unsaved Changes</h3>
+        <p class="text-gray-600 mb-6">You have unsaved changes. Are you sure you want to go back?</p>
+        <div class="flex justify-end gap-3">
+          <button @click="cancelLeave" class="px-4 py-2 bg-gray-100 font-bold rounded-lg hover:bg-gray-200 transition">
+            Cancel
+          </button>
+          <button @click="confirmLeave" class="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition">
+            Quit without saving
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Top Header & Controls -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
       <h1 class="text-2xl font-bold text-gray-800">{{ t.detailsTitle }}</h1>

@@ -9,7 +9,7 @@ const apiClient = axios.create({
 export const EventService = {
   // C-001
   async generateFromPrompt(prompt: string): Promise<GeneratedEventDto> {
-    const response = await apiClient.post<GeneratedEventDto>('/events/generate/prompt', { prompt });
+    const response = await apiClient.post<GeneratedEventDto>('/events/generate/prompt', { prompt: prompt });
     return response.data;
   },
 
