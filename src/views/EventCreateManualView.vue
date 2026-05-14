@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, toRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
+import type { SaveDraftDto } from '../types'
 
 const router = useRouter()
 const store = useEventCreationStore()
@@ -307,21 +308,42 @@ const handlePublishClick = () => {
 // Your Save Draft action can remain exactly as it was!
 // (Because you usually want to let organizers save a draft even if it's incomplete)
 const saveAsDraft = async () => {
-  // 1. ADD THIS VALIDATION CHECK HERE TOO
   if (eventFormRef.value && !eventFormRef.value.reportValidity()) {
-    return // Stops the function and shows the browser's "Please fill out this field" popup
+    return 
   }
 
   isSaving.value = true
+  
   try {
-    await EventService.saveAsDraft(form.value)
+    // 1. Extract the raw, un-proxied object from Vue
+    const rawForm = toRaw(form.value);
+
+    // 2. Map and sanitize the data into your DTO format
+    const draftPayload: SaveDraftDto = {
+      ...rawForm,
+      // NestJS @IsOptional() expects the field to be absent or undefined, not an empty string.
+      // Convert empty strings to undefined to pass backend validation.
+      startAt: rawForm.startAt ? new Date(rawForm.startAt).toISOString() : undefined,
+      endAt: rawForm.endAt ? new Date(rawForm.endAt).toISOString() : undefined,
+      seatLimit: rawForm.seatLimit ? Number(rawForm.seatLimit) : undefined,
+      mapLink: rawForm.mapLink || undefined,
+      contactEmail: rawForm.contactEmail || undefined,
+      externalUrl: rawForm.externalUrl || undefined,
+    };
+
+    console.log('Sending sanitized payload:', draftPayload);
+
+    // 3. Send the clean DTO to the service
+    await EventService.saveAsDraft(draftPayload);
+    
     store.hasUnsavedChanges = false
     alert("Event saved as draft successfully")
     router.push({ name: 'home' })
+    
   } catch (error: any) {
-    // If it still fails, it's helpful to log the actual backend error to the console
-    console.error(error) 
-    alert("Failed to save event.")
+    // 4. Log the EXACT backend validation error to see which field failed
+    console.error('Backend Validation Error:', error.response?.data?.message || error); 
+    alert("Failed to save event. Check console for details.");
   } finally {
     isSaving.value = false
   }
@@ -332,25 +354,7 @@ const showLeaveModal = ref(false)
 
 // Replaces your direct router.back() call
 const handleBackClick = () => {
-  // Check if any key fields contain data
-  const hasData = 
-    form.value.title.en.trim() !== '' || 
-    form.value.title.th.trim() !== '' ||
-    form.value.description.en.trim() !== '' || 
-    form.value.description.th.trim() !== '' ||
-    form.value.startAt !== '' || 
-    form.value.endAt !== '' ||
-    form.value.category.length > 0 ||
-    form.value.agenda.length > 0 ||
-    form.value.bannerUrl !== '';
-
-  if (hasData) {
-    // There is data, so show the confirmation modal
-    showLeaveModal.value = true;
-  } else {
-    // The form is completely empty, let them leave immediately
-    router.back();
-  }
+  showLeaveModal.value = true
 }
 
 // When the user clicks "Quit without saving"

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { GeneratedEventDto, TranslateBilingualFieldsDto, EventData } from '../types';
+import type { GeneratedEventDto, TranslateBilingualFieldsDto, EventData, SaveDraftDto } from '../types';
 
 // Assuming AxiosClient is configured with baseURL in your actual project
 const apiClient = axios.create({
@@ -40,7 +40,7 @@ export const EventService = {
   },
 
   // C-005
-  async saveAsDraft(dto: Partial<EventData>): Promise<EventData> {
+  async saveAsDraft(dto: SaveDraftDto): Promise<EventData> {
     const response = await apiClient.post<EventData>('/events/save-draft', dto);
     return response.data;
   },

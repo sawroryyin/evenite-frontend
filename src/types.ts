@@ -47,3 +47,27 @@ export interface EventData extends GeneratedEventDto {
   updatedAt?: string;
   publishedAt?: string;
 }
+
+export interface SaveDraftDto {
+  id?: string;
+  title?: BilingualField;
+  description?: BilingualField;
+  category?: string[];
+  location?: BilingualField;
+  mapLink?: string;
+  isOnline?: boolean;
+  startAt?: Date | string; 
+  endAt?: Date | string;
+  seatLimit?: number;
+  hasCatering?: boolean;
+  isCateringFree?: boolean;
+  cateringDescription?: BilingualField;
+  agenda?: AgendaItem[];
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactLineId?: string;
+  externalUrl?: string;
+  remarks?: BilingualField;
+  bannerUrl?: string;
+}
