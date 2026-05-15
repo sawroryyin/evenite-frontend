@@ -49,5 +49,16 @@ export const EventService = {
   async publish(dto: EventData): Promise<EventData> {
     const response = await apiClient.post<EventData>('/events/publish', dto);
     return response.data;
+  },
+
+  async getEventById(id: string): Promise<EventData> {
+    const response = await apiClient.get<EventData>(`/events/${id}`);
+    return response.data;
+  },
+
+  // Get all events (needed for SavedEventsView.vue and PublishedEventsView.vue)
+  async getAllEvents(): Promise<EventData[]> {
+    const response = await apiClient.get<EventData[]>('/events');
+    return response.data;
   }
 };

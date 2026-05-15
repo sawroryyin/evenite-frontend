@@ -67,7 +67,7 @@ const handleTextGenerate = async () => {
       
       <!-- Pop-up Manual Button (SRS-006) -->
       <button 
-        @click="router.push({ name: 'create-detail' })" 
+        @click="router.push({ name: 'create-manual' })" 
         class="bg-gray-800 text-white px-4 py-2 rounded-lg w-full font-bold hover:bg-gray-700 transition shadow"
       >
         Create Manually Instead

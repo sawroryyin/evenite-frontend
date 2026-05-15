@@ -115,7 +115,7 @@ const handleImageUpload = async (e: Event) => {
       <p class="text-red-600 text-sm mb-4 font-medium">{{ errorMessage }}</p>
 
       <button
-        @click="router.push({ name: 'create-detail' })"
+        @click="router.push({ name: 'create-manual' })"
         class="bg-gray-800 text-white px-4 py-3 rounded-lg w-full font-bold hover:bg-gray-700 transition shadow mb-2"
       >
         Create Manually Instead
