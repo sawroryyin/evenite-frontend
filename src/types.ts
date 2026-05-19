@@ -42,7 +42,7 @@ export interface TranslateBilingualFieldsDto {
 export interface EventData extends GeneratedEventDto {
   id?: string;
   bannerUrl?: string;
-  status?: 'DRAFT' | 'PUBLISHED';
+  status?: 'DRAFT' | 'PUBLISHED' | null;
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;

@@ -7,12 +7,8 @@ import { translations } from '../locales/eventForm'
 
 // Components
 import ConfirmModal from '../components/ConfirmModal.vue'
-import FormBasicInfo from '../components/FormBasicInfo.vue'
-import FormDateLocation from '../components/FormDateLocation.vue'
-import FormAgenda from '../components/FormAgenda.vue'
-import FormCatering from '../components/FormCatering.vue'
-import FormContact from '../components/FormContact.vue'
-import FormBanner from '../components/FormBanner.vue'
+import EventPreview from './EventPreview.vue'
+import EventForm from '../components/EventForm.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,7 +16,7 @@ const store = useEventCreationStore()
 
 // State Management
 const viewMode = ref<'create' | 'edit' | 'preview'>('create')
-const eventStatus = ref<'DRAFT' | 'PUBLISHED' | null>(null)
+const eventStatus = ref<'DRAFT' | 'PUBLISHED' | null | undefined>(null)
 const viewLang = ref<'en' | 'th'>('en')
 const t = computed(() => translations[viewLang.value])
 
@@ -125,6 +121,7 @@ const saveAsDraft = async () => {
   isSaving.value = true
   try {
     await EventService.saveAsDraft(sanitizePayload() as any);
+    
     store.hasUnsavedChanges = false
     alert("Event saved as draft successfully")
     router.push({ name: 'home' })
@@ -139,6 +136,7 @@ const confirmPublish = async () => {
   isSaving.value = true
   try {
     await EventService.publish(sanitizePayload() as any);
+    store.setDraftEvent(null);
     store.hasUnsavedChanges = false 
     alert("Event published successfully")
     router.push({ name: 'home' })
@@ -176,17 +174,13 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
       </div>
     </div>
 
-    <!-- Separated Form Components -->
-    <form ref="eventFormRef" class="space-y-8" @submit.prevent>
-      <fieldset :disabled="viewMode === 'preview'" class="space-y-8 disabled:opacity-95">
-        <FormBanner :form="form" :t="t" :viewMode="viewMode" />
-        <FormBasicInfo :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
-        <FormDateLocation :form="form" :t="t" :viewLang="viewLang" />
-        <FormAgenda :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
-        <FormCatering :form="form" :t="t" :viewLang="viewLang" />
-        <FormContact :form="form" :t="t" />
-        
-      </fieldset>
+    <!-- switch mode -->
+    <div v-if="viewMode === 'preview'" class="animate-fade-in">
+      <EventPreview :event="form" :t="t" :viewLang="viewLang" />
+    </div>
+
+    <form v-else ref="eventFormRef" @submit.prevent>
+      <EventForm :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     </form>
 
     <!-- Bottom Action Bar -->
@@ -226,10 +220,11 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
 </template>
 
 <style scoped>
-fieldset:disabled input,
-fieldset:disabled textarea {
-  color: #374151;
-  border-color: #e5e7eb;
-  background-color: #f9fafb;
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

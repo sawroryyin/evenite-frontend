@@ -8,23 +8,23 @@ defineProps<{ form: any; t: any }>()
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ t.contactName }}</label>
-        <input v-model="form.contactName" class="w-full border p-2 rounded-lg disabled:bg-gray-50" />
+        <input v-model="form.contactName" class="w-full border p-2 rounded-lg" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ t.contactEmail }}</label>
-        <input v-model="form.contactEmail" type="email" class="w-full border p-2 rounded-lg disabled:bg-gray-50" />
+        <input v-model="form.contactEmail" type="email" class="w-full border p-2 rounded-lg" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ t.contactPhone }}</label>
-        <input v-model="form.contactPhone" class="w-full border p-2 rounded-lg disabled:bg-gray-50" />
+        <input v-model="form.contactPhone" class="w-full border p-2 rounded-lg" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ t.lineId }}</label>
-        <input v-model="form.contactLineId" class="w-full border p-2 rounded-lg disabled:bg-gray-50" />
+        <input v-model="form.contactLineId" class="w-full border p-2 rounded-lg" />
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ t.externalUrl }}</label>
-        <input v-model="form.externalUrl" class="w-full border p-2 rounded-lg disabled:bg-gray-50" placeholder="https://..." />
+        <input v-model="form.externalUrl" class="w-full border p-2 rounded-lg" placeholder="https://..." />
       </div>
     </div>
   </section>

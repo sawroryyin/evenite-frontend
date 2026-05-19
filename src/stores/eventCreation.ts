@@ -7,7 +7,7 @@ export const useEventCreationStore = defineStore('eventCreation', {
     hasUnsavedChanges: false
   }),
   actions: {
-    setDraftEvent(data: EventData) {
+    setDraftEvent(data: EventData | null) {
       this.draftEvent = data
       this.hasUnsavedChanges = true
     },

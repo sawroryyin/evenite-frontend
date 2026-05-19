@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ form: any; t: any; viewLang: 'en' | 'th'; viewMode: string }>()
+const props = defineProps<{ form: any; t: any; viewLang: 'en' | 'th' }>()
 
 const addAgendaItem = () => {
   const agendaList = props.form.agenda;
@@ -29,7 +29,7 @@ const removeAgendaItem = (index: number) => {
   <section class="bg-white p-5 rounded-xl border shadow-sm">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold text-gray-800">{{ t.agenda }}</h2>
-      <button type="button" v-if="viewMode !== 'preview'" @click="addAgendaItem" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-medium hover:bg-blue-200">{{ t.addItem }}</button>
+      <button type="button" @click="addAgendaItem" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-medium hover:bg-blue-200">{{ t.addItem }}</button>
     </div>
     
     <div v-if="form.agenda.length === 0" class="text-gray-500 text-sm text-center py-4">{{ t.noAgenda }}</div>
@@ -45,16 +45,16 @@ const removeAgendaItem = (index: number) => {
       </div>
 
       <div v-for="(item, index) in form.agenda" :key="index" class="relative flex flex-row items-center gap-2 sm:gap-4 py-2 pr-8">
-        <button type="button" v-if="viewMode !== 'preview'" @click="removeAgendaItem(index)" class="absolute top-1/2 right-0 -translate-y-1/2 p-1 text-red-500 hover:text-red-700 text-lg font-bold leading-none">×</button>
+        <button type="button" @click="removeAgendaItem(index as number)" class="absolute top-1/2 right-0 -translate-y-1/2 p-1 text-red-500 hover:text-red-700 text-lg font-bold leading-none">×</button>
         
-        <div class="shrink-0 w-4 sm:w-5 text-center font-black text-gray-400 text-sm sm:text-base">{{ index + 1 }}</div>
-        <div class="w-1/3"><input type="time" v-model="item.time" class="w-full border p-1.5 sm:p-2 rounded text-xs sm:text-sm bg-white disabled:bg-gray-100" /></div>
+        <div class="shrink-0 w-4 sm:w-5 text-center font-black text-gray-400 text-sm sm:text-base">{{ index as number + 1 }}</div>
+        <div class="w-1/3"><input type="time" v-model="item.time" class="w-full border p-1.5 sm:p-2 rounded text-xs sm:text-sm bg-white" /></div>
         
         <div v-if="viewLang === 'en'" class="flex-1">
-          <input v-model="item.activity.en" class="w-full border p-1.5 sm:p-2 rounded text-xs sm:text-sm disabled:bg-gray-100" placeholder="Opening Ceremony" />
+          <input v-model="item.activity.en" class="w-full border p-1.5 sm:p-2 rounded text-xs sm:text-sm bg-white" placeholder="Opening Ceremony" />
         </div>
         <div v-if="viewLang === 'th'" class="flex-1">
-          <input v-model="item.activity.th" class="w-full border p-1.5 sm:p-2 rounded text-xs sm:text-sm disabled:bg-gray-100" placeholder="พิธีเปิด" />
+          <input v-model="item.activity.th" class="w-full border p-1.5 sm:p-2 rounded text-xs sm:text-sm bg-white" placeholder="พิธีเปิด" />
         </div>
       </div>
     </div>
