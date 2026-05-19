@@ -7,8 +7,8 @@ import { translations } from '../locales/eventForm'
 
 // Components
 import ConfirmModal from '../components/ConfirmModal.vue'
-import EventPreview from './EventPreview.vue'
-import EventForm from '../components/EventForm.vue'
+import EventPreview from './EventDetailPreview.vue'
+import EventForm from '../components/EventDetailForm.vue'
 
 const router = useRouter()
 const route = useRoute()

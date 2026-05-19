@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import FormBanner from './FormBanner.vue'
-import FormBasicInfo from './FormBasicInfo.vue'
-import FormDateLocation from './FormDateLocation.vue'
-import FormAgenda from './FormAgenda.vue'
-import FormCatering from './FormCatering.vue'
-import FormContact from './FormContact.vue'
+import FormBanner from './EventBanner.vue'
+import FormBasicInfo from './EventBasicInfo.vue'
+import FormDateLocation from './EventDateLocation.vue'
+import FormAgenda from './EventAgenda.vue'
+import FormCatering from './EventCatering.vue'
+import FormContact from './EventContact.vue'
 
 defineProps<{ 
   form: any; 
