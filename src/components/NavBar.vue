@@ -3,121 +3,99 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const isProfileSheetOpen = ref(false)
+const isSidebarOpen = ref(false)
 
-const closeProfileSheet = () => {
-  isProfileSheetOpen.value = false
+const closeSidebar = () => {
+  isSidebarOpen.value = false
 }
 
 const navigateTo = (routeName: string) => {
-  closeProfileSheet()
+  closeSidebar()
   router.push({ name: routeName })
 }
 </script>
 
 <template>
-  <!-- Main Header -->
-  <header class="bg-blue-800 text-white pl-4 pr-4 p-2 flex justify-between items-center sticky top-0 z-10 shadow-md">
-    <div class="font-bold text-lg tracking-wide cursor-pointer" @click="router.push({ name: 'home' })">
+  <header class="bg-gradient-to-r from-purple-800 to-indigo-900 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-60 shadow-lg font-sans">
+    <div class="font-extrabold font-['Lobster'] text-xl tracking-wider cursor-pointer" @click="router.push({ name: 'home' })">
       Evenite
     </div>
     
     <nav class="flex items-center gap-4">
-      <!-- Profile Icon Button -->
       <button 
-        @click="isProfileSheetOpen = true"
-        class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-500 transition border border-blue-400 focus:outline-none focus:ring-2 focus:ring-white">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        @click="router.push({ name: 'notifications' })"
+        class="relative p-1 rounded-full hover:bg-white/20 transition focus:outline-none">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
         </svg>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-indigo-900"></span>
+      </button>
+
+      <button 
+        @click="isSidebarOpen = true"
+        class="w-8 h-8 rounded-full bg-white/20 border-2 border-white/50 flex items-center justify-center hover:bg-white/30 transition focus:outline-none overflow-hidden">
+        <span class="text-sm font-bold text-white">C</span>
       </button>
     </nav>
   </header>
 
-  <!-- Profile Sheet Overlay -->
   <div 
-    v-if="isProfileSheetOpen" 
-    class="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-all duration-300"
-    @click="closeProfileSheet"
+    v-if="isSidebarOpen" 
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm z-70 transition-all duration-300"
+    @click="closeSidebar"
   ></div>
 
-  <!-- Right Side Profile Sheet -->
   <aside 
-    class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col"
-    :class="isProfileSheetOpen ? 'translate-x-0' : 'translate-x-full'"
+    class="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-80 transform transition-transform duration-300 ease-in-out flex flex-col font-sans"
+    :class="isSidebarOpen ? 'translate-x-0' : 'translate-x-full'"
   >
-    <!-- Sheet Header -->
-    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-      <h2 class="text-lg font-bold text-gray-800">Account</h2>
-      <button @click="closeProfileSheet" class="text-gray-500 hover:text-gray-800 focus:outline-none">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
+    <div class="p-4 flex justify-between items-center bg-purple-50">
+      <h2 class="text-base font-bold text-purple-900">Account Menu</h2>
+      <button @click="closeSidebar" class="p-1 text-purple-700 hover:bg-purple-200 rounded-full transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
 
-    <!-- Profile Preview -->
-    <div class="p-6 flex flex-col items-center border-b border-gray-200">
-      <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-3 border-2 border-blue-500">
-        <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>
+    <div class="px-5 py-6 flex flex-col items-center border-b border-gray-100">
+      <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-200 to-indigo-200 flex items-center justify-center mb-3 shadow-inner">
+        <span class="text-xl font-bold text-purple-700">C</span>
       </div>
-      <h3 class="text-xl font-bold text-gray-800">Student Name</h3>
-      <p class="text-sm text-gray-500 mb-4">student@cmu.ac.th</p>
+      <h3 class="text-lg font-bold text-gray-800 leading-tight">Chaiwat</h3>
+      <p class="text-xs text-gray-500 mb-4">Student Affairs</p>
       
       <button 
-        @click="navigateTo('edit-profile')"
-        class="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition border border-gray-300">
+        @click="navigateTo('profile')"
+        class="w-full py-2 text-sm bg-white hover:bg-purple-50 text-purple-700 font-semibold rounded-lg transition border border-purple-200 shadow-sm">
         View Profile
       </button>
     </div>
 
-    <!-- Event Navigation Options -->
-    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">My Events</h4>
+    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+      <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Manage Organization</h4>
       
-      <!-- Draft Events Button -->
       <button 
-        @click="navigateTo('draft-events')"
-        class="flex items-center justify-between w-full p-3 bg-white hover:bg-blue-50 text-left border border-gray-200 rounded-lg transition group">
-        <div class="flex items-center gap-3">
-          <div class="p-2 bg-yellow-100 text-yellow-600 rounded-md group-hover:bg-yellow-200 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-          </div>
-          <div>
-            <span class="block font-medium text-gray-800">Draft Events</span>
-            <span class="block text-xs text-gray-500">Unpublished event setups</span>
-          </div>
-        </div>
-        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        @click="navigateTo('create-options')" 
+        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-[11px] font-['Lato'] font-bold py-3 px-4 rounded-xl shadow-md shadow-purple-100 mb-3 flex justify-center items-center gap-1.5 transition-transform transform active:scale-95"
+      >
+        <svg class="w-3.5 h-3.5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Create New Event
       </button>
-
-      <!-- Published Events Button -->
+      
       <button 
-        @click="navigateTo('published-events')"
-        class="flex items-center justify-between w-full p-3 bg-white hover:bg-blue-50 text-left border border-gray-200 rounded-lg transition group">
-        <div class="flex items-center gap-3">
-          <div class="p-2 bg-green-100 text-green-600 rounded-md group-hover:bg-green-200 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <div>
-            <span class="block font-medium text-gray-800">Published Events</span>
-            <span class="block text-xs text-gray-500">Live & upcoming events</span>
-          </div>
+        @click="navigateTo('my-events')"
+        class="shadow-sm flex items-center gap-3 w-full p-2.5 bg-white hover:bg-gray-50 text-left rounded-xl transition border border-gray-100 group">
+        <div class="p-2 bg-gray-100 text-gray-600 rounded-lg group-hover:text-purple-600 group-hover:bg-purple-100 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         </div>
-        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <span class="text-sm font-medium text-gray-700 group-hover:text-purple-700 transition">My Events Dashboard</span>
       </button>
     </div>
     
-    <!-- Sign Out / Footer area (Optional) -->
-    <div class="p-4 border-t border-gray-200">
-      <button class="w-full flex items-center justify-center gap-2 py-2 text-red-600 hover:bg-red-50 font-medium rounded-lg transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+    <div class="p-4 border-t border-gray-100">
+      <button class="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-red-500 hover:bg-red-50 font-bold rounded-xl transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         Sign Out
       </button>
     </div>

@@ -7,6 +7,9 @@ import SavedEventsView from '../views/SavedEventsView.vue'
 import PublishedEventsView from '../views/PublishedEventsView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import EventDetailView from '../views/EventDetailView.vue'
+import EventListView from '../views/EventListView.vue'
+import DiscussionView from '../views/DiscussionView.vue'
+import NotificationView from '../views/NotificationView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,7 +22,11 @@ const router = createRouter({
     { path: '/event/:id', name: 'event-detail', component: EventDetailView },
     { path: '/profile/edit', name: 'edit-profile', component: ProfileView }, 
     { path: '/profile/drafts', name: 'draft-events', component: SavedEventsView },
-    { path: '/profile/published', name: 'published-events', component: PublishedEventsView }
+    { path: '/profile/published', name: 'published-events', component: PublishedEventsView },
+    { path: '/event', name: 'event-list', component: EventListView},
+    { path: '/discussion', name: 'discussion', component: DiscussionView},
+    { path: '/profile', name: 'profile', component: ProfileView },
+    { path: '/notifications', name: 'notifications', component: NotificationView },
   ]
 })
 
