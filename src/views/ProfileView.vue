@@ -39,12 +39,6 @@ const saveProfile = () => {
 
 <template>
   <div class="max-w-screen-md mx-auto p-4 pt-4 pb-24 bg-[#fafafa] min-h-screen font-['Lato']">
-
-    <button @click="router.push({ name: 'home' })" class="mb-4 text-gray-400 hover:text-purple-700 flex items-center gap-1 font-bold text-[11px] transition-colors cursor-pointer uppercase tracking-wide">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-      Back Home
-    </button>
-
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gradient-to-r from-purple-800 to-indigo-900 p-5 text-white flex justify-between items-center">
         <div class="flex items-center gap-3">

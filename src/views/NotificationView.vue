@@ -9,23 +9,23 @@ const feedItems = [
 </script>
 
 <template>
-  <div class="pt-4 pb-12 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Plus_Jakarta_Sans'] px-4">
+  <div class="pt-4 pb-12 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
     
-    <div class="flex items-center gap-2.5 mb-5">
+    <div class="flex items-center gap-2 mb-4">
       <button @click="router.back()" class="p-1 text-gray-400 hover:text-purple-600 transition-colors cursor-pointer">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
       </button>
-      <h1 class="text-xl font-['Space_Grotesk'] font-bold text-gray-900 tracking-tight uppercase">Notifications</h1>
+      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-600 to-indigo-600 tracking-tight leading-none">Notifications</h1>
     </div>
 
-    <div class="space-y-3">
+    <div class="space-y-2.5">
       <div 
         v-for="item in feedItems" 
         :key="item.id" 
-        class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-3.5"
+        class="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex gap-3"
       >
         <div 
-          class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs"
+          class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-xs"
           :class="item.type === 'update' ? 'bg-purple-50 text-purple-600' : 'bg-indigo-50 text-indigo-600'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,9 +33,9 @@ const feedItems = [
           </svg>
         </div>
         <div>
-          <h2 class="text-sm font-bold text-gray-900 tracking-tight">{{ item.title }}</h2>
-          <p class="text-xs text-gray-500 font-medium font-['Lato'] mt-0.5 leading-relaxed">{{ item.details }}</p>
-          <span class="text-[9px] font-bold text-gray-400 font-['Lato'] uppercase mt-2 block tracking-wider">{{ item.elapsed }}</span>
+          <h2 class="text-[13px] font-bold text-gray-900 tracking-tight">{{ item.title }}</h2>
+          <p class="text-[11px] text-gray-500 font-medium mt-0.5 leading-snug">{{ item.details }}</p>
+          <span class="text-[9px] font-bold text-gray-400 uppercase mt-1.5 block tracking-wider">{{ item.elapsed }}</span>
         </div>
       </div>
     </div>

@@ -55,7 +55,7 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
 </script>
 
 <template>
-  <div class="pt-2 pb-24 max-w-screen-md mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
+  <div class="pb-24 max-w-screen-md mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
     
     <div 
       v-if="isCategoryOpen || isDateOpen" 
@@ -63,7 +63,7 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
       class="fixed inset-0 z-30"
     ></div>
 
-    <div class="mb-4 mt-1 px-4 relative z-10">
+    <div class="mb-4 pt-4 px-4 relative z-10">
       <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-600 to-indigo-600 tracking-tight leading-none">
         Search Events
       </h1>

@@ -32,13 +32,13 @@ const handleScroll = (event: Event) => {
 </script>
 
 <template>
-  <div class="pt-2 pb-24 max-w-screen-md mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
+  <div class="pb-24 max-w-screen-md mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
 
-    <div class="mb-6 mt-1 px-4 relative z-10">
+    <div class="mb-6 pt-4 px-4 relative z-10">
       <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-600 to-indigo-600 tracking-tight leading-none">
         Discover your next <br /> campus experience ✨
       </h1>
-      <p class="text-[11px] font-['Lato'] text-gray-400 font-medium mt-1.5 tracking-wide">
+      <p class="text-[11px] font-['Lato'] text-gray-400 font-medium tracking-wide">
         Explore what's happening around you today.
       </p>
     </div>
