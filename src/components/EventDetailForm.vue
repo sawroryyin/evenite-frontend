@@ -15,8 +15,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="space-y-8">
-    <!-- Notice we are now passing :viewMode="viewMode" to satisfy TypeScript -->
+  <div class="space-y-4 font-['Lato']">
     <FormBanner :form="form" :t="t" :viewMode="viewMode" />
     <FormBasicInfo :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     <FormDateLocation :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />

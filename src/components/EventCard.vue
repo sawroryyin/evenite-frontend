@@ -14,7 +14,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="border-none rounded-xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full font-['Plus_Jakarta_Sans'] ring-1 ring-gray-100">
+  <div class="border-none rounded-xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full font-['Lato'] ring-1 ring-gray-100">
     
     <!-- Changed to aspect-[4/3] to scale perfectly in both swipe and grid layouts -->
     <img :src="event.image" :alt="event.title" class="w-full aspect-4/3 object-cover" />
@@ -29,7 +29,7 @@ defineProps<{
       </div>
       
       <!-- Title uses Space Grotesk -->
-      <h3 class="font-['Space_Grotesk'] font-bold text-sm text-gray-900 leading-snug mb-2 line-clamp-2 flex-grow tracking-tight">{{ event.title }}</h3>
+      <h3 class="font-['Lato'] font-bold text-sm text-gray-900 leading-snug mb-2 line-clamp-2 flex-grow tracking-tight">{{ event.title }}</h3>
       
       <!-- Location -->
       <div class="flex items-center text-[10px] text-gray-500 gap-1 font-medium mt-auto">

@@ -121,7 +121,7 @@ const saveAsDraft = async () => {
   isSaving.value = true
   try {
     await EventService.saveAsDraft(sanitizePayload() as any);
-    
+    console.log("Event saved as draft:", sanitizePayload())
     store.hasUnsavedChanges = false
     alert("Event saved as draft successfully")
     router.push({ name: 'home' })
@@ -153,28 +153,36 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
 </script>
 
 <template>
-  <div class="p-6 max-w-2xl mx-auto pb-20">
+  <!-- Wrapper matching Dashboard styling -->
+  <div class="pt-4 pb-24 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Plus_Jakarta_Sans'] px-4">
+    
     <!-- Header Controls -->
-    <button @click="handleBackClick" class="mb-6 text-gray-500 hover:text-gray-800 flex items-center gap-2 font-medium transition cursor-pointer">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold font-['Lato'] transition-colors cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       {{ t.back }}
     </button>
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
-      <h1 class="text-2xl font-bold text-gray-800">{{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}</h1>
-      <div class="flex items-center gap-3 w-full md:w-auto">
-        <div class="flex bg-gray-200 p-1 rounded-lg w-full md:w-48">
-          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-white shadow text-blue-700' : 'text-gray-500'" class="flex-1 py-1.5 rounded-md text-sm font-bold transition">EN</button>
-          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-white shadow text-blue-700' : 'text-gray-500'" class="flex-1 py-1.5 rounded-md text-sm font-bold transition">TH</button>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-gray-100 pb-3 gap-3">
+      <h1 class="text-xl font-['Space_Grotesk'] font-bold text-gray-900 tracking-tight uppercase">
+        {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
+      </h1>
+      
+      <div class="flex items-center gap-2 w-full md:w-auto font-['Lato']">
+        <div class="flex bg-gray-200 p-0.5 rounded-lg w-full md:w-32">
+          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" 
+          class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">EN</button>
+          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" 
+          class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">TH</button>
         </div>
-        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow hover:bg-purple-700 disabled:bg-gray-400 transition flex items-center gap-1 whitespace-nowrap">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
+        
+        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-purple-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
           <span class="hidden sm:inline">{{ isTranslating ? t.translating : t.translateBtn }}</span>
         </button>
       </div>
     </div>
 
-    <!-- switch mode -->
+    <!-- Switch Mode -->
     <div v-if="viewMode === 'preview'" class="animate-fade-in">
       <EventPreview :event="form" :t="t" :viewLang="viewLang" />
     </div>
@@ -184,14 +192,14 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
     </form>
 
     <!-- Bottom Action Bar -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-      <div class="max-w-screen-md mx-auto w-full flex gap-3">
-        <button v-if="viewMode === 'preview' && eventStatus === 'DRAFT'" @click="viewMode = 'edit'" class="bg-yellow-500 text-white px-4 py-3 rounded-lg font-bold text-sm flex-1 hover:bg-yellow-600 transition shadow">Edit Draft</button>
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20 font-['Lato']">
+      <div class="max-w-screen-md w-full flex gap-2 px-4 md:px-0">
+        <button v-if="viewMode === 'preview' && eventStatus === 'DRAFT'" @click="viewMode = 'edit'" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all">Edit Draft</button>
         <template v-if="viewMode === 'create' || viewMode === 'edit'">
-          <button @click="saveAsDraft" :disabled="isSaving" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold text-sm flex-1 hover:bg-yellow-600 transition disabled:opacity-50 shadow">{{ t.saveDraft }}</button>
-          <button @click="() => { if (eventFormRef && eventFormRef.reportValidity()) showPublishModal = true }" :disabled="isSaving" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold text-sm flex-1 hover:bg-blue-700 transition disabled:opacity-50 shadow">{{ t.publish }}</button>
+          <button @click="saveAsDraft" :disabled="isSaving" class="bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all disabled:opacity-50">{{ t.saveDraft }}</button>
+          <button @click="() => { if (eventFormRef && eventFormRef.reportValidity()) showPublishModal = true }" :disabled="isSaving" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all disabled:opacity-50 shadow-sm">{{ t.publish }}</button>
         </template>
-        <button v-if="viewMode === 'preview' && eventStatus === 'PUBLISHED'" @click="router.push({name: 'home'})" class="bg-gray-800 text-white px-4 py-3 rounded-lg font-bold text-sm flex-1 hover:bg-gray-900 transition shadow">Back to Dashboard</button>
+        <button v-if="viewMode === 'preview' && eventStatus === 'PUBLISHED'" @click="router.push({name: 'home'})" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all shadow-sm">Back to Dashboard</button>
       </div>
     </div>
 
@@ -224,7 +232,7 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
   animation: fadeIn 0.2s ease-in-out;
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
 </style>

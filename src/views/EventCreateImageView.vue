@@ -38,7 +38,7 @@ const handleImageUpload = async (e: Event) => {
   } catch (error: any) {
     errorMessage.value =
       error.response?.data?.message ||
-      "There was an error in creating an event, try creating manually.";
+      "There was an error creating an event, try creating manually.";
   } finally {
     isLoading.value = false;
     if (fileInput.value) fileInput.value.value = ""; // Reset input
@@ -47,36 +47,24 @@ const handleImageUpload = async (e: Event) => {
 </script>
 
 <template>
-  <div class="p-6 max-w-md mx-auto">
+  <div class="p-4 max-w-md mx-auto font-['Lato']">
     <button
       @click="router.back()"
-      class="mb-6 text-gray-500 hover:text-gray-800 flex items-center gap-2 font-medium transition cursor-pointer"
+      class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 font-bold text-[11px] transition cursor-pointer uppercase tracking-wide"
     >
-      <svg
-        class="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M10 19l-7-7m0 0l7-7m-7 7h18"
-        ></path>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
       </svg>
       Back
     </button>
-    <div class="flex items-center gap-2 mb-6">
-      <h1 class="text-2xl font-bold">Generate from Image</h1>
+    
+    <div class="mb-5">
+      <h1 class="text-[18px] font-black tracking-tight text-gray-900 mb-1">Generate from Image</h1>
+      <p class="text-[11px] text-gray-400 font-medium leading-snug">
+        Upload an event poster or screenshot, and we'll extract the details for you.
+      </p>
     </div>
 
-    <p class="text-gray-600 mb-6">
-      Upload an event poster or screenshot, and we'll extract the details for
-      you.
-    </p>
-
-    <!-- Hidden File Input -->
     <input
       type="file"
       ref="fileInput"
@@ -89,41 +77,30 @@ const handleImageUpload = async (e: Event) => {
       v-if="!errorMessage"
       @click="fileInput?.click()"
       :disabled="isLoading"
-      class=" px-4 py-8 border-2 border-black-800 border-dashed rounded-xl w-full font-bold flex flex-col items-center gap-2 disabled:bg-gray-400 disabled:border-gray-500 transition shadow hover:bg-gray-200"
+      class="px-4 py-8 border-2 border-gray-300 border-dashed rounded-xl w-full text-[12px] font-bold flex flex-col items-center gap-2.5 text-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 transition-colors cursor-pointer hover:bg-gray-50 hover:border-gray-400"
     >
-      <svg
-        class="w-8 h-8"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-        ></path>
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
       </svg>
-      {{ isLoading ? "Analyzing Image..." : "Click to Upload Poster" }}
+      {{ isLoading ? "Analyzing Image..." : "Tap to Upload Poster" }}
     </button>
 
-    <!-- Error Message & Manual Route Button -->
     <div
       v-if="errorMessage"
-      class="mt-4 text-center animate-fade-in border border-red-200 bg-red-50 p-4 rounded-xl"
+      class="mt-3 text-center animate-fade-in border border-red-100 bg-red-50 p-4 rounded-xl"
     >
-      <p class="text-red-600 text-sm mb-4 font-medium">{{ errorMessage }}</p>
+      <p class="text-red-600 text-[11px] font-bold mb-3">{{ errorMessage }}</p>
 
       <button
         @click="router.push({ name: 'create-manual' })"
-        class="bg-gray-800 text-white px-4 py-3 rounded-lg w-full font-bold hover:bg-gray-700 transition shadow mb-2"
+        class="bg-gray-800 text-white px-4 py-2.5 rounded-lg w-full text-[12px] font-bold hover:bg-gray-700 transition shadow-sm mb-2"
       >
         Create Manually Instead
       </button>
 
       <button
         @click="errorMessage = ''"
-        class="text-gray-500 text-sm underline"
+        class="text-gray-500 text-[11px] font-bold underline hover:text-gray-700"
       >
         Try uploading again
       </button>
@@ -136,13 +113,7 @@ const handleImageUpload = async (e: Event) => {
   animation: fadeIn 0.3s ease-in-out;
 }
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

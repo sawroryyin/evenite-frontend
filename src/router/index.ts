@@ -10,6 +10,7 @@ import EventDetailView from '../views/EventDetailView.vue'
 import EventListView from '../views/EventListView.vue'
 import DiscussionView from '../views/DiscussionView.vue'
 import NotificationView from '../views/NotificationView.vue'
+import SearchView from '../views/SearchView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,7 @@ const router = createRouter({
     { path: '/discussion', name: 'discussion', component: DiscussionView},
     { path: '/profile', name: 'profile', component: ProfileView },
     { path: '/notifications', name: 'notifications', component: NotificationView },
+    { path: '/search', name: 'search', component: SearchView }
   ]
 })
 
