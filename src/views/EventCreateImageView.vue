@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useEventCreationStore } from "../stores/eventCreation";
 import { EventService } from "../services/EventService";
+import LoadingOverlay from "../components/LoadingOverlay.vue"; // Adjust path as needed
 
 const router = useRouter();
 const store = useEventCreationStore();
@@ -47,7 +48,10 @@ const handleImageUpload = async (e: Event) => {
 </script>
 
 <template>
-  <div class="p-4 max-w-md mx-auto font-['Lato']">
+  <div class="p-4 max-w-md mx-auto font-['Lato'] relative">
+    
+    <LoadingOverlay v-if="isLoading" message="Analyzing Image & Generating Event..." />
+
     <button
       @click="router.back()"
       class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 font-bold text-[11px] transition cursor-pointer uppercase tracking-wide"
@@ -82,7 +86,7 @@ const handleImageUpload = async (e: Event) => {
       <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
       </svg>
-      {{ isLoading ? "Analyzing Image..." : "Tap to Upload Poster" }}
+      Tap to Upload Poster
     </button>
 
     <div

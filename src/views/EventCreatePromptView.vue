@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
+import LoadingOverlay from "../components/LoadingOverlay.vue"; // Adjust path as needed
 
 const router = useRouter()
 const store = useEventCreationStore()
@@ -42,7 +43,10 @@ const handleTextGenerate = async () => {
 </script>
 
 <template>
-  <div class="p-4 max-w-md mx-auto font-['Lato']">
+  <div class="p-4 max-w-md mx-auto font-['Lato'] relative">
+    
+    <LoadingOverlay v-if="isLoading" message="Generating Event Details..." />
+
     <button @click="router.back()" class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 font-bold text-[11px] transition cursor-pointer uppercase tracking-wide">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
@@ -77,7 +81,7 @@ const handleTextGenerate = async () => {
       :disabled="isLoading"
       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl w-full text-[12px] font-bold disabled:bg-blue-300 transition shadow-sm cursor-pointer"
     >
-      {{ isLoading ? 'Generating AI Form...' : 'Generate Event' }}
+      Generate Event
     </button>
   </div>
 </template>
