@@ -57,7 +57,7 @@ const removeAgendaItem = (index: number) => {
         class="flex gap-2 items-center bg-gray-50 border border-gray-200 rounded-lg p-2 transition-all hover:border-purple-200"
       >
         <span class="flex items-center justify-center w-6 h-6 shrink-0 bg-purple-100 text-purple-700 font-bold text-[10px] rounded-full">
-          {{ index + 1 }}
+          {{ index as number + 1 }}
         </span>
         
         <input 

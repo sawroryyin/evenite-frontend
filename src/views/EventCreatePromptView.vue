@@ -3,14 +3,34 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
-import LoadingOverlay from "../components/LoadingOverlay.vue"; // Adjust path as needed
+import LoadingOverlay from "../components/LoadingOverlay.vue"
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 const router = useRouter()
 const store = useEventCreationStore()
 
 const promptText = ref('')
 const isLoading = ref(false)
-const errorMessage = ref('')
+
+// Alert Modal State
+const alertState = ref({
+  show: false,
+  title: '',
+  description: '',
+  theme: 'blue' as 'blue' | 'red',
+  redirectOnClose: false
+})
+
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue', redirect = false) => {
+  alertState.value = { show: true, title, description, theme, redirectOnClose: redirect }
+}
+
+const handleAlertConfirm = () => {
+  alertState.value.show = false
+  if (alertState.value.redirectOnClose) {
+    router.push({ name: 'create-manual' })
+  }
+}
 
 const validatePrompt = (text: string) => {
   const trimmed = text.trim()
@@ -22,11 +42,11 @@ const validatePrompt = (text: string) => {
 const handleTextGenerate = async () => {
   const error = validatePrompt(promptText.value)
   if (error) {
-    errorMessage.value = error
+    showAlert("Validation Error", error, "red")
+    promptText.value = '' // Auto-clear the input
     return
   }
 
-  errorMessage.value = ''
   isLoading.value = true
 
   try {
@@ -35,7 +55,8 @@ const handleTextGenerate = async () => {
     store.setDraftEvent(generatedData as any)
     router.push({ name: 'create-manual' })
   } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || "There was an error creating an event, try creating manually."
+    // Show in-app alert and set redirect flag to true
+    showAlert("Error", "There was an error in creating an event, try creating manually.", "red", true)
   } finally {
     isLoading.value = false
   }
@@ -64,25 +85,22 @@ const handleTextGenerate = async () => {
       placeholder="E.g., We are hosting a Web Development workshop next Friday at CMU Library..."
     ></textarea>
     
-    <div v-if="errorMessage" class="mb-3 text-center animate-fade-in border border-red-100 bg-red-50 p-3 rounded-xl">
-      <p class="text-red-500 text-[11px] font-bold mb-3">{{ errorMessage }}</p>
-      
-      <button 
-        @click="router.push({ name: 'create-manual' })" 
-        class="bg-gray-800 text-white px-4 py-2.5 rounded-lg w-full text-[12px] font-bold hover:bg-gray-700 transition shadow-sm"
-      >
-        Create Manually Instead
-      </button>
-    </div>
-    
     <button 
-      v-else
       @click="handleTextGenerate" 
       :disabled="isLoading"
-      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl w-full text-[12px] font-bold disabled:bg-blue-300 transition shadow-sm cursor-pointer"
+      class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl w-full text-[12px] font-bold disabled:opacity-50 transition shadow-sm cursor-pointer"
     >
       Generate Event
     </button>
+
+    <ConfirmModal 
+      v-if="alertState.show"
+      :title="alertState.title"
+      :description="alertState.description"
+      :confirmTheme="alertState.theme"
+      confirmText="OK"
+      @confirm="handleAlertConfirm"
+    />
   </div>
 </template>
 
