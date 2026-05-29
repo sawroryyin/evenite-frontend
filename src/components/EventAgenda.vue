@@ -39,7 +39,7 @@ const removeAgendaItem = (index: number) => {
         @click="addAgendaItem" 
         class="text-[10px] bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md font-bold hover:bg-purple-100 transition-colors border border-purple-100"
       >
-        + {{ t.addItem }}
+        {{ t.addItem }}
       </button>
     </div>
     

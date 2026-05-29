@@ -120,11 +120,21 @@ const saveAsDraft = async () => {
   if (eventFormRef.value && !eventFormRef.value.reportValidity()) return 
   isSaving.value = true
   try {
-    await EventService.saveAsDraft(sanitizePayload() as any);
+    const response = await EventService.saveAsDraft(sanitizePayload() as any);
+    
+    // Update the ID in the URL and form if it's a newly created draft
+    if (response && response.id) {
+      form.value.id = response.id;
+      router.replace({ params: { id: response.id } }).catch(() => {});
+    }
+
     console.log("Event saved as draft:", sanitizePayload())
     store.hasUnsavedChanges = false
     alert("Event saved as draft successfully")
-    router.push({ name: 'home' })
+    
+    // Switch to preview mode
+    eventStatus.value = 'DRAFT'
+    viewMode.value = 'preview'
   } catch (error: any) {
     alert("Failed to save event. Check console for details.");
   } finally {
@@ -135,11 +145,21 @@ const saveAsDraft = async () => {
 const confirmPublish = async () => {
   isSaving.value = true
   try {
-    await EventService.publish(sanitizePayload() as any);
+    const response = await EventService.publish(sanitizePayload() as any);
+    
+    // Update the ID in the URL and form if it's newly published
+    if (response && response.id) {
+      form.value.id = response.id;
+      router.replace({ params: { id: response.id } }).catch(() => {});
+    }
+
     store.setDraftEvent(null);
     store.hasUnsavedChanges = false 
     alert("Event published successfully")
-    router.push({ name: 'home' })
+    
+    // Switch to preview mode
+    eventStatus.value = 'PUBLISHED'
+    viewMode.value = 'preview'
   } catch (error: any) {
     alert(error.response?.data?.message || "Failed to publish event.")
   } finally {
@@ -153,17 +173,15 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
 </script>
 
 <template>
-  <!-- Wrapper matching Dashboard styling -->
   <div class="pt-4 pb-24 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Plus_Jakarta_Sans'] px-4">
     
-    <!-- Header Controls -->
     <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold font-['Lato'] transition-colors cursor-pointer">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       {{ t.back }}
     </button>
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-gray-100 pb-3 gap-3">
-      <h1 class="text-xl font-['Space_Grotesk'] font-bold text-gray-900 tracking-tight uppercase">
+      <h1 class="text-xl font-['Lato'] font-bold text-gray-900 tracking-tight uppercase">
         {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
       </h1>
       
@@ -175,14 +193,13 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
           class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">TH</button>
         </div>
         
-        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-purple-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
+        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
           <span class="hidden sm:inline">{{ isTranslating ? t.translating : t.translateBtn }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Switch Mode -->
     <div v-if="viewMode === 'preview'" class="animate-fade-in">
       <EventPreview :event="form" :t="t" :viewLang="viewLang" />
     </div>
@@ -191,19 +208,24 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
       <EventForm :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     </form>
 
-    <!-- Bottom Action Bar -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20 font-['Lato']">
       <div class="max-w-screen-md w-full flex gap-2 px-4 md:px-0">
-        <button v-if="viewMode === 'preview' && eventStatus === 'DRAFT'" @click="viewMode = 'edit'" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all">Edit Draft</button>
+        
+        <template v-if="viewMode === 'preview'">
+          <button v-if="eventStatus === 'DRAFT'" @click="viewMode = 'edit'" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all">Edit Draft</button>
+          
+          <button @click="router.push({name: 'home'})" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all shadow-sm">Back to Dashboard</button>
+        </template>
+        
         <template v-if="viewMode === 'create' || viewMode === 'edit'">
           <button @click="saveAsDraft" :disabled="isSaving" class="bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all disabled:opacity-50">{{ t.saveDraft }}</button>
+          
           <button @click="() => { if (eventFormRef && eventFormRef.reportValidity()) showPublishModal = true }" :disabled="isSaving" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all disabled:opacity-50 shadow-sm">{{ t.publish }}</button>
         </template>
-        <button v-if="viewMode === 'preview' && eventStatus === 'PUBLISHED'" @click="router.push({name: 'home'})" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all shadow-sm">Back to Dashboard</button>
+
       </div>
     </div>
 
-    <!-- Modals -->
     <ConfirmModal 
       v-if="showLeaveModal"
       title="Unsaved Changes"
