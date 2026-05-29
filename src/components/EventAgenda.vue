@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { inject } from 'vue'
+
 const props = defineProps<{ 
   form: any; 
   t: any; 
   viewLang: 'en' | 'th';
   viewMode?: 'create' | 'edit'
 }>()
+
+const showAlert = inject<((title: string, desc: string, theme?: 'blue'|'red') => void)>('showAlert')
 
 const addAgendaItem = () => {
   const agendaList = props.form.agenda;
@@ -15,10 +19,9 @@ const addAgendaItem = () => {
                             (!lastItem.activity.th || lastItem.activity.th.trim() === '');
 
     if (isTimeEmpty || isActivityEmpty) {
-      const alertMsg = props.viewLang === 'en' 
-        ? "Please fill out the previous agenda item before adding a new one." 
-        : "กรุณากรอกข้อมูลกำหนดการล่าสุดให้ครบก่อนเพิ่มรายการใหม่";
-      alert(alertMsg);
+      if(showAlert) {
+        showAlert("Incomplete Item", "Please fill out the previous agenda item before adding a new one.", "red");
+      }
       return; 
     }
   }
@@ -51,37 +54,40 @@ const removeAgendaItem = (index: number) => {
       <div 
         v-for="(item, index) in form.agenda" 
         :key="index" 
-        class="bg-gray-50 border border-gray-200 rounded-lg p-2 transition-all hover:border-purple-200 relative"
+        class="flex gap-2 items-center bg-gray-50 border border-gray-200 rounded-lg p-2 transition-all hover:border-purple-200"
       >
-        <div class="flex justify-between items-center mb-1.5">
-          <span class="font-black text-purple-400 text-[9px] uppercase tracking-widest">Item {{ index as number + 1 }}</span>
-          <button 
-            type="button" 
-            @click="removeAgendaItem(index as number)" 
-            class="text-gray-400 hover:text-red-500 text-sm font-bold leading-none p-1"
-          >
-            ×
-          </button>
-        </div>
+        <span class="flex items-center justify-center w-6 h-6 shrink-0 bg-purple-100 text-purple-700 font-bold text-[10px] rounded-full">
+          {{ index + 1 }}
+        </span>
         
-        <div class="flex gap-1.5 items-end">
+        <input 
+          type="time" 
+          v-model="item.time" 
+          class="w-20 sm:w-24 border border-gray-200 p-1.5 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none transition-all px-1 shrink-0" 
+        />
           
-          <div class="w-[72px] shrink-0">
-            <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">{{ t.time }}</label>
-            <input type="time" v-model="item.time" class="w-full border border-gray-200 p-1.5 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none transition-all px-1" />
-          </div>
-          
-          <div v-if="viewLang === 'en'" class="flex-1 min-w-0">
-            <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5 truncate">{{ t.activityEn }}</label>
-            <input v-model="item.activity.en" class="w-full border border-gray-200 p-1.5 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none transition-all truncate" placeholder="e.g. Ceremony" />
-          </div>
-          
-          <div v-if="viewLang === 'th'" class="flex-1 min-w-0">
-            <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5 truncate">{{ t.activityTh }}</label>
-            <input v-model="item.activity.th" class="w-full border border-gray-200 p-1.5 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none transition-all truncate" placeholder="e.g. พิธีเปิด" />
-          </div>
-          
+        <div class="flex-1 min-w-0">
+          <input 
+            v-if="viewLang === 'en'" 
+            v-model="item.activity.en" 
+            class="w-full border border-gray-200 p-1.5 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none transition-all truncate" 
+            placeholder="e.g. Ceremony" 
+          />
+          <input 
+            v-if="viewLang === 'th'" 
+            v-model="item.activity.th" 
+            class="w-full border border-gray-200 p-1.5 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-purple-500 focus:border-transparent outline-none transition-all truncate" 
+            placeholder="e.g. พิธีเปิด" 
+          />
         </div>
+          
+        <button 
+          type="button" 
+          @click="removeAgendaItem(index as number)" 
+          class="text-gray-400 hover:text-red-500 text-lg font-bold leading-none p-1 shrink-0"
+        >
+          ×
+        </button>
       </div>
     </div>
   </section>

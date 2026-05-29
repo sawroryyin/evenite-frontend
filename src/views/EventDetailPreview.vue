@@ -13,16 +13,15 @@ const formatDisplayDate = (isoString: string) => {
 }
 
 const mapEmbedUrl = computed(() => {
-  // Generates an embeddable URL based on the location name
   const locationText = props.event.location?.en || props.event.location?.th
-  if (locationText) {
+  if (locationText && !props.event.isOnline) {
+    // Highly reliable, secure embed URL for Google Maps
     return `https://maps.google.com/maps?q=${encodeURIComponent(locationText)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
   }
   return null
 })
 
 const goBack = () => {
-  // Routes strictly back to the specified component name
   router.push({ name: 'EventListView' })
 }
 </script>
@@ -37,7 +36,7 @@ const goBack = () => {
         <div v-else class="w-full h-full flex items-center justify-center text-gray-400 font-medium text-sm">
           No Banner Uploaded
         </div>
-        </div>
+      </div>
 
       <div class="p-5 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
         
@@ -51,7 +50,7 @@ const goBack = () => {
             </p>
             
             <div v-if="event.category?.length > 0" class="mt-6 flex flex-wrap gap-2">
-              <span v-for="cat in event.category" :key="cat" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
+              <span v-for="cat in event.category" :key="cat" class="bg-purple-600 text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
                 {{ cat }}
               </span>
             </div>
@@ -62,7 +61,7 @@ const goBack = () => {
             <ul class="space-y-4 relative border-l-2 border-purple-200 ml-2 pl-5">
               <li v-for="(item, index) in event.agenda" :key="index" class="relative">
                 <span class="absolute -left-[27px] top-1 w-3 h-3 bg-purple-500 rounded-full border-2 border-white shadow-sm"></span>
-                <p class="text-sm font-bold text-gradient-to-r from-purple-600 to-indigo-600 tracking-wide">{{ item.time || '--:--' }}</p>
+                <p class="text-sm font-bold text-purple-600 tracking-wide">{{ item.time || '--:--' }}</p>
                 <p class="text-gray-800 text-sm mt-1">{{ viewLang === 'en' ? item.activity.en : item.activity.th }}</p>
               </li>
             </ul>
@@ -112,13 +111,16 @@ const goBack = () => {
                     loading="lazy">
                   </iframe>
                 </div>
+                <a v-if="event.mapLink" :href="event.mapLink" target="_blank" class="text-purple-600 hover:text-purple-700 hover:underline text-xs font-bold inline-block transition-colors">
+                  Open in Google Maps ↗
+                </a>
               </div>
             </div>
           </div>
 
           <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-5">
             <div v-if="event.seatLimit" class="flex items-start gap-3">
-              <svg class="w-5 h-5 text-gradient-to-r from-purple-600 to-indigo-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-purple-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               <div>

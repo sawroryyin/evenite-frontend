@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, toRaw } from 'vue'
+import { ref, onMounted, toRaw, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
 import { translations } from '../locales/eventForm'
 
-// Components
 import ConfirmModal from '../components/ConfirmModal.vue'
 import EventPreview from './EventDetailPreview.vue'
 import EventForm from '../components/EventDetailForm.vue'
@@ -18,7 +17,30 @@ const store = useEventCreationStore()
 const viewMode = ref<'create' | 'edit' | 'preview'>('create')
 const eventStatus = ref<'DRAFT' | 'PUBLISHED' | null | undefined>(null)
 const viewLang = ref<'en' | 'th'>('en')
-const t = computed(() => translations[viewLang.value])
+
+// Hardcode labels to strictly English regardless of viewLang
+const t = translations['en'] 
+
+// UI States
+const isTranslating = ref(false)
+const isSaving = ref(false)
+const showPublishModal = ref(false)
+const showLeaveModal = ref(false)
+const eventFormRef = ref<HTMLFormElement | null>(null)
+const originalStateStr = ref('')
+
+// Alert Modal State
+const alertState = ref({
+  show: false,
+  title: '',
+  description: '',
+  theme: 'blue' as 'blue' | 'red'
+})
+
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
+  alertState.value = { show: true, title, description, theme }
+}
+provide('showAlert', showAlert)
 
 // Form State
 const form = ref<any>({
@@ -45,12 +67,6 @@ const form = ref<any>({
   bannerUrl: ''
 })
 
-const isTranslating = ref(false)
-const isSaving = ref(false)
-const showPublishModal = ref(false)
-const showLeaveModal = ref(false)
-const eventFormRef = ref<HTMLFormElement | null>(null)
-
 const formatForDateTimeLocal = (isoString: string | undefined) => {
   if (!isoString) return '';
   const date = new Date(isoString);
@@ -69,7 +85,7 @@ onMounted(async () => {
       if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt)
       if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt)
     } catch (error) {
-      alert("Failed to load event data.")
+      showAlert("Error", "Failed to load event data.", "red")
       router.back()
     }
   } else {
@@ -80,6 +96,7 @@ onMounted(async () => {
       if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt);
     }
   }
+  originalStateStr.value = JSON.stringify(form.value)
 })
 
 const handleTranslate = async () => {
@@ -95,20 +112,68 @@ const handleTranslate = async () => {
     }
     const translated = await EventService.translateFields(payload)
     Object.assign(form.value, translated)
-    alert(viewLang.value === 'th' ? "แปลภาษาเสร็จสมบูรณ์!" : "Translation complete!")
+    showAlert("Success", "Translation complete!", "blue")
   } catch (error) {
-    alert(viewLang.value === 'th' ? "การแปลล้มเหลว" : "Translation failed.")
+    showAlert("Translation Error", "Translation failed. Please try again.", "red")
   } finally {
     isTranslating.value = false
   }
 }
 
+const sanitizeDateRange = (startInput: any, endInput: any) => {
+  const isValidDate = (d: any) => d instanceof Date && !isNaN(d.getTime());
+  
+  let startAt = startInput ? new Date(startInput) : undefined;
+  let endAt = endInput ? new Date(endInput) : undefined;
+
+  if (!isValidDate(startAt)) return { startAt: undefined, endAt: undefined };
+  if (!isValidDate(endAt)) return { startAt, endAt: undefined };
+  if (startAt!.getTime() >= endAt!.getTime()) return { startAt, endAt: undefined };
+
+  return { startAt, endAt };
+}
+
+const validateForm = (isPublishing = false) => {
+  if (!form.value.title.en.trim() && !form.value.title.th.trim()) {
+    showAlert("Validation Error", "Event Title cannot be empty.", "red")
+    return false
+  }
+  
+  const { startAt } = sanitizeDateRange(form.value.startAt, form.value.endAt);
+
+  if (isPublishing) {
+    if (!startAt) {
+      showAlert("Validation Error", "A valid Start Date is required to publish an event.", "red")
+      return false
+    }
+
+    if (!form.value.isOnline) {
+      if (!form.value.location?.en?.trim() && !form.value.location?.th?.trim()) {
+        showAlert("Validation Error", "Location is required for offline events.", "red")
+        return false
+      }
+    }
+  }
+
+  if (form.value.seatLimit !== undefined && form.value.seatLimit !== null && form.value.seatLimit !== '') {
+    const limit = Number(form.value.seatLimit)
+    if (!Number.isInteger(limit) || limit < 1) {
+      showAlert("Validation Error", "Seat Limit must be a positive whole number.", "red")
+      return false
+    }
+  }
+
+  return true
+}
+
 const sanitizePayload = () => {
   const rawForm = toRaw(form.value);
+  const { startAt, endAt } = sanitizeDateRange(rawForm.startAt, rawForm.endAt);
+
   return {
     ...rawForm,
-    startAt: rawForm.startAt ? new Date(rawForm.startAt).toISOString() : undefined,
-    endAt: rawForm.endAt ? new Date(rawForm.endAt).toISOString() : undefined,
+    startAt: startAt ? startAt.toISOString() : undefined,
+    endAt: endAt ? endAt.toISOString() : undefined,
     seatLimit: rawForm.seatLimit ? Number(rawForm.seatLimit) : undefined,
     mapLink: rawForm.mapLink || undefined,
     contactEmail: rawForm.contactEmail || undefined,
@@ -116,27 +181,33 @@ const sanitizePayload = () => {
   };
 }
 
+const triggerPublish = () => {
+  if (!validateForm(true)) return; 
+  if (eventFormRef.value && !eventFormRef.value.reportValidity()) return;
+  showPublishModal.value = true;
+}
+
 const saveAsDraft = async () => {
-  if (eventFormRef.value && !eventFormRef.value.reportValidity()) return 
+  if (!validateForm(false)) return; 
+  if (eventFormRef.value && !eventFormRef.value.reportValidity()) return;
+  
   isSaving.value = true
   try {
     const response = await EventService.saveAsDraft(sanitizePayload() as any);
-    
-    // Update the ID in the URL and form if it's a newly created draft
     if (response && response.id) {
       form.value.id = response.id;
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
-
-    console.log("Event saved as draft:", sanitizePayload())
     store.hasUnsavedChanges = false
-    alert("Event saved as draft successfully")
+    originalStateStr.value = JSON.stringify(form.value) 
     
-    // Switch to preview mode
+    showAlert("Success", "Event Saved As Draft", "blue")
     eventStatus.value = 'DRAFT'
     viewMode.value = 'preview'
   } catch (error: any) {
-    alert("Failed to save event. Check console for details.");
+    const msg = error.response?.data?.message;
+    const formattedMsg = Array.isArray(msg) ? msg.join('\n• ') : (msg || "Failed to save event.");
+    showAlert("Error", formattedMsg, "red")
   } finally {
     isSaving.value = false
   }
@@ -146,46 +217,66 @@ const confirmPublish = async () => {
   isSaving.value = true
   try {
     const response = await EventService.publish(sanitizePayload() as any);
-    
-    // Update the ID in the URL and form if it's newly published
     if (response && response.id) {
       form.value.id = response.id;
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
-
     store.setDraftEvent(null);
     store.hasUnsavedChanges = false 
-    alert("Event published successfully")
+    originalStateStr.value = JSON.stringify(form.value) 
     
-    // Switch to preview mode
+    showAlert("Success", "Event Published Successfully", "blue")
     eventStatus.value = 'PUBLISHED'
     viewMode.value = 'preview'
   } catch (error: any) {
-    alert(error.response?.data?.message || "Failed to publish event.")
+    const msg = error.response?.data?.message;
+    const formattedMsg = Array.isArray(msg) ? msg.join(' | ') : (msg || "Failed to publish event.");
+    showAlert("Error", formattedMsg, "red")
   } finally {
     showPublishModal.value = false
     isSaving.value = false
   }
 }
 
-const handleBackClick = () => viewMode.value === 'preview' ? router.back() : (showLeaveModal.value = true)
-const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges = false; router.back(); }
+const handleBackClick = () => {
+  if (viewMode.value === 'preview') {
+    router.back()
+    return
+  }
+  
+  if (JSON.stringify(form.value) !== originalStateStr.value) {
+    showLeaveModal.value = true
+  } else {
+    router.back()
+  }
+}
+
+const confirmLeave = () => { 
+  store.setDraftEvent(null); 
+  store.hasUnsavedChanges = false; 
+  router.back(); 
+}
 </script>
 
 <template>
-  <div class="pt-4 pb-24 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Plus_Jakarta_Sans'] px-4">
+  <div class="pt-4 pb-24 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
     
-    <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold font-['Lato'] transition-colors cursor-pointer">
+    <div v-if="isTranslating" class="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
+      <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-3"></div>
+      <p class="text-purple-800 font-bold tracking-widest uppercase text-sm animate-pulse">Translating...</p>
+    </div>
+
+    <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       {{ t.back }}
     </button>
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-gray-100 pb-3 gap-3">
-      <h1 class="text-xl font-['Lato'] font-bold text-gray-900 tracking-tight uppercase">
+      <h1 class="text-xl font-bold text-gray-900 tracking-tight uppercase">
         {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
       </h1>
       
-      <div class="flex items-center gap-2 w-full md:w-auto font-['Lato']">
+      <div class="flex items-center gap-2 w-full md:w-auto">
         <div class="flex bg-gray-200 p-0.5 rounded-lg w-full md:w-32">
           <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" 
           class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">EN</button>
@@ -195,36 +286,44 @@ const confirmLeave = () => { store.setDraftEvent(null); store.hasUnsavedChanges 
         
         <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
-          <span class="hidden sm:inline">{{ isTranslating ? t.translating : t.translateBtn }}</span>
+          <span class="hidden sm:inline">Auto Translate</span>
         </button>
       </div>
     </div>
 
     <div v-if="viewMode === 'preview'" class="animate-fade-in">
-      <EventPreview :event="form" :t="t" :viewLang="viewLang" />
+      <EventPreview :event="form" :viewLang="viewLang" />
     </div>
 
     <form v-else ref="eventFormRef" @submit.prevent>
       <EventForm :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     </form>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20 font-['Lato']">
-      <div class="max-w-screen-md w-full flex gap-2 px-4 md:px-0">
+    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
+      
+      <div class="max-w-screen-md w-full flex justify-center gap-4 md:gap-6 px-4 md:px-0">
         
-        <template v-if="viewMode === 'preview'">
-          <button v-if="eventStatus === 'DRAFT'" @click="viewMode = 'edit'" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all">Edit Draft</button>
-          
-          <button @click="router.push({name: 'home'})" class="bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all shadow-sm">Back to Dashboard</button>
+        <template v-if="viewMode === 'preview' && eventStatus === 'DRAFT'">
+          <button @click="viewMode = 'edit'" class="w-[140px] md:w-[160px] bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 py-2.5 rounded-xl font-bold text-[11px] transition-all">Edit Draft</button>
         </template>
         
         <template v-if="viewMode === 'create' || viewMode === 'edit'">
-          <button @click="saveAsDraft" :disabled="isSaving" class="bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all disabled:opacity-50">{{ t.saveDraft }}</button>
+          <button @click="saveAsDraft" :disabled="isSaving" class="w-[140px] md:w-[160px] bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 py-2.5 rounded-xl font-bold text-[11px] transition-all disabled:opacity-50">Save Draft</button>
           
-          <button @click="() => { if (eventFormRef && eventFormRef.reportValidity()) showPublishModal = true }" :disabled="isSaving" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-bold text-[11px] flex-1 transition-all disabled:opacity-50 shadow-sm">{{ t.publish }}</button>
+          <button @click="triggerPublish" :disabled="isSaving" class="w-[140px] md:w-[160px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:bg-gradient-to-r hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-[11px] transition-all disabled:opacity-50 shadow-sm">Publish</button>
         </template>
 
       </div>
     </div>
+
+    <ConfirmModal 
+      v-if="alertState.show"
+      :title="alertState.title"
+      :description="alertState.description"
+      :confirmTheme="alertState.theme"
+      confirmText="OK"
+      @confirm="alertState.show = false"
+    />
 
     <ConfirmModal 
       v-if="showLeaveModal"

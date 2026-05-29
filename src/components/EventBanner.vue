@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { inject } from 'vue'
 import { EventService } from '../services/EventService'
 
 const props = defineProps<{ 
@@ -7,34 +7,35 @@ const props = defineProps<{
   t: any;
   viewMode?: 'create' | 'edit' 
 }>()
-const imageError = ref('')
+
+const showAlert = inject<((title: string, desc: string, theme?: 'blue'|'red') => void)>('showAlert')
 
 const handleImageUpload = async (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  imageError.value = ''
   const validTypes = ['image/jpeg', 'image/png', 'image/webp']
   
   if (!validTypes.includes(file.type)) {
-    imageError.value = "Unsupported image format"
+    if (showAlert) showAlert("Invalid Format", "Unsupported image format", "red")
     return
   }
   if (file.size > 5242880) {
-    imageError.value = "File size must not exceed 5MB."
+    if (showAlert) showAlert("File Too Large", "File size must not exceed 5MB.", "red")
     return
   }
 
   try {
     const response = await EventService.uploadBanner(file)
     props.form.bannerUrl = response.bannerUrl
+    if (showAlert) showAlert("Success", "Image Uploading Successful", "blue")
   } catch (error) {
-    imageError.value = "Failed to upload banner image."
+    if (showAlert) showAlert("Upload Failed", "Failed to upload banner image.", "red")
   }
 }
 </script>
 
 <template>
-  <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+  <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm font-['Lato']">
     <h2 class="text-base font-bold text-gray-900 mb-3">
       {{ t.eventBanner }} 
       <span class="text-xs font-medium text-gray-400">{{ t.universalSub }}</span>
@@ -59,6 +60,5 @@ const handleImageUpload = async (e: Event) => {
          <span class="text-[10px] text-gray-400 mt-1">JPEG, PNG or WEBP (Max 5MB)</span>
       </div>
     </div>
-    <span v-if="imageError" class="text-red-500 text-xs font-semibold mt-2 block">{{ imageError }}</span>
   </section>
 </template>

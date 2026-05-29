@@ -3,7 +3,7 @@ defineProps<{
   title: string
   description: string
   confirmText: string
-  cancelText: string
+  cancelText?: string
   confirmTheme?: 'blue' | 'red'
 }>()
 
@@ -12,16 +12,16 @@ const emit = defineEmits(['confirm', 'cancel'])
 
 <template>
   <div class="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 transition-opacity">
-    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full animate-fade-in font-['Plus_Jakarta_Sans']">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full animate-fade-in font-['Lato']">
       <h3 class="text-lg font-bold text-gray-900 mb-2">{{ title }}</h3>
       <p class="text-sm text-gray-600 mb-6 leading-relaxed">{{ description }}</p>
-      <div class="flex justify-end gap-3 font-['Lato']">
-        <button @click="emit('cancel')" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+      <div class="flex justify-end gap-3">
+        <button v-if="cancelText" @click="emit('cancel')" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
           {{ cancelText }}
         </button>
         <button 
           @click="emit('confirm')" 
-          :class="confirmTheme === 'red' ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'"
+          :class="confirmTheme === 'red' ? 'bg-red-600 hover:bg-red-700' : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:bg-purple-700'"
           class="px-4 py-2 text-sm text-white font-bold rounded-xl transition-colors shadow-sm"
         >
           {{ confirmText }}

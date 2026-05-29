@@ -13,7 +13,7 @@ defineProps<{
     
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.startDate }}</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.startDate }} <span class="text-red-500">*</span></label>
         <input type="datetime-local" v-model="form.startAt" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" />
       </div>
       <div>
@@ -29,11 +29,11 @@ defineProps<{
 
     <div v-if="!form.isOnline" class="space-y-4">
       <div v-if="viewLang === 'en'">
-        <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.locationEn }}</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.locationEn }} <span class="text-red-500">*</span></label>
         <input v-model="form.location.en" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. Main Hall" />
       </div>
       <div v-if="viewLang === 'th'">
-        <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.locationTh }}</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.locationTh }} <span class="text-red-500">*</span></label>
         <input v-model="form.location.th" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="สถานที่จัดงาน" />
       </div>
       <div>
