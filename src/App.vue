@@ -6,7 +6,7 @@ import NavBar from './components/NavBar.vue'
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col font-sans">
     <NavBar />
-    <main class="flex-grow max-w-screen-md mx-auto w-full bg-white shadow-sm pb-16 md:pb-0">
+    <main class="grow max-w-3xl mx-auto w-full bg-white shadow-sm md:pb-0">
       <RouterView />
     </main>
   </div>
