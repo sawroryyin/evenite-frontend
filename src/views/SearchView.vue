@@ -55,7 +55,7 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
 </script>
 
 <template>
-  <div class="pb-24 max-w-screen-md mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
+  <div class="pb-24 max-w-3xl mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
     
     <div 
       v-if="isCategoryOpen || isDateOpen" 
@@ -64,7 +64,8 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
     ></div>
 
     <div class="mb-4 pt-4 px-4 relative z-10">
-      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-600 to-indigo-600 tracking-tight leading-none">
+      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-linear-to-r 
+      from-purple-600 to-indigo-600 tracking-tight leading-none">
         Search Events
       </h1>
       <p class="text-[11px] font-['Lato'] text-gray-400 font-medium mt-1.5 tracking-wide">
@@ -75,14 +76,16 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
     <div class="relative w-full px-4 mb-3 z-10">
       <div class="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
         <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
       <input 
         v-model="searchQuery" 
         type="text" 
         placeholder="Search events, categories, or keywords..." 
-        class="w-full text-[12px] border-none rounded-xl py-2.5 pl-9 pr-4 focus:outline-none focus:ring-1.5 focus:ring-purple-400 bg-white shadow-sm font-['Lato']" 
+        class="w-full text-[12px] border-none rounded-xl py-2.5 pl-9 pr-4 focus:outline-none focus:ring-1.5 
+        focus:ring-purple-400 bg-white shadow-sm font-['Lato']" 
       />
     </div>
 
@@ -91,20 +94,26 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
       <div class="relative">
         <button 
           @click="isCategoryOpen = !isCategoryOpen; isDateOpen = false" 
-          class="w-full flex items-center justify-between bg-white border-none text-gray-700 text-[11px] py-2 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-1.5 focus:ring-purple-400 font-bold shadow-sm cursor-pointer transition-shadow"
+          class="w-full flex items-center justify-between bg-white border-none text-gray-700 text-[11px] 
+          py-2 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-1.5 focus:ring-purple-400 font-bold shadow-sm cursor-pointer transition-shadow"
         >
           <div class="flex items-center gap-1.5 truncate font-['Lato']">
-            <svg class="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeCategory.icon"></path>
             </svg>
             <span class="truncate text-[12px]">{{ activeCategory.label }}</span>
           </div>
-          <svg class="w-3 h-3 text-purple-400 flex-shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isCategoryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+          <svg class="w-3 h-3 text-purple-400 shrink-0 transition-transform duration-200" 
+          :class="{ 'rotate-180': isCategoryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7">
+            </path>
+        </svg>
         </button>
 
         <ul 
           v-if="isCategoryOpen" 
-          class="absolute top-full left-0 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 overflow-y-auto scrollbar-hide py-1 z-50 origin-top"
+          class="absolute top-full left-0 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 
+          overflow-y-auto scrollbar-hide py-1 z-50 origin-top"
         >
           <li 
             v-for="cat in categoryOptions" 
@@ -115,7 +124,8 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
               activeCategoryValue === cat.value ? 'text-purple-700 bg-purple-50/80' : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
             ]"
           >
-            <svg class="w-3.5 h-3.5 flex-shrink-0" :class="activeCategoryValue === cat.value ? 'text-purple-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 shrink-0" :class="activeCategoryValue === cat.value ? 'text-purple-600' 
+            : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="cat.icon"></path>
             </svg>
             {{ cat.label }}
@@ -126,20 +136,24 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
       <div class="relative font-['Lato']">
         <button 
           @click="isDateOpen = !isDateOpen; isCategoryOpen = false" 
-          class="w-full flex items-center justify-between bg-white border-none text-gray-700 text-[11px] py-2 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-1.5 focus:ring-purple-400 font-bold shadow-sm cursor-pointer transition-shadow"
+          class="w-full flex items-center justify-between bg-white border-none text-gray-700 text-[11px] 
+          py-2 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-1.5 focus:ring-purple-400 font-bold shadow-sm cursor-pointer transition-shadow"
         >
           <div class="flex items-center gap-1.5 truncate text-[12px]">
-            <svg class="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeDate.icon"></path>
             </svg>
             <span class="truncate">{{ activeDate.label }}</span>
           </div>
-          <svg class="w-3 h-3 text-purple-400 flex-shrink-0 transition-transform duration-200" :class="{ 'rotate-180': isDateOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+          <svg class="w-3 h-3 text-purple-400 shrink-0 transition-transform duration-200" 
+          :class="{ 'rotate-180': isDateOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
         </button>
 
         <ul 
           v-if="isDateOpen" 
-          class="absolute top-full right-0 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden py-1 z-50 origin-top"
+          class="absolute top-full right-0 w-full mt-1.5 bg-white border border-gray-100 rounded-xl 
+          shadow-xl overflow-hidden py-1 z-50 origin-top"
         >
           <li 
             v-for="date in dateOptions" 
@@ -147,10 +161,12 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
             @click="selectDate(date.value)"
             :class="[
               'flex items-center gap-2 px-3 py-2 text-[11px] font-bold cursor-pointer transition-colors',
-              activeDateValue === date.value ? 'text-purple-700 bg-purple-50/80' : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
+              activeDateValue === date.value ? 'text-purple-700 bg-purple-50/80' 
+              : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
             ]"
           >
-            <svg class="w-3.5 h-3.5 flex-shrink-0" :class="activeDateValue === date.value ? 'text-purple-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 shrink-0" :class="activeDateValue === date.value ? 'text-purple-600' 
+            : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="date.icon"></path>
             </svg>
             {{ date.label }}
@@ -161,7 +177,7 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
 
     <div class="px-4 relative z-10">
       <div v-if="searchQuery || activeCategoryValue !== 'All' || activeDateValue !== 'latest'" class="mt-4">
-        <p class="text-xs font-['Space_Grotesk'] font-bold mb-2.5 text-gray-900 tracking-tight uppercase text-purple-900/40">
+        <p class="text-xs font-['Space_Grotesk'] font-bold mb-2.5 tracking-tight uppercase text-purple-900/40">
           Search Results
         </p>
         </div>

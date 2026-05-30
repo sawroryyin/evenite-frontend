@@ -29,12 +29,6 @@ const fetchDrafts = async () => {
   }
 }
 
-const editDraft = (id?: string) => {
-  if (!id) return
-  // router.push({ name: 'create-manual', query: { id } })
-  alert(`Editing draft ${id}`)
-}
-
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'Unknown date'
   return new Date(dateString).toLocaleDateString('en-US', {

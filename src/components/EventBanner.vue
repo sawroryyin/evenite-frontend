@@ -46,16 +46,22 @@ const handleImageUpload = async (e: Event) => {
       <button 
         type="button" 
         @click="form.bannerUrl = ''" 
-        class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100"
+        class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-600 
+        px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100"
       >
         {{ t.removeImg }}
       </button>
     </div>
     
-    <div v-else class="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-xl hover:bg-purple-50/50 hover:border-purple-300 transition-colors relative cursor-pointer bg-gray-50/50">
-      <input type="file" @change="handleImageUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/jpeg, image/png, image/webp" />
+    <div v-else class="flex flex-col items-center justify-center h-32 border-2 
+    border-dashed border-gray-300 rounded-xl hover:bg-purple-50/50 
+    hover:border-purple-300 transition-colors relative cursor-pointer bg-gray-50/50">
+      <input type="file" @change="handleImageUpload" class="absolute inset-0 w-full h-full 
+      opacity-0 cursor-pointer" accept="image/jpeg, image/png, image/webp" />
       <div class="text-gray-500 pointer-events-none flex flex-col items-center px-4 text-center">
-         <svg class="w-6 h-6 mb-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+         <svg class="w-6 h-6 mb-1 text-gray-400" fill="none" stroke="currentColor" 
+         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" 
+         stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
          <span class="text-xs font-bold">{{ t.uploadBanner }}</span>
          <span class="text-[10px] text-gray-400 mt-1">JPEG, PNG or WEBP (Max 5MB)</span>
       </div>

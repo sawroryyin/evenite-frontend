@@ -1,14 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { EventData } from '../types';
 
-// Assumes you have VITE_GEMINI_API_KEY in your .env file
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export const AiService = {
-  /**
-   * Translates a raw prompt into structured EventData JSON (SRS-005)
-   */
+
+  // Translates a raw prompt into structured EventData JSON
   async generateEventFromPrompt(prompt: string): Promise<Partial<EventData>> {
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -28,13 +26,12 @@ export const AiService = {
       return JSON.parse(cleanedText) as Partial<EventData>;
     } catch (error) {
       console.error("Failed to connect to AI API:", error);
-      throw error; // Caught by the View to trigger SRS-006
+      throw error;
     }
   },
 
-  /**
-   * Translates missing bilingual fields without overwriting existing ones (SRS-010)
-   */
+  
+  // Translates missing bilingual fields without overwriting existing ones
   async translateMissingFields(currentData: Partial<EventData>): Promise<Partial<EventData>> {
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });

@@ -9,10 +9,11 @@ const mockChannels = [
 </script>
 
 <template>
-  <div class="pt-4 pb-24 max-w-screen-md mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
+  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
     
     <div class="mb-5 relative z-10">
-      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-600 to-indigo-600 tracking-tight leading-none">
+      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-linear-to-r from-purple-600 
+      to-indigo-600 tracking-tight leading-none">
         Discussion Rooms
       </h1>
       <p class="text-[11px] font-['Lato'] text-gray-400 font-medium tracking-wide">
@@ -27,7 +28,8 @@ const mockChannels = [
         class="p-3.5 flex items-center justify-between gap-3 hover:bg-purple-50/20 cursor-pointer transition-colors"
       >
         <div class="flex items-center gap-3 truncate">
-          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-purple-600 font-black text-[13px] flex-shrink-0 shadow-inner">
+          <div class="w-9 h-9 rounded-lg bg-linear-to-br from-purple-100 to-indigo-100 flex items-center justify-center 
+          text-purple-600 font-black text-[13px] shrink-0 shadow-inner">
             #
           </div>
           <div class="truncate">
@@ -37,7 +39,7 @@ const mockChannels = [
             </p>
           </div>
         </div>
-        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+        <div class="flex flex-col items-end gap-1 shrink-0">
           <span class="text-[9px] font-semibold text-gray-400">{{ chat.timestamp }}</span>
           <span v-if="chat.unread" class="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
         </div>

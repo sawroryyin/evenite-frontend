@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import type { EventData } from '../types' // Adjust path if needed
+import type { EventData } from '../types'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
@@ -28,11 +28,6 @@ const fetchPublishedEvents = async () => {
   }
 }
 
-const manageEvent = (id?: string) => {
-  if (!id) return
-  alert(`Navigating to manage dashboard for event ${id}`)
-}
-
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'TBA'
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -48,8 +43,10 @@ onMounted(() => {
 <template>
   <div class="p-6 max-w-md mx-auto">
 
-    <button @click="router.push({ name: 'home' })" class="mb-6 text-gray-500 hover:text-gray-800 flex items-center gap-2 font-medium transition cursor-pointer">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    <button @click="router.push({ name: 'home' })" class="mb-6 text-gray-500 hover:text-gray-800 flex 
+    items-center gap-2 font-medium transition cursor-pointer">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
+        stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
     </button>
 
@@ -88,20 +85,28 @@ onMounted(() => {
                 </div>
                 
                 <div class="text-left md:text-right">
-                <p class="text-3xl font-bold text-blue-600">0 <span class="text-sm font-normal text-gray-500">/ {{ event.seatLimit || '∞' }}</span></p>
+                <p class="text-3xl font-bold text-blue-600">0 <span class="text-sm font-normal text-gray-500">/ 
+                  {{ event.seatLimit || '∞' }}</span></p>
                 <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Registered</p>
                 </div>
             </div>
 
             <!-- Updated: Only the View Button -->
             <div class="flex justify-end">
-                <button @click="router.push({ name: 'event-detail', params: { id: event.id } })" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg text-sm transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                <button @click="router.push({ name: 'event-detail', params: { id: event.id } })" class="px-6 py-2 
+                bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg text-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
+                  </path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                  </path>
+                </svg>
                 View Details
                 </button>
             </div>
-            </div>
-            </div>
+          </div>
+        </div>
     </div>
   </div>
 </template>

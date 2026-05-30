@@ -14,8 +14,9 @@ const navItems = [
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pb-safe z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] font-['Lato']">
-    <div class="flex justify-around items-center h-14 max-w-screen-md mx-auto px-2">
+  <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pb-safe z-50 
+  shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] font-['Lato']">
+    <div class="flex justify-around items-center h-14 max-w-3xl mx-auto px-2">
       <button 
         v-for="item in navItems" 
         :key="item.name"

@@ -16,23 +16,29 @@ defineProps<{
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.contactName }}</label>
-        <input v-model="form.contactName" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. John Doe" />
+        <input v-model="form.contactName" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 
+        focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. John Doe" />
       </div>
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.contactEmail }}</label>
-        <input v-model="form.contactEmail" type="email" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="john@example.com" />
+        <input v-model="form.contactEmail" type="email" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm 
+        bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" 
+        placeholder="john@example.com" />
       </div>
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.contactPhone }}</label>
-        <input v-model="form.contactPhone" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. +66 123 456 789" />
+        <input v-model="form.contactPhone" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 
+        focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. +66 123 456 789" />
       </div>
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.lineId }}</label>
-        <input v-model="form.contactLineId" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. @eventcontact" />
+        <input v-model="form.contactLineId" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 
+        focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="e.g. @eventcontact" />
       </div>
       <div class="sm:col-span-2">
         <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.externalUrl }}</label>
-        <input v-model="form.externalUrl" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="https://..." />
+        <input v-model="form.externalUrl" class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 
+        focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" placeholder="https://..." />
       </div>
     </div>
   </section>

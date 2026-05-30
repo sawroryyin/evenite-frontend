@@ -6,7 +6,6 @@ const props = defineProps<{
   event: EventData
 }>()
 
-// --- Utility Formatting ---
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'TBA'
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -14,7 +13,6 @@ const formatDate = (dateString?: string) => {
   })
 }
 
-// --- Dynamic Styling ---
 const statusStyles = computed(() => {
   if (props.event.status === 'PUBLISHED') return 'bg-green-100 text-green-800'
   if (props.event.status === 'DRAFT') return 'bg-yellow-100 text-yellow-800'
@@ -23,7 +21,8 @@ const statusStyles = computed(() => {
 </script>
 
 <template>
-  <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex justify-between items-center transition-transform active:scale-[0.995]">
+  <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex justify-between items-center transition-transform 
+  active:scale-[0.995]">
     <div class="pr-3 truncate">
       <div class="flex items-center gap-2 mb-1">
         <span 
@@ -44,7 +43,8 @@ const statusStyles = computed(() => {
     <!-- Vue Router Link to Event Detail View -->
     <router-link 
       :to="{ name: 'event-detail', params: { id: event.id } }"
-      class="bg-[#fafafa] hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 text-gray-700 border border-gray-200 text-[11px] font-bold py-1.5 px-3 rounded-xl transition-all flex-shrink-0"
+      class="bg-[#fafafa] hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 text-gray-700 border 
+      border-gray-200 text-[11px] font-bold py-1.5 px-3 rounded-xl transition-all shrink-0"
     >
       View
     </router-link>

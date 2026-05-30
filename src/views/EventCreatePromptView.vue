@@ -68,8 +68,10 @@ const handleTextGenerate = async () => {
     
     <LoadingOverlay v-if="isLoading" message="Generating Event Details..." />
 
-    <button @click="router.back()" class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 font-bold text-[11px] transition cursor-pointer uppercase tracking-wide">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    <button @click="router.back()" class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 
+    font-bold text-[11px] transition cursor-pointer uppercase tracking-wide">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
+        stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
     </button>
     
@@ -80,7 +82,8 @@ const handleTextGenerate = async () => {
     
     <textarea 
       v-model="promptText" 
-      class="w-full border border-gray-200 p-3 rounded-xl mb-3 focus:ring-1.5 focus:ring-blue-400 focus:border-blue-400 focus:outline-none text-[12px] bg-[#fafafa] placeholder-gray-400 shadow-sm" 
+      class="w-full border border-gray-200 p-3 rounded-xl mb-3 focus:ring-1.5 focus:ring-blue-400 
+      focus:border-blue-400 focus:outline-none text-[12px] bg-[#fafafa] placeholder-gray-400 shadow-sm" 
       rows="6"
       placeholder="E.g., We are hosting a Web Development workshop next Friday at CMU Library..."
     ></textarea>
@@ -88,7 +91,8 @@ const handleTextGenerate = async () => {
     <button 
       @click="handleTextGenerate" 
       :disabled="isLoading"
-      class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl w-full text-[12px] font-bold disabled:opacity-50 transition shadow-sm cursor-pointer"
+      class="bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl 
+      w-full text-[12px] font-bold disabled:opacity-50 transition shadow-sm cursor-pointer"
     >
       Generate Event
     </button>
