@@ -71,3 +71,41 @@ export interface SaveDraftDto {
   remarks?: BilingualField;
   bannerUrl?: string;
 }
+
+export const FormType = {
+  REGISTRATION: 'REGISTRATION',
+  FEEDBACK: 'FEEDBACK',
+} as const;
+
+export type FormType = typeof FormType[keyof typeof FormType];
+
+export const FieldType = {
+  TEXT: 'TEXT',
+  TEXTAREA: 'TEXTAREA',
+  NUMBER: 'NUMBER',
+  RATING: 'RATING',
+  DATE: 'DATE',
+  CHOICE: 'CHOICE',
+  CHECKBOX: 'CHECKBOX',
+} as const;
+
+export type FieldType = typeof FieldType[keyof typeof FieldType];
+
+export interface FormField {
+  id?: string;
+  type: FieldType;
+  label: string;
+  isRequired: boolean;
+  order: number;
+  options: string[];
+  autoFillKey?: string | null;
+}
+
+export interface Form {
+  id?: string;
+  eventId: string;
+  type: FormType;
+  title: string | null;
+  description: string | null;
+  fields: FormField[];
+}

@@ -1,7 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-const props = defineProps<{ event: any; viewLang: 'en' | 'th' }>()
+const router = useRouter()
+
+const props = defineProps<{ 
+  event: any; 
+  viewLang: 'en' | 'th';
+  availableForms?: any[]; 
+}>()
+
+// Check if specific forms exist
+const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
+const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
+
+// Navigation handler for participants
+const navigateToSubmitForm = (type: string) => {
+  router.push(`/events/${props.event.id}/forms/${type}/submit`) 
+}
 
 const formatDisplayDate = (isoString: string) => {
   if (!isoString) return 'TBA'
@@ -11,18 +27,14 @@ const formatDisplayDate = (isoString: string) => {
 }
 
 const mapEmbedUrl = computed(() => {
-  // ONLY generate the embed if the mapLink field is actually filled out
   if (props.event.mapLink && !props.event.isOnline) {
     const locationText = props.event.location?.en || props.event.location?.th;
     
-    // If there is a location text, generate the search embed. 
     if (locationText) {
       return `https://maps.google.com/maps?q=${encodeURIComponent(locationText)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
     return props.event.mapLink; 
   }
-  
-  // If mapLink is empty, return null so the iframe hides
   return null;
 })
 </script>
@@ -62,7 +74,7 @@ const mapEmbedUrl = computed(() => {
             <h2 class="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2 mb-4">Event Agenda</h2>
             <ul class="space-y-4 relative border-l-2 border-purple-200 ml-2 pl-5">
               <li v-for="(item, index) in event.agenda" :key="index" class="relative">
-                <span class="absolute -left-675 top-1 w-3 h-3 bg-purple-500 rounded-full border-2 
+                <span class="absolute -left-6.5 top-1 w-3 h-3 bg-purple-500 rounded-full border-2 
                 border-white shadow-sm"></span>
                 <p class="text-sm font-bold text-purple-600 tracking-wide">{{ item.time || '--:--' }}</p>
                 <p class="text-gray-800 text-sm mt-1">{{ viewLang === 'en' ? item.activity.en : item.activity.th }}</p>
@@ -177,6 +189,34 @@ const mapEmbedUrl = computed(() => {
               </div>
             </div>
           </div>
+
+          <div v-if="hasRegistration || hasFeedback" 
+               class="bg-linear-to-br from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 shadow-sm space-y-4">
+            
+            <div class="text-center">
+              <h3 class="text-lg font-black text-gray-900 tracking-tight">Join the Experience</h3>
+              <p class="text-xs text-gray-500 mt-1">Don't miss out on this event!</p>
+            </div>
+
+            <div class="flex flex-col gap-3 mt-4">
+              <button v-if="hasRegistration" @click="navigateToSubmitForm('REGISTRATION')" 
+                class="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                </svg>
+                Register Now
+              </button>
+
+              <button v-if="hasFeedback" @click="navigateToSubmitForm('FEEDBACK')" 
+                class="w-full bg-white hover:bg-gray-50 text-indigo-700 border border-indigo-200 shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                </svg>
+                Give Feedback
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
