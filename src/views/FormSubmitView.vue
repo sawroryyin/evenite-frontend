@@ -70,7 +70,7 @@ const submitForm = async () => {
     
     console.log("Submitting Payload:", payload);
     alert('Successfully submitted!');
-    router.push(`/events/${eventId}`);
+    router.back()
     
   } catch (error) {
     alert('Error submitting form. Please try again.');
@@ -83,7 +83,7 @@ const submitForm = async () => {
 <template>
   <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4" v-if="form">
     
-    <button @click="router.push(`/events/${eventId}`)" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
+    <button @click="router.back()" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       BACK TO EVENT
     </button>
