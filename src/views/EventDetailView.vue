@@ -8,6 +8,7 @@ import { translations } from '../locales/eventForm'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import EventPreview from './EventDetailPreview.vue'
 import EventForm from '../components/EventDetailForm.vue'
+import { FormService } from '../services/FormService'
 
 const router = useRouter()
 const route = useRoute()
@@ -28,6 +29,9 @@ const showPublishModal = ref(false)
 const showLeaveModal = ref(false)
 const eventFormRef = ref<HTMLFormElement | null>(null)
 const originalStateStr = ref('')
+
+const availableForms = ref<any[]>([]) 
+const isRegistered = ref(false)
 
 // Alert Modal State
 const alertState = ref({
@@ -81,11 +85,20 @@ onMounted(async () => {
       const data = await EventService.getEventById(eventId)
       form.value = { ...form.value, ...data }
       eventStatus.value = data.status
-      viewMode.value = 'preview'
+      
+      // ADD THIS LINE: Fetch the available forms for this event
+      availableForms.value = await FormService.getFormsByEventId(eventId)
+      
+      if (route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true') {
+        viewMode.value = 'edit';
+        sessionStorage.removeItem('returnToEventEditMode');
+      } else {
+        viewMode.value = 'preview';
+      }
+      
       if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt)
       if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt)
       
-      // Snapshot the fetched data for existing events
       originalStateStr.value = JSON.stringify(form.value)
     } catch (error) {
       showAlert("Error", "Failed to load event data.", "red")
@@ -264,7 +277,12 @@ const handleBackClick = () => {
   if (JSON.stringify(form.value) !== originalStateStr.value) {
     showLeaveModal.value = true
   } else {
-    router.back()
+    // FIX: Clean back behavior. If existing event, go to preview. If new, go back completely.
+    if (eventStatus.value) {
+      viewMode.value = 'preview'
+    } else {
+      router.back()
+    }
   }
 }
 
@@ -318,7 +336,12 @@ const confirmLeave = () => {
     </div>
 
     <div v-if="viewMode === 'preview'" class="animate-fade-in">
-      <EventPreview :event="form" :viewLang="viewLang" />
+      <EventPreview 
+        :event="form" 
+        :viewLang="viewLang" 
+        :availableForms="availableForms" 
+        :isRegistered="isRegistered" 
+      />
     </div>
 
     <form v-else ref="eventFormRef" @submit.prevent>

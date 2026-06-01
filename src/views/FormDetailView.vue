@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { FormService } from '../services/FormService';
-import { FormType, FieldType, type Form, type FormField } from '../types';
+import { FormType, FieldType, type Form } from '../types';
 
 const route = useRoute();
 const router = useRouter();
@@ -100,17 +100,24 @@ const saveForm = async () => {
 };
 
 const goBack = () => {
-  if (isEditMode.value && confirm('You have unsaved changes. Are you sure you want to go back?')) {
-    if (originalForm.value) {
-      form.value = JSON.parse(JSON.stringify(originalForm.value));
-      isEditMode.value = false;
-    } else {
-      router.push(`/events/${eventId}`);
+  if (isEditMode.value) {
+    if (confirm('You have unsaved changes. Are you sure you want to go back?')) {
+      if (originalForm.value) {
+        // Cancel edits on an existing form: return to Form Preview
+        form.value = JSON.parse(JSON.stringify(originalForm.value));
+        isEditMode.value = false;
+      } else {
+        // Cancel a brand new form: leave a note and go back natively
+        sessionStorage.setItem('returnToEventEditMode', 'true');
+        router.back();
+      }
     }
-  } else if (!isEditMode.value) {
-    router.push(`/events/${eventId}`);
+  } else {
+    // From Form Preview: leave a note and go back natively
+    sessionStorage.setItem('returnToEventEditMode', 'true');
+    router.back();
   }
-};
+}; 
 </script>
 
 <template>
@@ -158,7 +165,7 @@ const goBack = () => {
           </div>
 
           <div v-if="field.type === 'CHOICE' || field.type === 'CHECKBOX'" class="pl-2 border-l-2 border-purple-100 space-y-2 mt-2">
-            <div v-for="(opt, optIndex) in field.options" :key="optIndex" class="flex items-center gap-2">
+            <div v-for="(_, optIndex) in field.options" :key="optIndex" class="flex items-center gap-2">
               <div class="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0" :class="field.type === 'CHECKBOX' ? 'rounded-sm' : ''"></div>
               <input v-model="field.options[optIndex]" placeholder="Option text" class="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-purple-500" />
               <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-600 p-2 transition-colors">

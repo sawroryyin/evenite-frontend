@@ -13,6 +13,7 @@ import NotificationView from '../views/NotificationView.vue'
 import SearchView from '../views/SearchView.vue'
 import FormDetailView from '../views/FormDetailView.vue'
 import FormResponseView from '../views/FormResponseView.vue'
+import FormSubmitView from '../views/FormSubmitView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,7 +33,8 @@ const router = createRouter({
     { path: '/notifications', name: 'notifications', component: NotificationView },
     { path: '/search', name: 'search', component: SearchView },
     { path: '/events/:id/forms/:formType', name: 'FormDetail', component: FormDetailView },
-    { path: '/events/:id/forms/:formType/responses', name: 'FormResponses', component: FormResponseView }
+    { path: '/events/:id/forms/:formType/responses', name: 'FormResponses', component: FormResponseView },
+    { path: '/events/:id/forms/:formType/submit', name: 'FormSubmit', component: FormSubmitView }
   ]
 })
 
