@@ -99,6 +99,7 @@ export interface FormField {
   order: number;
   options: string[];
   autoFillKey?: string | null;
+  maxRating?: number | null;
 }
 
 export interface Form {

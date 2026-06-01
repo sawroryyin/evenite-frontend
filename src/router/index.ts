@@ -22,7 +22,7 @@ const router = createRouter({
     { path: '/create/prompt', name: 'create-prompt', component: EventCreatePromptView },
     { path: '/create/image', name: 'create-image', component: EventCreateImageView },
     { path: '/create/manual', name: 'create-manual', component: EventDetailView},
-    { path: '/event/:id', name: 'event-detail', component: EventDetailView },
+    { path: '/events/:id', name: 'event-detail', component: EventDetailView },
     { path: '/profile/edit', name: 'edit-profile', component: ProfileView }, 
     { path: '/profile/drafts', name: 'draft-events', component: SavedEventsView },
     { path: '/profile/published', name: 'published-events', component: PublishedEventsView },
