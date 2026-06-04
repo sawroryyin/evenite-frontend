@@ -1,44 +1,49 @@
-import { defineStore } from 'pinia';
-import { jwtDecode } from 'jwt-decode';
+import { defineStore } from 'pinia'
+import { jwtDecode } from 'jwt-decode'
 
-interface JwtPayload {
-  sub: string;
-  email: string;
-  currentRole: 'ORGANIZER' | 'PARTICIPANT';
-  isVerified: boolean;
-  universityId: string;
-  participantProfileId: string | null;
-  organizerProfileId: string | null;
-  hasCreatedProfile: boolean;
+interface AuthState {
+  accessToken: string | null
+  refreshToken: string | null
 }
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    accessToken: localStorage.getItem('accessToken') || null,
-    refreshToken: localStorage.getItem('refreshToken') || null,
-    user: null as JwtPayload | null,
+  state: (): AuthState => ({
+    accessToken: localStorage.getItem('access_token'),
+    refreshToken: localStorage.getItem('refresh_token'),
   }),
   getters: {
     isAuthenticated: (state) => !!state.accessToken,
-    isVerified: (state) => state.user?.isVerified || false,
-    hasProfile: (state) => state.user?.hasCreatedProfile || false,
-    currentRole: (state) => state.user?.currentRole || 'PARTICIPANT',
+    parsedToken: (state): any => {
+      if (!state.accessToken) return null
+      try {
+        return jwtDecode(state.accessToken)
+      } catch {
+        return null
+      }
+    },
+    hasParticipantProfile(): boolean {
+      return this.parsedToken?.participantProfileId !== null
+    },
+    hasOrganizerProfile(): boolean {
+      return this.parsedToken?.organizerProfileId !== null
+    },
+    currentRole(): string | null {
+      return this.parsedToken?.currentRole || null
+    }
   },
   actions: {
     setTokens(access: string, refresh: string) {
-      this.accessToken = access;
-      this.refreshToken = refresh;
-      localStorage.setItem('accessToken', access);
-      localStorage.setItem('refreshToken', refresh);
-      this.user = jwtDecode<JwtPayload>(access);
+      this.accessToken = access
+      this.refreshToken = refresh
+      localStorage.setItem('access_token', access)
+      localStorage.setItem('refresh_token', refresh)
     },
     logout() {
-      this.accessToken = null;
-      this.refreshToken = null;
-      this.user = null;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
+      this.accessToken = null
+      this.refreshToken = null
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      window.location.href = '/login'
     }
   }
-});
+})

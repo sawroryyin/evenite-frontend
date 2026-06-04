@@ -1,31 +1,28 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+// REMOVED: import axios from 'axios'
+import { EventService } from '../services/EventService' // ADDED: Use our authenticated service
 import type { EventData } from '../types' // Adjust path if needed
 import BottomNav from '../components/BottomNav.vue'
 import EventCardList from '../components/EventCardList.vue'
 
 const router = useRouter()
 
-// --- State Management Engine ---
 const allEvents = ref<EventData[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 
-// Simplified Tabs Configuration for Organizer
 const tabs = ['Published', 'Draft', 'Completed']
 const activeTab = ref('Published')
 
-// --- Database Sync Engine ---
 const fetchEventsFromDatabase = async () => {
   try {
     isLoading.value = true
     errorMessage.value = ''
     
-    // Fetch all events from NestJS local server endpoint
-    const response = await axios.get<EventData[]>('http://localhost:3000/events')
-    allEvents.value = response.data
+    const data = await EventService.getAllEvents()
+    allEvents.value = data
     
   } catch (error) {
     console.error('Error fetching event telemetry from database:', error)
@@ -35,7 +32,6 @@ const fetchEventsFromDatabase = async () => {
   }
 }
 
-// --- Live Filtering Logic Node ---
 const filteredEvents = computed(() => {
   if (activeTab.value === 'Published') {
     return allEvents.value.filter(event => event.status === 'PUBLISHED')
@@ -47,9 +43,8 @@ const filteredEvents = computed(() => {
   return []
 })
 
-// Global Lifecycle Hooks Initialization
+
 onMounted(() => {
-  // Reset scroll position to the top of the page immediately when returning to this view
   window.scrollTo({ top: 0, behavior: 'instant' })
   fetchEventsFromDatabase()
 })

@@ -17,8 +17,8 @@ const navigateTo = (routeName: string) => {
   router.push({ name: routeName })
 }
 
-// Compute dynamic UI values based on JWT payload
-const userInitial = computed(() => authStore.user?.email?.charAt(0).toUpperCase() || 'U')
+// Compute dynamic UI values based on JWT payload via parsedToken
+const userInitial = computed(() => authStore.parsedToken?.email?.charAt(0).toUpperCase() || 'U')
 const isOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 const targetSwitchRole = computed(() => isOrganizer.value ? 'PARTICIPANT' : 'ORGANIZER')
 
@@ -29,27 +29,26 @@ const handleLogout = () => {
 
 const handleSwitchRole = async () => {
   try {
-    // 1. Check if they have the target profile created
+    // 1. Check if they have the target profile created using the store's getters
     const hasTargetProfile = targetSwitchRole.value === 'ORGANIZER' 
-      ? authStore.user?.organizerProfileId 
-      : authStore.user?.participantProfileId
+      ? authStore.hasOrganizerProfile 
+      : authStore.hasParticipantProfile
 
     if (!hasTargetProfile) {
       // If no profile, route them to profile creation
       alert(`You must create a ${targetSwitchRole.value.toLowerCase()} profile first.`)
-      navigateTo('profile')
+      navigateTo('profile-create') // Make sure this matches the route name in index.ts
       return
     }
 
     // 2. Call backend to switch role & get new token
-    // NOTE: You must build this endpoint in your NestJS backend!
-    const response = await api.post('/users/me/switch-role', { role: targetSwitchRole.value })
+    const response = await api.patch('/users/me/switch-profile', { targetRole: targetSwitchRole.value })
     
     if (response.data.accessToken) {
       authStore.setTokens(response.data.accessToken, authStore.refreshToken as string)
       alert(`Switched to ${targetSwitchRole.value} view!`)
       closeSidebar()
-      // Optional: Redirect to respective dashboard
+      // Redirect to respective dashboard
       router.push({ name: targetSwitchRole.value === 'ORGANIZER' ? 'event-list' : 'home' })
     }
   } catch (error) {
@@ -112,7 +111,7 @@ const handleSwitchRole = async () => {
       <div class="w-16 h-16 rounded-full bg-linear-to-br from-purple-200 to-indigo-200 flex items-center justify-center mb-3 shadow-inner">
         <span class="text-xl font-bold text-purple-700">{{ userInitial }}</span>
       </div>
-      <h3 class="text-sm font-bold text-gray-800 leading-tight mb-1">{{ authStore.user?.email || 'Loading...' }}</h3>
+      <h3 class="text-sm font-bold text-gray-800 leading-tight mb-1">{{ authStore.parsedToken?.email || 'Loading...' }}</h3>
       <p class="text-xs text-purple-600 font-bold mb-4 bg-purple-100 px-2 py-1 rounded-full">
         {{ isOrganizer ? 'Organizer Mode' : 'Participant Mode' }}
       </p>
