@@ -180,7 +180,7 @@ const logout = () => {
       
       <div class="px-6 relative flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start -mt-16 mb-8 gap-5">
         
-        <div class="w-32 h-32 rounded-full border-4 border-white bg-white shadow-md overflow-hidden flex-shrink-0 z-10 relative group"
+        <div class="w-32 h-32 rounded-full border-4 border-white bg-white shadow-md overflow-hidden shrink-0 z-10 relative group"
              :class="isEditing ? 'cursor-pointer' : ''"
              @click="triggerFileInput">
           <img 

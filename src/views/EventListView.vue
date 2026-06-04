@@ -1,28 +1,44 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-// REMOVED: import axios from 'axios'
-import { EventService } from '../services/EventService' // ADDED: Use our authenticated service
-import type { EventData } from '../types' // Adjust path if needed
+import { EventService } from '../services/EventService'
+import { useAuthStore } from '../stores/auth'
+import type { EventData } from '../types' 
 import BottomNav from '../components/BottomNav.vue'
 import EventCardList from '../components/EventCardList.vue'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
+// --- State Management Engine ---
 const allEvents = ref<EventData[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 
-const tabs = ['Published', 'Draft', 'Completed']
-const activeTab = ref('Published')
+const isOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 
+// Dynamic Tabs: Participants don't have Drafts
+const tabs = computed(() => 
+  isOrganizer.value ? ['Published', 'Draft', 'Completed'] : ['Registered', 'Completed']
+)
+const activeTab = ref(isOrganizer.value ? 'Published' : 'Registered')
+
+// --- Database Sync Engine ---
 const fetchEventsFromDatabase = async () => {
   try {
     isLoading.value = true
     errorMessage.value = ''
     
-    const data = await EventService.getAllEvents()
-    allEvents.value = data
+    if (isOrganizer.value) {
+      // Organizer: Fetch events they created
+      const data = await EventService.getCreatedEvents()
+      allEvents.value = data
+    } else {
+      // Participant: Fetch events they registered for
+      // Backend returns EventRegistration with a nested 'event' object
+      const data: any = await EventService.getRegisteredEvents()
+      allEvents.value = data.map((item: any) => item.event ? item.event : item)
+    }
     
   } catch (error) {
     console.error('Error fetching event telemetry from database:', error)
@@ -32,8 +48,9 @@ const fetchEventsFromDatabase = async () => {
   }
 }
 
+// --- Live Filtering Logic Node ---
 const filteredEvents = computed(() => {
-  if (activeTab.value === 'Published') {
+  if (activeTab.value === 'Published' || activeTab.value === 'Registered') {
     return allEvents.value.filter(event => event.status === 'PUBLISHED')
   } else if (activeTab.value === 'Draft') {
     return allEvents.value.filter(event => event.status === 'DRAFT')
@@ -43,7 +60,7 @@ const filteredEvents = computed(() => {
   return []
 })
 
-
+// Global Lifecycle Hooks Initialization
 onMounted(() => {
   window.scrollTo({ top: 0, behavior: 'instant' })
   fetchEventsFromDatabase()
@@ -63,7 +80,10 @@ onMounted(() => {
           Manage and track your activities
         </p>
       </div>
+      
+      <!-- Only show Create Event button to Organizers -->
       <button 
+        v-if="isOrganizer"
         @click="router.push({ name: 'create-options' })"
         class="bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 
         text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm flex items-center gap-1.5 

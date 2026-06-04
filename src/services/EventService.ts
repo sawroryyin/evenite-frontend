@@ -40,13 +40,29 @@ export const EventService = {
     return response.data;
   },
 
-  async getEventById(id: string): Promise<EventData> {
-    const response = await api.get<EventData>(`/events/${id}`);
+  // --- Dashboard & Feed Retrieval Methods ---
+
+  // 1. PUBLIC FEED (For HomeView.vue)
+  async getPublicEvents(status?: string): Promise<EventData[]> {
+    const response = await api.get<EventData[]>('/events', { params: { status } });
     return response.data;
   },
 
-  async getAllEvents(): Promise<EventData[]> {
-    const response = await api.get<EventData[]>('/events');
+  // 2. ORGANIZER DASHBOARD (For EventListView.vue when role is Organizer)
+  async getCreatedEvents(): Promise<EventData[]> {
+    const response = await api.get<EventData[]>('/users/me/created-events');
+    return response.data;
+  },
+
+  // 3. PARTICIPANT DASHBOARD (For EventListView.vue when role is Participant)
+  async getRegisteredEvents(): Promise<EventData[]> {
+    const response = await api.get<EventData[]>('/users/me/registered-events');
+    return response.data;
+  },
+
+  // Single event retrieval
+  async getEventById(id: string): Promise<EventData> {
+    const response = await api.get<EventData>(`/events/${id}`);
     return response.data;
   }
 };
