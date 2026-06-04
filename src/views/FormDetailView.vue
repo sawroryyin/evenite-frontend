@@ -3,6 +3,10 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { FormService } from '../services/FormService';
 import { FormType, FieldType, type Form } from '../types';
+import { useEventCreationStore } from '../stores/eventCreation';
+import ConfirmModal from '../components/ConfirmModal.vue';
+
+const store = useEventCreationStore();
 
 const route = useRoute();
 const router = useRouter();
@@ -21,7 +25,22 @@ const hasResponses = ref(false);
 
 const availableFieldTypes = Object.values(FieldType);
 
+const showLeaveModal = ref(false);
+
 onMounted(async () => {
+  if (eventId === 'new') {
+    const existingDraft = store.draftForms[formType];
+    if (existingDraft) {
+      form.value = JSON.parse(JSON.stringify(existingDraft));
+      originalForm.value = JSON.parse(JSON.stringify(existingDraft));
+      isEditMode.value = true;
+    } else {
+      isEditMode.value = true;
+      originalForm.value = JSON.parse(JSON.stringify(form.value));
+    }
+    return;
+  }
+
   try {
     const data = await FormService.getForm(eventId, formType);
     if (data) {
@@ -38,12 +57,10 @@ onMounted(async () => {
 
 const toggleEdit = () => {
   if (eventStatus.value !== 'DRAFT') {
-    alert('Form can only be edited while the event is in draft state.');
-    return;
+    return showAlert('Edit Restricted', 'Form can only be edited while the event is in draft state.', 'red');
   }
   if (hasResponses.value) {
-    alert('Form cannot be updated because it has existing responses.');
-    return;
+    return showAlert('Edit Restricted', 'Form cannot be updated because it has existing responses.', 'red');
   }
   isEditMode.value = true;
 };
@@ -61,9 +78,16 @@ const addField = (type: FieldType) => {
 };
 
 const removeField = (index: number) => {
-  if (confirm('Are you sure you want to delete this field?')) {
-    form.value.fields.splice(index, 1);
-  }
+  showConfirm(
+    'Delete Field',
+    'Are you sure you want to delete this field?',
+    'Delete',
+    'red',
+    () => {
+      form.value.fields.splice(index, 1);
+      confirmState.value.show = false;
+    }
+  );
 };
 
 const moveField = (index: number, direction: -1 | 1) => {
@@ -77,47 +101,95 @@ const moveField = (index: number, direction: -1 | 1) => {
 
 const saveForm = async () => {
   // Validation
+  if (!form.value.title?.trim()) return showAlert('Validation Error', 'Form Title is required.', 'red');
+  if (!form.value.description?.trim()) return showAlert('Validation Error', 'Form Description is required.', 'red');
+  if (form.value.fields.length === 0) return showAlert('Validation Error', 'At least one field is required.', 'red');
+
   for (const field of form.value.fields) {
-    if (!field.label.trim()) return alert('Field label is required.');
+    if (!field.label.trim()) return showAlert('Validation Error', 'Field label is required.', 'red');
     if ((field.type === FieldType.CHOICE || field.type === FieldType.CHECKBOX) && field.options.length < 2) {
-      return alert('At least two options are required for choice/checkbox fields.');
+      return showAlert('Validation Error', 'At least two options are required for choice/checkbox fields.', 'red');
     }
   }
 
   try {
+    if (eventId === 'new') {
+      store.setDraftForm(formType, JSON.parse(JSON.stringify(form.value)));
+      showAlert('Success', 'Form saved locally (will be published with event)', 'blue');
+      isEditMode.value = false;
+      originalForm.value = JSON.parse(JSON.stringify(form.value));
+      return;
+    }
+
     if (originalForm.value) {
       await FormService.updateForm(eventId, formType, form.value);
-      alert('Form updated successfully');
+      showAlert('Success', 'Form updated successfully', 'blue');
     } else {
       await FormService.createForm(eventId, form.value);
-      alert('Form created successfully');
+      showAlert('Success', 'Form created successfully', 'blue');
     }
     isEditMode.value = false;
     originalForm.value = JSON.parse(JSON.stringify(form.value));
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Error saving form');
+    showAlert('Error', err.response?.data?.message || 'Error saving form', 'red');
   }
 };
 
 const goBack = () => {
-  if (isEditMode.value) {
-    if (confirm('You have unsaved changes. Are you sure you want to go back?')) {
-      if (originalForm.value) {
-        // Cancel edits on an existing form: return to Form Preview
-        form.value = JSON.parse(JSON.stringify(originalForm.value));
-        isEditMode.value = false;
-      } else {
-        // Cancel a brand new form: leave a note and go back natively
-        sessionStorage.setItem('returnToEventEditMode', 'true');
-        router.back();
+  const hasChanges = JSON.stringify(form.value) !== JSON.stringify(originalForm.value);
+
+  if (isEditMode.value && hasChanges) {
+    showConfirm(
+      'Unsaved Changes',
+      'You have unsaved changes. Are you sure you want to go back?',
+      'Discard Changes',
+      'red',
+      () => {
+        executeGoBack();
+        confirmState.value.show = false;
       }
-    }
+    );
   } else {
-    // From Form Preview: leave a note and go back natively
+    executeGoBack();
+  }
+};
+
+const executeGoBack = () => {
+  if (isEditMode.value && originalForm.value && eventId !== 'new') {
+    form.value = JSON.parse(JSON.stringify(originalForm.value));
+    isEditMode.value = false;
+  } else {
     sessionStorage.setItem('returnToEventEditMode', 'true');
     router.back();
   }
-}; 
+};
+
+const alertState = ref({
+  show: false,
+  title: '',
+  description: '',
+  theme: 'blue' as 'blue' | 'red'
+});
+
+const confirmState = ref({
+  show: false,
+  title: '',
+  description: '',
+  confirmText: '',
+  theme: 'blue' as 'blue' | 'red',
+  onConfirm: () => {}
+});
+
+// Helper for simple OK alerts (validations, success, errors)
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
+  alertState.value = { show: true, title, description, theme };
+};
+
+// Helper for actions requiring Cancel/Confirm
+const showConfirm = (title: string, description: string, confirmText: string, theme: 'blue' | 'red', action: () => void) => {
+  confirmState.value = { show: true, title, description, confirmText, theme, onConfirm: action };
+};
+
 </script>
 
 <template>
@@ -286,6 +358,26 @@ const goBack = () => {
         </button>
       </div>
     </div>
+
+    <ConfirmModal 
+      v-if="alertState.show"
+      :title="alertState.title"
+      :description="alertState.description"
+      :confirmTheme="alertState.theme"
+      confirmText="OK"
+      @confirm="alertState.show = false"
+    />
+
+    <ConfirmModal 
+      v-if="confirmState.show"
+      :title="confirmState.title"
+      :description="confirmState.description"
+      :confirmTheme="confirmState.theme"
+      :confirmText="confirmState.confirmText"
+      cancelText="Cancel"
+      @cancel="confirmState.show = false"
+      @confirm="confirmState.onConfirm"
+    />
 
   </div>
 </template>

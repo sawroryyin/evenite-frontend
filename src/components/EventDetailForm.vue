@@ -22,7 +22,7 @@ defineProps<{
     <FormDateLocation :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     <FormAgenda :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     <FormCatering :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
-    <EventFormLinks :eventId="form.id" />
+    <EventFormLinks :eventId="form.id || 'new'" />
     <FormContact :form="form" :t="t" :viewMode="viewMode" />
   </div>
 </template>

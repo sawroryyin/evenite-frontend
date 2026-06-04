@@ -83,6 +83,10 @@ onMounted(async () => {
   if (eventId && eventId !== 'new') {
     try {
       const data = await EventService.getEventById(eventId)
+
+      if (data.startAt) data.startAt = formatForDateTimeLocal(data.startAt)
+  if (data.endAt) data.endAt = formatForDateTimeLocal(data.endAt)
+
       form.value = { ...form.value, ...data }
       eventStatus.value = data.status
       
@@ -112,9 +116,12 @@ onMounted(async () => {
     originalStateStr.value = JSON.stringify(form.value)
 
     if (store.draftEvent) {
-      form.value = { ...form.value, ...store.draftEvent };
-      if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt);
-      if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt);
+      const draft = { ...store.draftEvent };
+      
+      if (draft.startAt) draft.startAt = formatForDateTimeLocal(draft.startAt);
+      if (draft.endAt) draft.endAt = formatForDateTimeLocal(draft.endAt);
+      
+      form.value = { ...form.value, ...draft };
     }
   }
 })
@@ -226,6 +233,22 @@ const saveAsDraft = async () => {
     const response = await EventService.saveAsDraft(sanitizePayload() as any);
     if (response && response.id) {
       form.value.id = response.id;
+
+      // NEW: Save any pending forms in Pinia to the database now that we have an ID
+      for (const draftForm of Object.values(store.draftForms)) {
+        // 1. Deep clone to safely unwrap Vue Proxies so Axios reads the array correctly
+        const formPayload = JSON.parse(JSON.stringify(draftForm));
+        
+        // 2. Replace the placeholder 'new' with the REAL generated database UUID
+        formPayload.eventId = response.id;
+        
+        // 3. Ensure no rogue form ID is sent on creation
+        delete formPayload.id;
+
+        await FormService.createForm(response.id, formPayload);
+      }
+      store.clearDraftForms(); // Clear memory once saved
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     store.hasUnsavedChanges = false
@@ -249,6 +272,21 @@ const confirmPublish = async () => {
     const response = await EventService.publish(sanitizePayload() as any);
     if (response && response.id) {
       form.value.id = response.id;
+
+      for (const draftForm of Object.values(store.draftForms)) {
+        // 1. Deep clone to safely unwrap Vue Proxies so Axios reads the array correctly
+        const formPayload = JSON.parse(JSON.stringify(draftForm));
+        
+        // 2. Replace the placeholder 'new' with the REAL generated database UUID
+        formPayload.eventId = response.id;
+        
+        // 3. Ensure no rogue form ID is sent on creation
+        delete formPayload.id;
+
+        await FormService.createForm(response.id, formPayload);
+      }
+      store.clearDraftForms(); // Clear memory once saved
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     store.setDraftEvent(null);
