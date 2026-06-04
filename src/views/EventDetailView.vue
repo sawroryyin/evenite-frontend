@@ -13,15 +13,12 @@ const router = useRouter()
 const route = useRoute()
 const store = useEventCreationStore()
 
-// State Management
 const viewMode = ref<'create' | 'edit' | 'preview'>('create')
 const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'COMPLETED' | null | undefined>(null)
 const viewLang = ref<'en' | 'th'>('en')
 
-// Hardcode labels to strictly English regardless of viewLang
 const t = translations['en'] 
 
-// UI States
 const isTranslating = ref(false)
 const isSaving = ref(false)
 const showPublishModal = ref(false)
@@ -29,7 +26,6 @@ const showLeaveModal = ref(false)
 const eventFormRef = ref<HTMLFormElement | null>(null)
 const originalStateStr = ref('')
 
-// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -42,7 +38,6 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
 }
 provide('showAlert', showAlert)
 
-// Form State
 const form = ref<any>({
   id: undefined, 
   title: { en: '', th: '' },
@@ -85,7 +80,6 @@ onMounted(async () => {
       if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt)
       if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt)
       
-      // Snapshot the fetched data for existing events
       originalStateStr.value = JSON.stringify(form.value)
     } catch (error) {
       showAlert("Error", "Failed to load event data.", "red")
@@ -94,8 +88,6 @@ onMounted(async () => {
   } else {
     viewMode.value = 'create'
     
-    // Take snapshot of the completely empty form first
-    // This ensures any AI-generated data applied next is correctly flagged as "unsaved changes"
     originalStateStr.value = JSON.stringify(form.value)
 
     if (store.draftEvent) {
@@ -141,14 +133,12 @@ const sanitizeDateRange = (startInput: any, endInput: any) => {
 }
 
 const validateForm = (isPublishing = false) => {
-  // Safely extract titles to avoid runtime errors
+
   const titleEn = form.value.title?.en || '';
   const titleTh = form.value.title?.th || '';
   
-  // Check if the title in the language the user is CURRENTLY looking at is empty
   const isCurrentTitleEmpty = viewLang.value === 'en' ? titleEn.trim() === '' : titleTh.trim() === '';
 
-  // Title is ALWAYS required (Draft & Publish)
   if (isCurrentTitleEmpty || (titleEn.trim() === '' && titleTh.trim() === '')) {
     showAlert("Validation Error", "Event Title cannot be empty.", "red");
     return false;
@@ -156,7 +146,6 @@ const validateForm = (isPublishing = false) => {
   
   const { startAt } = sanitizeDateRange(form.value.startAt, form.value.endAt);
 
-  // Publish-only strict requirements
   if (isPublishing) {
     if (!startAt) {
       showAlert("Validation Error", "A valid Start Date is required to publish an event.", "red");
@@ -171,7 +160,6 @@ const validateForm = (isPublishing = false) => {
     }
   }
 
-  // Capacity check
   if (form.value.seatLimit !== undefined && form.value.seatLimit !== null && form.value.seatLimit !== '') {
     const limit = Number(form.value.seatLimit);
     if (!Number.isInteger(limit) || limit < 1) {
@@ -278,16 +266,13 @@ const confirmLeave = () => {
 <template>
   <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
     
-    <div v-if="isTranslating" class="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex flex-col items-center 
-    justify-center transition-opacity">
+    <div v-if="isTranslating" class="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
       <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-3"></div>
       <p class="text-purple-800 font-bold tracking-widest uppercase text-sm animate-pulse">Translating...</p>
     </div>
 
-    <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 
-    text-[11px] font-bold transition-colors cursor-pointer">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
-        stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       {{ t.back }}
     </button>
 
@@ -298,20 +283,12 @@ const confirmLeave = () => {
       
       <div class="flex items-center gap-2 w-full md:w-auto">
         <div class="flex bg-gray-200 p-0.5 rounded-lg w-full md:w-32">
-          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-white shadow-sm text-purple-700' : 
-          'text-gray-500 hover:text-purple-600'" 
-          class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">EN</button>
-          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-white shadow-sm text-purple-700' : 
-          'text-gray-500 hover:text-purple-600'" 
-          class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">TH</button>
+          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">EN</button>
+          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">TH</button>
         </div>
         
-        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-linear-to-r 
-        from-purple-600 to-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm 
-        hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
-            stroke-linejoin="round" stroke-width="2" 
-            d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
+        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-linear-to-r from-purple-600 to-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
           <span class="hidden sm:inline">Auto Translate</span>
         </button>
       </div>
@@ -325,23 +302,17 @@ const confirmLeave = () => {
       <EventForm :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     </form>
 
-    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" 
-    class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
+    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
       
       <div class="max-w-3xl w-full flex justify-center gap-4 md:gap-6 px-4 md:px-0">
         
         <template v-if="viewMode === 'preview' && eventStatus === 'DRAFT'">
-          <button @click="viewMode = 'edit'" class="w-35 md:w-40 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 
-          border border-yellow-200 py-2.5 rounded-xl font-bold text-[11px] transition-all">Edit Draft</button>
+          <button @click="viewMode = 'edit'" class="w-35 md:w-40 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 py-2.5 rounded-xl font-bold text-[11px] transition-all">Edit Draft</button>
         </template>
         
         <template v-if="viewMode === 'create' || viewMode === 'edit'">
-          <button @click="saveAsDraft" :disabled="isSaving" class="w-35 md:w-40 bg-gray-50 hover:bg-purple-50 text-gray-700 
-          hover:text-purple-700 border border-gray-200 hover:border-purple-200 py-2.5 rounded-xl font-bold text-[11px] 
-          transition-all disabled:opacity-50">Save Draft</button>
-          <button @click="triggerPublish" :disabled="isSaving" class="w-35 md:w-40 bg-linear-to-r from-purple-600 
-          to-indigo-600 hover:bg-linear-to-r hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl 
-          font-bold text-[11px] transition-all disabled:opacity-50 shadow-sm">Publish</button>
+          <button @click="saveAsDraft" :disabled="isSaving" class="w-35 md:w-40 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 py-2.5 rounded-xl font-bold text-[11px] transition-all disabled:opacity-50">Save Draft</button>
+          <button @click="triggerPublish" :disabled="isSaving" class="w-35 md:w-40 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-linear-to-r hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-[11px] transition-all disabled:opacity-50 shadow-sm">Publish</button>
         </template>
 
       </div>
