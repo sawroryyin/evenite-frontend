@@ -58,8 +58,13 @@ router.beforeEach((to) => {
   
   if (to.meta.isGuest && isAuthenticated) {
     if (!authStore.currentRole) return { name: 'role-select' }
+    if (authStore.currentRole === 'ORGANIZER') return { name: 'event-list' }
     return { name: 'home' }
   } 
+
+  if (to.name === 'home' && authStore.currentRole === 'ORGANIZER') {
+    return { name: 'event-list' }
+  }
   
   if (isAuthenticated && to.meta.requiresAuth && to.name !== 'role-select' && to.name !== 'profile-create') {
     if (!authStore.currentRole) {
