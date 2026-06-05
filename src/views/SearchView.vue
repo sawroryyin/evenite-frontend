@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { EventService } from '../services/EventService'
+import type { EventData } from '../types'
 import BottomNav from '../components/BottomNav.vue'
+import EventCard from '../components/EventCard.vue'
 
-const searchQuery = ref('')
+const router = useRouter()
+const allEvents = ref<EventData[]>([])
+const isLoading = ref(true)
+
+// --- Search States ---
+const searchInput = ref('') // What the user is currently typing
+const appliedSearchQuery = ref('') // The query actually used to filter results
+const isSearching = ref(false) // Controls the 3-second loading spinner
 
 // --- Custom Dropdown State ---
 const isCategoryOpen = ref(false)
@@ -17,7 +28,7 @@ const categoryOptions = [
   { value: 'All', label: 'All Categories', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
   { value: 'SEMINAR', label: 'Seminar', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' },
   { value: 'WORKSHOP', label: 'Workshop', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
-  { value: 'LECTURE', label: 'Lecture', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+  { value: 'LECTURE', label: 'Lecture', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
   { value: 'CONFERENCE', label: 'Conference', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
   { value: 'HACKATHON', label: 'Hackathon', icon: 'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
   { value: 'COMPETITION', label: 'Competition', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
@@ -50,6 +61,97 @@ const activeDate = computed(() => dateOptions.find(d => d.value === activeDateVa
 
 const selectCategory = (val: string) => { activeCategoryValue.value = val; isCategoryOpen.value = false }
 const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.value = false }
+
+// --- Trigger Search Function with 3-second Delay ---
+const triggerSearch = () => {
+  if (isSearching.value) return; // Prevent multiple presses
+  
+  isSearching.value = true
+  
+  setTimeout(() => {
+    // Actually apply the query for the filteredEvents to read
+    appliedSearchQuery.value = searchInput.value
+    isSearching.value = false
+  }, 3000)
+}
+
+// Determine if the user has applied filters/search yet
+const hasActiveFilters = computed(() => {
+  return appliedSearchQuery.value.trim().length > 0 || activeCategoryValue.value !== 'All' || activeDateValue.value !== 'latest'
+})
+
+// Fetch all available public events
+onMounted(async () => {
+  try {
+    const data = await EventService.getPublicEvents()
+    allEvents.value = data
+  } catch (err) {
+    console.error('Failed to load events for search', err)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+// Filter Logic based on the APPLIED search query (not the active input)
+const filteredEvents = computed(() => {
+  let result = allEvents.value
+
+  // 1. Filter by Search Query
+  if (appliedSearchQuery.value.trim()) {
+    const q = appliedSearchQuery.value.toLowerCase()
+    result = result.filter(e => {
+      const titleEn = e.title?.en?.toLowerCase() || ''
+      const titleTh = e.title?.th?.toLowerCase() || ''
+      const descEn = e.description?.en?.toLowerCase() || ''
+      const descTh = e.description?.th?.toLowerCase() || ''
+      const locEn = e.location?.en?.toLowerCase() || ''
+      const locTh = e.location?.th?.toLowerCase() || ''
+
+      return titleEn.includes(q) || titleTh.includes(q) || 
+             descEn.includes(q) || descTh.includes(q) ||
+             locEn.includes(q) || locTh.includes(q)
+    })
+  }
+
+  // 2. Filter by Category Dropdown
+  if (activeCategoryValue.value !== 'All') {
+    result = result.filter(e => {
+      const cats = Array.isArray(e.category) ? e.category : [e.category]
+      return cats.includes(activeCategoryValue.value)
+    })
+  }
+
+  // 3. Filter by Date Dropdown
+  const now = new Date()
+  if (activeDateValue.value !== 'latest') {
+    result = result.filter(e => {
+      if (!e.startAt) return false
+      const eDate = new Date(e.startAt)
+      
+      if (activeDateValue.value === 'today') {
+        return eDate.toDateString() === now.toDateString()
+      } else if (activeDateValue.value === 'week') {
+        const nextWeek = new Date(now)
+        nextWeek.setDate(now.getDate() + 7)
+        return eDate >= now && eDate <= nextWeek
+      } else if (activeDateValue.value === 'month') {
+        const nextMonth = new Date(now)
+        nextMonth.setMonth(now.getMonth() + 1)
+        return eDate >= now && eDate <= nextMonth
+      }
+      return true
+    })
+  }
+
+  // Always sort by closest starting date
+  result.sort((a, b) => {
+    const dA = a.startAt ? new Date(a.startAt).getTime() : 0
+    const dB = b.startAt ? new Date(b.startAt).getTime() : 0
+    return dA - dB
+  })
+
+  return result
+})
 </script>
 
 <template>
@@ -72,23 +174,24 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
     </div>
 
     <div class="relative w-full px-4 mb-3 z-10">
-      <div class="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
-        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button @click="triggerSearch" class="absolute inset-y-0 left-0 pl-7 flex items-center pr-2 cursor-pointer outline-none">
+        <svg class="w-3.5 h-3.5 text-purple-400 hover:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
-      </div>
+      </button>
+      
       <input 
-        v-model="searchQuery" 
+        v-model="searchInput" 
+        @keyup.enter="triggerSearch"
         type="text" 
-        placeholder="Search events, categories, or keywords..." 
+        placeholder="Search... (Press Enter to search)" 
         class="w-full text-[12px] border-none rounded-xl py-2.5 pl-9 pr-4 focus:outline-none focus:ring-1.5 
         focus:ring-purple-400 bg-white shadow-sm font-['Lato']" 
       />
     </div>
 
     <div class="grid grid-cols-2 gap-2.5 px-4 mb-6 relative z-40 font-['Lato']">
-      
       <div class="relative">
         <button 
           @click="isCategoryOpen = !isCategoryOpen; isDateOpen = false" 
@@ -174,20 +277,47 @@ const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.va
     </div>
 
     <div class="px-4 relative z-10">
-      <div v-if="searchQuery || activeCategoryValue !== 'All' || activeDateValue !== 'latest'" class="mt-4">
-        <p class="text-xs font-['Space_Grotesk'] font-bold mb-2.5 tracking-tight uppercase text-purple-900/40">
-          Search Results
-        </p>
-        </div>
       
-      <div v-else class="flex flex-col items-center justify-center mt-20 opacity-50">
+      <div v-if="isLoading || isSearching" class="text-center py-16">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
+        <p class="text-gray-400 text-[11px] mt-3 font-medium">
+          {{ isSearching ? 'Searching...' : 'Loading events...' }}
+        </p>
+      </div>
+
+      <div v-else-if="!hasActiveFilters" class="flex flex-col items-center justify-center mt-20 opacity-50">
         <svg class="w-12 h-12 text-purple-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
         <p class="text-xs font-['Lato'] text-gray-500 font-medium text-center">
-          Start typing or apply filters to discover<br/>upcoming campus experiences.
+          Type a keyword and press <b>Enter</b> <br/> or apply filters to discover campus experiences.
         </p>
       </div>
+
+      <div v-else-if="filteredEvents.length > 0">
+        <p class="text-xs font-['Space_Grotesk'] font-bold mb-3 tracking-tight uppercase text-purple-900/40">
+          Search Results ({{ filteredEvents.length }})
+        </p>
+        <div class="grid grid-cols-2 gap-2.5">
+          <EventCard 
+            v-for="event in filteredEvents" 
+            :key="event.id" 
+            :event="event"
+            variant="grid"
+            @click="router.push({ name: 'event-detail', params: { id: event.id } })"
+          />
+        </div>
+      </div>
+
+      <div v-else class="flex flex-col items-center justify-center mt-20 opacity-50">
+        <svg class="w-12 h-12 text-purple-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-xs font-['Lato'] text-gray-500 font-medium text-center">
+          No events found matching your search. <br/> Try adjusting your filters.
+        </p>
+      </div>
+
     </div>
 
     <BottomNav />

@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import api from '../services/api'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const isSidebarOpen = ref(false)
 
 const closeSidebar = () => {
@@ -12,6 +15,40 @@ const closeSidebar = () => {
 const navigateTo = (routeName: string) => {
   closeSidebar()
   router.push({ name: routeName })
+}
+
+const userInitial = computed(() => authStore.parsedToken?.email?.charAt(0).toUpperCase() || 'U')
+const isOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
+const targetSwitchRole = computed(() => isOrganizer.value ? 'PARTICIPANT' : 'ORGANIZER')
+
+const handleLogout = () => {
+  authStore.logout() 
+}
+
+const handleSwitchRole = async () => {
+  try {
+    const hasTargetProfile = targetSwitchRole.value === 'ORGANIZER' 
+      ? authStore.hasOrganizerProfile 
+      : authStore.hasParticipantProfile
+
+    if (!hasTargetProfile) {
+      alert(`You must create a ${targetSwitchRole.value.toLowerCase()} profile first.`)
+      navigateTo('profile-create') // Make sure this matches the route name in index.ts
+      return
+    }
+
+    const response = await api.patch('/users/me/switch-profile', { targetRole: targetSwitchRole.value })
+    
+    if (response.data.accessToken) {
+      authStore.setTokens(response.data.accessToken, authStore.refreshToken as string)
+      alert(`Switched to ${targetSwitchRole.value} view!`)
+      closeSidebar()
+      router.push({ name: targetSwitchRole.value === 'ORGANIZER' ? 'event-list' : 'home' })
+    }
+  } catch (error) {
+    console.error('Failed to switch roles:', error)
+    alert('Failed to switch roles. Please try again.')
+  }
 }
 </script>
 
@@ -39,7 +76,7 @@ const navigateTo = (routeName: string) => {
         @click="isSidebarOpen = true"
         class="w-8 h-8 rounded-full bg-white/20 border-2 border-white/50 flex items-center justify-center 
         hover:bg-white/30 transition focus:outline-none overflow-hidden">
-        <span class="text-sm font-bold text-white">C</span>
+        <span class="text-sm font-bold text-white">{{ userInitial }}</span>
       </button>
     </nav>
   </header>
@@ -66,20 +103,29 @@ const navigateTo = (routeName: string) => {
 
     <div class="px-5 py-6 flex flex-col items-center border-b border-gray-100">
       <div class="w-16 h-16 rounded-full bg-linear-to-br from-purple-200 to-indigo-200 flex items-center justify-center mb-3 shadow-inner">
-        <span class="text-xl font-bold text-purple-700">C</span>
+        <span class="text-xl font-bold text-purple-700">{{ userInitial }}</span>
       </div>
-      <h3 class="text-lg font-bold text-gray-800 leading-tight">Chaiwat</h3>
-      <p class="text-xs text-gray-500 mb-4">Student Affairs</p>
+      <h3 class="text-sm font-bold text-gray-800 leading-tight mb-1">{{ authStore.parsedToken?.email || 'Loading...' }}</h3>
+      <p class="text-xs text-purple-600 font-bold mb-4 bg-purple-100 px-2 py-1 rounded-full">
+        {{ isOrganizer ? 'Organizer Mode' : 'Participant Mode' }}
+      </p>
       
-      <button 
-        @click="navigateTo('profile')"
-        class="w-full py-2 text-sm bg-white hover:bg-purple-50 text-purple-700 font-semibold rounded-lg transition border 
-        border-purple-200 shadow-sm">
-        View Profile
-      </button>
+      <div class="flex w-full gap-2">
+        <button 
+          @click="navigateTo('profile')"
+          class="flex-1 py-2 text-xs bg-white hover:bg-purple-50 text-purple-700 font-semibold rounded-lg transition border 
+          border-purple-200 shadow-sm">
+          My Profile
+        </button>
+        <button 
+          @click="handleSwitchRole"
+          class="flex-1 py-2 text-xs bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition shadow-sm">
+          Switch to {{ targetSwitchRole === 'ORGANIZER' ? 'Org' : 'User' }}
+        </button>
+      </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" v-if="isOrganizer">
       <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Manage Organization</h4>
       
       <button 
@@ -105,10 +151,14 @@ const navigateTo = (routeName: string) => {
         <span class="text-sm font-medium text-gray-700 group-hover:text-purple-700 transition">My Events Dashboard</span>
       </button>
     </div>
+
+    <div v-else class="flex-1"></div>
     
     <div class="p-4 border-t border-gray-100">
-      <button class="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-red-500 hover:bg-red-50 font-bold 
-      rounded-xl transition">
+      <button 
+        @click="handleLogout"
+        class="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-red-500 hover:bg-red-50 font-bold 
+        rounded-xl transition cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" 
           stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         Sign Out

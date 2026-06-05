@@ -25,7 +25,7 @@ const hasResponses = ref(false);
 
 const availableFieldTypes = Object.values(FieldType);
 
-const showLeaveModal = ref(false);
+const isNewForm = ref(route.query.isNew === 'true');
 
 onMounted(async () => {
   if (eventId === 'new') {
@@ -42,16 +42,36 @@ onMounted(async () => {
   }
 
   try {
-    const data = await FormService.getForm(eventId, formType);
-    if (data) {
+    // 1. Check if the form exists using the safe endpoint (returns [] instead of 404)
+    const existingForms = await FormService.getFormsByEventId(eventId);
+    const formExists = existingForms.some((f: any) => f.type === formType);
+
+    if (formExists) {
+      // 2. It exists! Now we can safely fetch the full details knowing it won't 404
+      const data = await FormService.getForm(eventId, formType);
+      
       form.value = data;
       originalForm.value = JSON.parse(JSON.stringify(data));
       isEditMode.value = false;
+      isNewForm.value = false;
+      
+      if (route.query.isNew) {
+        const query = { ...route.query };
+        delete query.isNew;
+        router.replace({ query });
+      }
+    } else {
+      // 3. It doesn't exist. Gracefully switch to Create Mode WITHOUT a 404 error!
+      isEditMode.value = true; 
+      isNewForm.value = true;
+      originalForm.value = JSON.parse(JSON.stringify(form.value));
     }
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      isEditMode.value = true; // UC-005: Create new form
-    }
+    console.error('Failed to load form details', error);
+    // Safely fallback to create mode if the API fails
+    isEditMode.value = true; 
+    isNewForm.value = true;
+    originalForm.value = JSON.parse(JSON.stringify(form.value));
   }
 });
 
@@ -121,13 +141,21 @@ const saveForm = async () => {
       return;
     }
 
-    if (originalForm.value) {
-      await FormService.updateForm(eventId, formType, form.value);
-      showAlert('Success', 'Form updated successfully', 'blue');
-    } else {
+    if (isNewForm.value) {
       await FormService.createForm(eventId, form.value);
       showAlert('Success', 'Form created successfully', 'blue');
+      isNewForm.value = false; 
+      
+      // ✅ CLEANUP: Remove isNew from URL so returning via router.back() is safe
+      const query = { ...route.query };
+      delete query.isNew;
+      router.replace({ query });
+      
+    } else {
+      await FormService.updateForm(eventId, formType, form.value);
+      showAlert('Success', 'Form updated successfully', 'blue');
     }
+    
     isEditMode.value = false;
     originalForm.value = JSON.parse(JSON.stringify(form.value));
   } catch (err: any) {
@@ -155,13 +183,23 @@ const goBack = () => {
 };
 
 const executeGoBack = () => {
-  if (isEditMode.value && originalForm.value && eventId !== 'new') {
-    form.value = JSON.parse(JSON.stringify(originalForm.value));
-    isEditMode.value = false;
-  } else {
+  // 1. NEW FORM: If the form hasn't been saved to the database yet, leave the page.
+  if (isNewForm.value || eventId === 'new') {
     sessionStorage.setItem('returnToEventEditMode', 'true');
     router.back();
+    return;
   }
+
+  // 2. EXISTING FORM (EDITING): Cancel the edits and return to Preview Mode.
+  if (isEditMode.value && originalForm.value) {
+    form.value = JSON.parse(JSON.stringify(originalForm.value));
+    isEditMode.value = false;
+    return;
+  }
+
+  // 3. EXISTING FORM (PREVIEW): Leave the page.
+  sessionStorage.setItem('returnToEventEditMode', 'true');
+  router.back();
 };
 
 const alertState = ref({
@@ -311,14 +349,10 @@ const showConfirm = (title: string, description: string, confirmText: string, th
           </label>
         </div>
 
-        <!-- RATING Preview Block (Disabled) -->
         <div v-if="field.type === 'RATING'" class="flex flex-wrap gap-2 mt-3">
-          <!-- Changed to cursor-not-allowed to indicate it's view-only -->
           <label v-for="n in (field.maxRating || 5)" :key="n" class="cursor-not-allowed group">
-            <!-- Added the 'disabled' attribute here -->
             <input type="radio" disabled :name="`preview-rating-${field.id || index}`" :value="n" class="peer sr-only" />
             
-            <!-- Kept the styling, but since it's disabled, clicking does nothing -->
             <div class="w-10 h-10 rounded-full border-2 border-gray-200 bg-gray-50 flex items-center justify-center text-sm font-bold text-gray-400 peer-disabled:opacity-70 shadow-sm transition-all">
               {{ n }}
             </div>
