@@ -47,7 +47,24 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
+  console.log(individualData.value.responses)
 });
+
+const formatValue = (value: any) => {
+  if (value === null || value === undefined || value === '') return null;
+  
+  // If it's an array (like ["Steak", "Chicken"]), format as "Steak, Chicken"
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  
+  // If it's an ISO date string (like "1995-12-07T00:00:00.000Z"), extract just the date
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    return value.split('T')[0];
+  }
+  
+  return value;
+};
 </script>
 
 <template>
@@ -87,10 +104,10 @@ onMounted(async () => {
       <div v-else v-for="field in summaryData.summary" :key="field.formFieldId" class="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
         <h3 class="font-bold text-gray-800 mb-3 text-sm">{{ field.label }}</h3>
         
-        <div class="max-h-55 overflow-y-auto space-y-2 pr-2 custom-scrollbar bg-gray-50/50 p-2 rounded-xl shadow-inner border border-gray-100">
+        <div class="max-h-56 overflow-y-auto space-y-2 pr-2 custom-scrollbar bg-gray-50/50 p-2 rounded-xl shadow-inner border border-gray-100">
           <div v-for="(answer, idx) in field.answers" :key="idx" class="p-3 bg-white border border-gray-100 rounded-xl text-sm text-gray-700 shadow-sm flex items-center gap-3">
             <span class="text-xs font-bold text-gray-400 w-5">{{ idx as number + 1 }}.</span>
-            {{ answer.value || '(No answer provided)' }}
+            {{ formatValue(answer.value) || '(No answer provided)' }}
           </div>
         </div>
       </div>
@@ -110,7 +127,8 @@ onMounted(async () => {
           </button>
           
           <div class="text-sm font-bold text-gray-700">
-            <span class="text-purple-600">{{ currentResponseIndex + 1 }}</span> / {{ individualData.totalResponses }}
+            <!-- <span class="text-purple-600">{{ currentResponseIndex + 1 }}</span> / {{ individualData.totalResponses }} -->
+             <span class="text-purple-600">Response {{ currentResponseIndex + 1 }}</span> of {{ individualData.totalResponses }}
           </div>
           
           <button @click="currentResponseIndex++" :disabled="currentResponseIndex === individualData.responses.length - 1" class="flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-lg transition-colors" :class="currentResponseIndex === individualData.responses.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-purple-600 hover:bg-purple-50'">
@@ -120,15 +138,11 @@ onMounted(async () => {
         </div>
 
         <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm space-y-6">
-          <div class="border-b border-gray-100 pb-4 mb-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Participant ID</p>
-            <p class="text-sm font-mono text-gray-600">{{ individualData.responses[currentResponseIndex].id }}</p>
-          </div>
 
           <div v-for="answer in individualData.responses[currentResponseIndex].answers" :key="answer.formFieldId" class="space-y-1.5">
             <h4 class="text-sm font-bold text-gray-800">{{ answer.label }}</h4>
             <p class="p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-700">
-              {{ answer.value || '(Blank)' }}
+              {{ formatValue(answer.value) || '(Blank)' }}
             </p>
           </div>
         </div>

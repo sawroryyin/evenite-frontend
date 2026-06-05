@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import EventFormResponseLinks from '../components/EventFormResponseLinks.vue'
 
 const router = useRouter()
 
@@ -8,6 +9,7 @@ const props = defineProps<{
   event: any; 
   viewLang: 'en' | 'th';
   availableForms?: any[]; 
+  isOrganizer?: boolean;
 }>()
 
 // Check if specific forms exist
@@ -190,7 +192,7 @@ const mapEmbedUrl = computed(() => {
             </div>
           </div>
 
-          <div v-if="hasRegistration || hasFeedback" 
+          <div v-if="(hasRegistration || hasFeedback) && (!isOrganizer || event.status === 'DRAFT')" 
                class="bg-linear-to-br from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 shadow-sm space-y-4">
             
             <div class="text-center">
@@ -216,6 +218,12 @@ const mapEmbedUrl = computed(() => {
               </button>
             </div>
           </div>
+
+          <EventFormResponseLinks 
+            v-if="isOrganizer && event.status === 'PUBLISHED'"
+            :event-id="event.id"
+            :available-forms="availableForms"
+          />
 
         </div>
       </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, toRaw, provide } from 'vue'
+import { ref, onMounted, toRaw, provide, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
@@ -9,10 +9,12 @@ import ConfirmModal from '../components/ConfirmModal.vue'
 import EventPreview from './EventDetailPreview.vue'
 import EventForm from '../components/EventDetailForm.vue'
 import { FormService } from '../services/FormService'
+import { useAuthStore } from '../stores/auth.ts'
 
 const router = useRouter()
 const route = useRoute()
 const store = useEventCreationStore()
+const authStore = useAuthStore()
 
 const viewMode = ref<'create' | 'edit' | 'preview'>('create')
 const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'COMPLETED' | null | undefined>(null)
@@ -42,6 +44,8 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
   alertState.value = { show: true, title, description, theme }
 }
 provide('showAlert', showAlert)
+
+const isCurrentUserOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 
 const form = ref<any>({
   id: undefined, 
@@ -358,6 +362,7 @@ const confirmLeave = () => {
         :viewLang="viewLang" 
         :availableForms="availableForms" 
         :isRegistered="isRegistered" 
+        :isOrganizer="isCurrentUserOrganizer"
       />
     </div>
 
