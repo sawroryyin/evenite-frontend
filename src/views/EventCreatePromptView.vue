@@ -52,7 +52,7 @@ const handleTextGenerate = async () => {
   try {
     const generatedData = await EventService.generateFromPrompt(promptText.value)
     console.log('Generated Event Data:', generatedData)
-    store.setDraftEvent(generatedData as any)
+    store.setTempEventData(generatedData as any)
     router.push({ name: 'create-manual' })
   } catch (error: any) {
     // Show in-app alert and set redirect flag to true
