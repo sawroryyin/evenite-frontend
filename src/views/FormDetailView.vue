@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { FormService } from '../services/FormService';
+import { EventService } from '../services/EventService';
 import { FormType, FieldType, type Form } from '../types';
 import { useEventCreationStore } from '../stores/eventCreation';
 import ConfirmModal from '../components/ConfirmModal.vue';
@@ -42,12 +43,13 @@ onMounted(async () => {
   }
 
   try {
-    // 1. Check if the form exists using the safe endpoint (returns [] instead of 404)
+    const ev = await EventService.getEventById(eventId);
+    eventStatus.value = ev.status as string;
+
     const existingForms = await FormService.getFormsByEventId(eventId);
     const formExists = existingForms.some((f: any) => f.type === formType);
 
     if (formExists) {
-      // 2. It exists! Now we can safely fetch the full details knowing it won't 404
       const data = await FormService.getForm(eventId, formType);
       
       form.value = data;
@@ -61,7 +63,6 @@ onMounted(async () => {
         router.replace({ query });
       }
     } else {
-      // 3. It doesn't exist. Gracefully switch to Create Mode WITHOUT a 404 error!
       isEditMode.value = true; 
       isNewForm.value = true;
       originalForm.value = JSON.parse(JSON.stringify(form.value));
@@ -183,24 +184,21 @@ const goBack = () => {
 };
 
 const executeGoBack = () => {
-  // 1. NEW FORM: If the form hasn't been saved to the database yet, leave the page.
   if (isNewForm.value || eventId === 'new') {
-    if (eventStatus.value === 'DRAFT') { // <-- ADD THIS CHECK
+    if (eventStatus.value === 'DRAFT' && route.query.source === 'edit') { 
       sessionStorage.setItem('returnToEventEditMode', 'true');
     }
     router.back();
     return;
   }
 
-  // 2. EXISTING FORM (EDITING): Cancel the edits and return to Preview Mode.
   if (isEditMode.value && originalForm.value) {
     form.value = JSON.parse(JSON.stringify(originalForm.value));
     isEditMode.value = false;
     return;
   }
 
-  // 3. EXISTING FORM (PREVIEW): Leave the page.
-  if (eventStatus.value === 'DRAFT') { // <-- ADD THIS CHECK
+  if (eventStatus.value === 'DRAFT' && route.query.source === 'edit') { 
     sessionStorage.setItem('returnToEventEditMode', 'true');
   }
   router.back();
@@ -246,8 +244,8 @@ const showConfirm = (title: string, description: string, confirmText: string, th
 
     <div class="mb-5 border-b border-gray-100 pb-3">
       <h1 class="text-xl font-bold text-gray-900 tracking-tight uppercase">
-  {{ isEditMode ? `${formType} Form` : form.title || `${formType} Form` }}
-</h1>
+        {{ isEditMode ? `${formType} Form` : form.title || `${formType} Form` }}
+      </h1>
       <p v-if="!isEditMode && form.description" class="text-sm text-gray-500 mt-1">{{ form.description }}</p>
     </div>
 
@@ -292,10 +290,10 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </button>
           </div>
 
-            <div v-if="field.type === 'RATING'" class="pl-2 border-l-2 border-purple-100 mt-2 py-1">
-                <label class="flex items-center gap-3 text-xs font-bold text-gray-600">
-                    Maximum Rating:
-                <input 
+          <div v-if="field.type === 'RATING'" class="pl-2 border-l-2 border-purple-100 mt-2 py-1">
+            <label class="flex items-center gap-3 text-xs font-bold text-gray-600">
+                Maximum Rating:
+              <input 
                 type="number" 
                 v-model.number="field.maxRating" 
                 min="2" 
@@ -368,10 +366,18 @@ const showConfirm = (title: string, description: string, confirmText: string, th
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
       <div class="max-w-3xl w-full flex justify-center gap-4 md:gap-6 px-4 md:px-0">
         <template v-if="!isEditMode">
-          <button @click="router.push(`/events/${eventId}/forms/${formType}/responses`)" class="w-35 md:w-40 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 py-2.5 rounded-xl font-bold text-[11px] transition-all">
+          <button 
+            v-if="eventStatus === 'PUBLISHED' || eventStatus === 'COMPLETED'" 
+            @click="router.push(`/events/${eventId}/forms/${formType}/responses`)" 
+            class="w-35 md:w-40 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 py-2.5 rounded-xl font-bold text-[11px] transition-all"
+          >
             Responses
           </button>
-          <button @click="toggleEdit" class="w-35 md:w-40 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-[11px] transition-all shadow-sm">
+          <button 
+            v-if="eventStatus === 'DRAFT'" 
+            @click="toggleEdit" 
+            class="w-35 md:w-40 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-[11px] transition-all shadow-sm"
+          >
             Edit Form
           </button>
         </template>

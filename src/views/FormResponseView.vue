@@ -26,19 +26,16 @@ onMounted(async () => {
   }
 
   try {
-    // 1. Safely check if the form actually exists first
     const existingForms = await FormService.getFormsByEventId(eventId);
     const formExists = existingForms.some((f: any) => f.type === formType);
 
     if (!formExists) {
-      // 2. Form isn't created yet, gracefully show 0 responses without a 404!
       summaryData.value = { totalResponses: 0, summary: [] };
       individualData.value = { totalResponses: 0, responses: [] };
       isLoading.value = false;
       return;
     }
 
-    // 3. Form exists, safely fetch responses
     summaryData.value = await FormService.getResponsesSummary(eventId, formType);
     individualData.value = await FormService.getResponses(eventId, formType);
 
@@ -47,18 +44,15 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
-  console.log(individualData.value.responses)
 });
 
 const formatValue = (value: any) => {
   if (value === null || value === undefined || value === '') return null;
   
-  // If it's an array (like ["Steak", "Chicken"]), format as "Steak, Chicken"
   if (Array.isArray(value)) {
     return value.join(', ');
   }
   
-  // If it's an ISO date string (like "1995-12-07T00:00:00.000Z"), extract just the date
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
     return value.split('T')[0];
   }
@@ -153,7 +147,6 @@ const formatValue = (value: any) => {
 </template>
 
 <style scoped>
-/* Keep your existing styles here */
 .animate-fade-in {
   animation: fadeIn 0.2s ease-in-out;
 }

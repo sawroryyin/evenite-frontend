@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, toRaw, provide, computed } from 'vue'
+import { ref, onMounted, toRaw, provide, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
@@ -78,32 +78,38 @@ const formatForDateTimeLocal = (isoString: string | undefined) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
+// CONTINUOUS SYNC: Watch for changes and save to temp data automatically
+watch(form, (newVal) => {
+  if (viewMode.value === 'create' || viewMode.value === 'edit') {
+    store.setTempEventData(JSON.parse(JSON.stringify(newVal)));
+  }
+}, { deep: true });
+
+watch(form, (newVal) => {
+  if (viewMode.value === 'create' || viewMode.value === 'edit') {
+    store.setTempEventData(JSON.parse(JSON.stringify(newVal)));
+  }
+}, { deep: true });
+
 onMounted(async () => {
   const eventId = route.params.id as string
+  
+  // Safely check for both 'new' and 'create' depending on how the router is pushed
+  const isNewEvent = !eventId || eventId === 'new' || eventId === 'create';
 
-  if (eventId !== 'new') {
-    try {
-      const ev = await EventService.getEventById(eventId);
-      eventStatus.value = ev.status;
-    } catch (e) {
-      console.error('Failed to fetch real event status', e);
-    }
-  }
-
-  if (eventId && eventId !== 'new') {
+  if (!isNewEvent) {
+    // IT IS AN EXISTING EVENT
     try {
       const data = await EventService.getEventById(eventId)
+      eventStatus.value = data.status
 
       if (data.startAt) data.startAt = formatForDateTimeLocal(data.startAt)
-  if (data.endAt) data.endAt = formatForDateTimeLocal(data.endAt)
+      if (data.endAt) data.endAt = formatForDateTimeLocal(data.endAt)
 
       form.value = { ...form.value, ...data }
-      eventStatus.value = data.status
       
-      // ADD THIS LINE: Fetch the available forms for this event
       availableForms.value = await FormService.getFormsByEventId(eventId)
       
-      // REPLACED LOGIC: Strict guard to prevent editing published events
       const requestedEdit = route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true';
       
       if (requestedEdit && data.status === 'DRAFT') {
@@ -113,27 +119,34 @@ onMounted(async () => {
       }
       sessionStorage.removeItem('returnToEventEditMode');
       
-      if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt)
-      if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt)
-      
       originalStateStr.value = JSON.stringify(form.value)
     } catch (error) {
       showAlert("Error", "Failed to load event data.", "red")
       router.back()
     }
   } else {
+    // IT IS A NEW EVENT
     viewMode.value = 'create'
+
+    // SMART TEMP DATA CHECK: Ensure it doesn't belong to a previous draft!
+    if (store.tempEventData && Object.keys(store.tempEventData).length > 0) {
+      
+      // If there is NO ID, it's a true new event in progress. Safe to restore.
+      if (!store.tempEventData.id) {
+        const draft = { ...store.tempEventData };
+        
+        if (draft.startAt) draft.startAt = formatForDateTimeLocal(draft.startAt);
+        if (draft.endAt) draft.endAt = formatForDateTimeLocal(draft.endAt);
+        
+        form.value = { ...form.value, ...draft };
+      } else {
+        // It has an ID! This means it's ghost data from a previous saved draft. 
+        // Do not restore it into a new event. Wipe it instead.
+        store.clearTempData();
+      }
+    }
     
     originalStateStr.value = JSON.stringify(form.value)
-
-    if (store.draftEvent) {
-      const draft = { ...store.draftEvent };
-      
-      if (draft.startAt) draft.startAt = formatForDateTimeLocal(draft.startAt);
-      if (draft.endAt) draft.endAt = formatForDateTimeLocal(draft.endAt);
-      
-      form.value = { ...form.value, ...draft };
-    }
   }
 })
 
@@ -241,24 +254,20 @@ const saveAsDraft = async () => {
     if (response && response.id) {
       form.value.id = response.id;
 
-      // NEW: Save any pending forms in Pinia to the database now that we have an ID
       for (const draftForm of Object.values(store.draftForms)) {
-        // 1. Deep clone to safely unwrap Vue Proxies so Axios reads the array correctly
         const formPayload = JSON.parse(JSON.stringify(draftForm));
-        
-        // 2. Replace the placeholder 'new' with the REAL generated database UUID
         formPayload.eventId = response.id;
-        
-        // 3. Ensure no rogue form ID is sent on creation
         delete formPayload.id;
 
         await FormService.createForm(response.id, formPayload);
       }
-      store.clearDraftForms(); // Clear memory once saved
+      store.clearDraftForms(); 
 
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
-    store.hasUnsavedChanges = false
+    
+    // CLEAR TEMP DATA ON EXPLICIT SAVE
+    store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
     showAlert("Success", "Event Saved As Draft", "blue")
@@ -281,23 +290,19 @@ const confirmPublish = async () => {
       form.value.id = response.id;
 
       for (const draftForm of Object.values(store.draftForms)) {
-        // 1. Deep clone to safely unwrap Vue Proxies so Axios reads the array correctly
         const formPayload = JSON.parse(JSON.stringify(draftForm));
-        
-        // 2. Replace the placeholder 'new' with the REAL generated database UUID
         formPayload.eventId = response.id;
-        
-        // 3. Ensure no rogue form ID is sent on creation
         delete formPayload.id;
 
         await FormService.createForm(response.id, formPayload);
       }
-      store.clearDraftForms(); // Clear memory once saved
+      store.clearDraftForms(); 
 
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
-    store.setDraftEvent(null);
-    store.hasUnsavedChanges = false 
+    
+    // CLEAR TEMP DATA ON EXPLICIT PUBLISH
+    store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
     showAlert("Success", "Event Published Successfully", "blue")
@@ -322,7 +327,6 @@ const handleBackClick = () => {
   if (JSON.stringify(form.value) !== originalStateStr.value) {
     showLeaveModal.value = true
   } else {
-    // FIX: Clean back behavior. If existing event, go to preview. If new, go back completely.
     if (eventStatus.value) {
       viewMode.value = 'preview'
     } else {
@@ -332,13 +336,11 @@ const handleBackClick = () => {
 }
 
 const confirmLeave = () => { 
-  store.setDraftEvent(null); 
-  store.hasUnsavedChanges = false; 
-  showLeaveModal.value = false; // close the modal
+  // CLEAR TEMP DATA ON EXPLICIT QUIT
+  store.clearTempData(); 
+  showLeaveModal.value = false;
 
-  // If it's an existing event, just go back to preview. If it's new, go back to the previous page.
   if (eventStatus.value) {
-    // Reset form back to original state
     if (originalStateStr.value) {
       form.value = JSON.parse(originalStateStr.value);
     }

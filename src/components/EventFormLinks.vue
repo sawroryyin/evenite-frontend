@@ -44,7 +44,8 @@ const navigateToForm = (formType: 'REGISTRATION' | 'FEEDBACK') => {
   if (!props.eventId) return;
   
   router.push({
-    path: `/events/${props.eventId}/forms/${formType}`
+    path: `/events/${props.eventId}/forms/${formType}`,
+    query: { source: 'edit' }
   });
 }
 </script>

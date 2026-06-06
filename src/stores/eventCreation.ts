@@ -1,36 +1,26 @@
-import { defineStore } from 'pinia'
-import type { EventData } from '../types'
+import { defineStore } from 'pinia';
 
 export const useEventCreationStore = defineStore('eventCreation', {
   state: () => ({
-    draftEvent: null as EventData | null,
+    tempEventData: {} as Record<string, any>, 
+    draftForms: {} as Record<string, any>,
     hasUnsavedChanges: false,
-    
-    // 1. ADDED: A place to hold forms in memory before the event is saved
-    draftForms: {} as Record<string, any>
   }),
-  
   actions: {
-    setDraftEvent(data: EventData | null) {
-      this.draftEvent = data
-      this.hasUnsavedChanges = true
-    },
-    
-    // 2. ADDED: Action to save a specific form type to memory
-    setDraftForm(type: string, form: any) {
-      this.draftForms[type] = form
-    },
-    
-    // 3. ADDED: Action to clear just the forms
-    clearDraftForms() {
-      this.draftForms = {}
+    setTempEventData(data: Record<string, any>) {
+      this.tempEventData = data;
     },
 
-    clearData() {
-      this.draftEvent = null
-      this.hasUnsavedChanges = false
-      // 4. ADDED: Ensure forms are wiped out when all data is cleared
-      this.draftForms = {} 
+    clearTempData() {
+      this.tempEventData = {};
+      this.hasUnsavedChanges = false;
+    },
+    
+    setDraftForm(formType: string, formData: any) {
+      this.draftForms[formType] = formData;
+    },
+    clearDraftForms() {
+      this.draftForms = {};
     }
   }
-})
+});
