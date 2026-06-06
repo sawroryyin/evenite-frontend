@@ -80,6 +80,16 @@ const formatForDateTimeLocal = (isoString: string | undefined) => {
 
 onMounted(async () => {
   const eventId = route.params.id as string
+
+  if (eventId !== 'new') {
+    try {
+      const ev = await EventService.getEventById(eventId);
+      eventStatus.value = ev.status;
+    } catch (e) {
+      console.error('Failed to fetch real event status', e);
+    }
+  }
+
   if (eventId && eventId !== 'new') {
     try {
       const data = await EventService.getEventById(eventId)
@@ -93,12 +103,15 @@ onMounted(async () => {
       // ADD THIS LINE: Fetch the available forms for this event
       availableForms.value = await FormService.getFormsByEventId(eventId)
       
-      if (route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true') {
+      // REPLACED LOGIC: Strict guard to prevent editing published events
+      const requestedEdit = route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true';
+      
+      if (requestedEdit && data.status === 'DRAFT') {
         viewMode.value = 'edit';
-        sessionStorage.removeItem('returnToEventEditMode');
       } else {
         viewMode.value = 'preview';
       }
+      sessionStorage.removeItem('returnToEventEditMode');
       
       if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt)
       if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt)
@@ -321,7 +334,18 @@ const handleBackClick = () => {
 const confirmLeave = () => { 
   store.setDraftEvent(null); 
   store.hasUnsavedChanges = false; 
-  router.back(); 
+  showLeaveModal.value = false; // close the modal
+
+  // If it's an existing event, just go back to preview. If it's new, go back to the previous page.
+  if (eventStatus.value) {
+    // Reset form back to original state
+    if (originalStateStr.value) {
+      form.value = JSON.parse(originalStateStr.value);
+    }
+    viewMode.value = 'preview';
+  } else {
+    router.back(); 
+  }
 }
 </script>
 

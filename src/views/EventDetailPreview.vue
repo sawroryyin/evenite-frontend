@@ -219,6 +219,32 @@ const mapEmbedUrl = computed(() => {
             </div>
           </div>
 
+          <div v-if="isOrganizer && (!hasRegistration || !hasFeedback)" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+            <h3 class="text-base font-bold text-gray-900 mb-2">Manage Forms</h3>
+            
+            <div class="flex flex-col gap-3">
+              <!-- Button to create Registration Form if missing -->
+              <button 
+                v-if="!hasRegistration" 
+                @click="router.push(`/events/${event.id}/forms/REGISTRATION`)" 
+                class="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Registration Form
+              </button>
+              
+              <!-- Button to create Feedback Form if missing -->
+              <button 
+                v-if="!hasFeedback" 
+                @click="router.push(`/events/${event.id}/forms/FEEDBACK`)" 
+                class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Feedback Form
+              </button>
+            </div>
+          </div>
+
           <EventFormResponseLinks 
             v-if="isOrganizer && event.status === 'PUBLISHED'"
             :event-id="event.id"

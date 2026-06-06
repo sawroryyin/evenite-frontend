@@ -135,7 +135,7 @@ const saveForm = async () => {
   try {
     if (eventId === 'new') {
       store.setDraftForm(formType, JSON.parse(JSON.stringify(form.value)));
-      showAlert('Success', 'Form saved locally (will be published with event)', 'blue');
+      showAlert('Success', 'Form created successfully', 'blue');
       isEditMode.value = false;
       originalForm.value = JSON.parse(JSON.stringify(form.value));
       return;
@@ -185,7 +185,9 @@ const goBack = () => {
 const executeGoBack = () => {
   // 1. NEW FORM: If the form hasn't been saved to the database yet, leave the page.
   if (isNewForm.value || eventId === 'new') {
-    sessionStorage.setItem('returnToEventEditMode', 'true');
+    if (eventStatus.value === 'DRAFT') { // <-- ADD THIS CHECK
+      sessionStorage.setItem('returnToEventEditMode', 'true');
+    }
     router.back();
     return;
   }
@@ -198,7 +200,9 @@ const executeGoBack = () => {
   }
 
   // 3. EXISTING FORM (PREVIEW): Leave the page.
-  sessionStorage.setItem('returnToEventEditMode', 'true');
+  if (eventStatus.value === 'DRAFT') { // <-- ADD THIS CHECK
+    sessionStorage.setItem('returnToEventEditMode', 'true');
+  }
   router.back();
 };
 
@@ -242,8 +246,8 @@ const showConfirm = (title: string, description: string, confirmText: string, th
 
     <div class="mb-5 border-b border-gray-100 pb-3">
       <h1 class="text-xl font-bold text-gray-900 tracking-tight uppercase">
-        {{ isEditMode ? 'Edit Form' : form.title || `${formType} Form` }}
-      </h1>
+  {{ isEditMode ? `${formType} Form` : form.title || `${formType} Form` }}
+</h1>
       <p v-if="!isEditMode && form.description" class="text-sm text-gray-500 mt-1">{{ form.description }}</p>
     </div>
 
@@ -271,7 +275,7 @@ const showConfirm = (title: string, description: string, confirmText: string, th
                 </div>
              </div>
              
-             <input v-model="field.label" placeholder="Question Label" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:border-purple-500 transition-all shadow-inner" required />
+             <input v-model="field.label" placeholder="Field Label" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:border-purple-500 transition-all shadow-inner" required />
           </div>
 
           <div v-if="field.type === 'CHOICE' || field.type === 'CHECKBOX'" class="pl-2 border-l-2 border-purple-100 space-y-2 mt-2">
@@ -317,7 +321,7 @@ const showConfirm = (title: string, description: string, confirmText: string, th
 
       <button type="button" @click="showFieldTypeModal = true" class="w-full py-4 border-2 border-dashed border-purple-200 bg-purple-50/50 rounded-2xl text-purple-700 font-bold text-[12px] flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors tracking-wide">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        ADD NEW FIELD
+        ADD FIELD
       </button>
     </div>
 
@@ -372,24 +376,31 @@ const showConfirm = (title: string, description: string, confirmText: string, th
           </button>
         </template>
         <template v-else>
-          <button @click="saveForm" class="w-full md:w-80 bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 rounded-xl font-bold text-[12px] transition-all shadow-sm tracking-wide">
+          <button @click="saveForm" class="w-35 md:w-40 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 py-2.5 rounded-xl font-bold text-[11px] transition-all">
             SAVE FORM
           </button>
         </template>
       </div>
     </div>
 
-    <div v-if="showFieldTypeModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fade-in p-4 pb-8">
+    <div v-if="showFieldTypeModal" @click.self="showFieldTypeModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fade-in p-4 pb-8">
       <div class="bg-white p-6 rounded-3xl shadow-xl max-w-sm w-full transform transition-all">
-        <h3 class="font-bold text-lg mb-4 text-gray-900 tracking-tight">Select Field Type</h3>
+        
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-lg text-gray-900 tracking-tight">Select Field Type</h3>
+          <button @click="showFieldTypeModal = false" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-full transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
         <div class="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-2">
           <button v-for="type in availableFieldTypes" :key="type" @click="addField(type)" class="p-3 border border-gray-100 bg-gray-50 rounded-xl hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 text-left text-sm font-semibold text-gray-700 transition-colors">
             {{ type }}
           </button>
         </div>
-        <button @click="showFieldTypeModal = false" class="mt-6 w-full p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] rounded-xl transition-colors uppercase tracking-widest">
-          Cancel
-        </button>
+        
       </div>
     </div>
 

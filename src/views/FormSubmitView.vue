@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { FormService } from '../services/FormService';
 import { FormType, type Form } from '../types';
+import { EventService } from '../services/EventService';
 
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +21,14 @@ const answers = ref<Record<string, any>>({});
 onMounted(async () => {
   try {
     // Fetch the form schema built by the Organizer
+
+    const eventData = await EventService.getEventById(eventId);
+    if (eventData.status !== 'PUBLISHED') {
+      alert('This form is not accepting responses yet because the event is not published.');
+      router.push(`/events/${eventId}`);
+      return;
+    }
+    
     form.value = await FormService.getForm(eventId, formType);
     
     // Initialize the answers object
