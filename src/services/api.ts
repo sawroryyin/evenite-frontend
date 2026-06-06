@@ -30,8 +30,11 @@ api.interceptors.response.use(
     const originalRequest = error.config
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+
+      console.log('INTERCEPTOR CAUGHT 401! Generating new access token...');
+      
       if (originalRequest.url.includes('/auth/refresh')) {
-        useAuthStore().logout()
+        useAuthStore().logout()   
         return Promise.reject(error)
       }
 

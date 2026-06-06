@@ -18,6 +18,9 @@ import RoleSelectView from '../views/auth/RoleSelectView.vue'
 import LoginView from '../views/auth/LoginView.vue'
 import RegisterView from '../views/auth/RegisterView.vue'
 import VerifyEmailView from '../views/auth/VerifyEmailView.vue'
+import FormDetailView from '../views/FormDetailView.vue'
+import FormResponseView from '../views/FormResponseView.vue'
+import FormSubmitView from '../views/FormSubmitView.vue'  
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,6 +48,12 @@ const router = createRouter({
     { path: '/profile/drafts', name: 'draft-events', component: SavedEventsView, meta: { requiresAuth: true } },
     { path: '/profile/published', name: 'published-events', component: PublishedEventsView, meta: { requiresAuth: true } },
     { path: '/role-select', name: 'role-select', component: RoleSelectView, meta: { requiresAuth: true } },
+
+    { path: '/events/:id/forms/:formType', name: 'form-detail', component: FormDetailView, meta: { requiresAuth: true } },
+    { path: '/events/:id/forms/:formType/responses', name: 'form-responses', component: FormResponseView, meta: { requiresAuth: true }},
+    { path: '/events/:id/forms/:formType/submit', name: 'form-submit', component: FormSubmitView, meta: { requiresAuth: true } },
+
+    { path: '/events/:id/forms/:formType/responses', name: 'FormResponses', component: FormResponseView }
   ]
 })
 

@@ -58,17 +58,15 @@ const removeCategory = (categoryToRemove: string) => {
 
     <div>
       <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ t.categories }}</label>
-      <div class="flex flex-col sm:flex-row gap-2 mb-3">
+      <div class="flex gap-2 mb-3">
         <input 
           list="category-options" v-model="newCategory" @keydown.enter.prevent="addCategory" 
-          class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 
-          focus:border-transparent transition-all outline-none" :placeholder="t.addCategory" 
+          class="flex-1 w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none" :placeholder="t.addCategory" 
         />
         <datalist id="category-options">
           <option v-for="cat in presetCategories" :key="cat" :value="cat"></option>
         </datalist>
-        <button type="button" @click="addCategory" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 rounded-xl 
-        text-sm font-bold transition-colors">{{ t.addBtn }}</button>
+        <button type="button" @click="addCategory" class="shrink-0 whitespace-nowrap bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-linear-to-r hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors">{{ t.addBtn }}</button>
       </div>
       
       <div class="flex flex-wrap gap-2 mt-2">

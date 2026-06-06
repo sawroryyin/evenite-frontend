@@ -4,6 +4,7 @@ import FormBasicInfo from './EventBasicInfo.vue'
 import FormDateLocation from './EventDateLocation.vue'
 import FormAgenda from './EventAgenda.vue'
 import FormCatering from './EventCatering.vue'
+import EventFormLinks from './EventFormLinks.vue' // <-- IMPORT HERE
 import FormContact from './EventContact.vue'
 
 defineProps<{ 
@@ -21,6 +22,7 @@ defineProps<{
     <FormDateLocation :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     <FormAgenda :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     <FormCatering :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
+    <EventFormLinks :eventId="form.id || 'new'" />
     <FormContact :form="form" :t="t" :viewMode="viewMode" />
   </div>
 </template>

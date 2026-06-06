@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, toRaw, provide } from 'vue'
+import { ref, onMounted, toRaw, provide, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useEventCreationStore } from '../stores/eventCreation'
 import { EventService } from '../services/EventService'
@@ -8,10 +8,13 @@ import { translations } from '../locales/eventForm'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import EventPreview from './EventDetailPreview.vue'
 import EventForm from '../components/EventDetailForm.vue'
+import { FormService } from '../services/FormService'
+import { useAuthStore } from '../stores/auth.ts'
 
 const router = useRouter()
 const route = useRoute()
 const store = useEventCreationStore()
+const authStore = useAuthStore()
 
 const viewMode = ref<'create' | 'edit' | 'preview'>('create')
 const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'COMPLETED' | null | undefined>(null)
@@ -26,6 +29,10 @@ const showLeaveModal = ref(false)
 const eventFormRef = ref<HTMLFormElement | null>(null)
 const originalStateStr = ref('')
 
+const availableForms = ref<any[]>([]) 
+const isRegistered = ref(false)
+
+// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -37,6 +44,8 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
   alertState.value = { show: true, title, description, theme }
 }
 provide('showAlert', showAlert)
+
+const isCurrentUserOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 
 const form = ref<any>({
   id: undefined, 
@@ -69,16 +78,46 @@ const formatForDateTimeLocal = (isoString: string | undefined) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
+// CONTINUOUS SYNC: Watch for changes and save to temp data automatically
+watch(form, (newVal) => {
+  if (viewMode.value === 'create' || viewMode.value === 'edit') {
+    store.setTempEventData(JSON.parse(JSON.stringify(newVal)));
+  }
+}, { deep: true });
+
+watch(form, (newVal) => {
+  if (viewMode.value === 'create' || viewMode.value === 'edit') {
+    store.setTempEventData(JSON.parse(JSON.stringify(newVal)));
+  }
+}, { deep: true });
+
 onMounted(async () => {
   const eventId = route.params.id as string
-  if (eventId && eventId !== 'new') {
+  
+  // Safely check for both 'new' and 'create' depending on how the router is pushed
+  const isNewEvent = !eventId || eventId === 'new' || eventId === 'create';
+
+  if (!isNewEvent) {
+    // IT IS AN EXISTING EVENT
     try {
       const data = await EventService.getEventById(eventId)
-      form.value = { ...form.value, ...data }
       eventStatus.value = data.status
-      viewMode.value = 'preview'
-      if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt)
-      if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt)
+
+      if (data.startAt) data.startAt = formatForDateTimeLocal(data.startAt)
+      if (data.endAt) data.endAt = formatForDateTimeLocal(data.endAt)
+
+      form.value = { ...form.value, ...data }
+      
+      availableForms.value = await FormService.getFormsByEventId(eventId)
+      
+      const requestedEdit = route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true';
+      
+      if (requestedEdit && data.status === 'DRAFT') {
+        viewMode.value = 'edit';
+      } else {
+        viewMode.value = 'preview';
+      }
+      sessionStorage.removeItem('returnToEventEditMode');
       
       originalStateStr.value = JSON.stringify(form.value)
     } catch (error) {
@@ -86,15 +125,28 @@ onMounted(async () => {
       router.back()
     }
   } else {
+    // IT IS A NEW EVENT
     viewMode.value = 'create'
+
+    // SMART TEMP DATA CHECK: Ensure it doesn't belong to a previous draft!
+    if (store.tempEventData && Object.keys(store.tempEventData).length > 0) {
+      
+      // If there is NO ID, it's a true new event in progress. Safe to restore.
+      if (!store.tempEventData.id) {
+        const draft = { ...store.tempEventData };
+        
+        if (draft.startAt) draft.startAt = formatForDateTimeLocal(draft.startAt);
+        if (draft.endAt) draft.endAt = formatForDateTimeLocal(draft.endAt);
+        
+        form.value = { ...form.value, ...draft };
+      } else {
+        // It has an ID! This means it's ghost data from a previous saved draft. 
+        // Do not restore it into a new event. Wipe it instead.
+        store.clearTempData();
+      }
+    }
     
     originalStateStr.value = JSON.stringify(form.value)
-
-    if (store.draftEvent) {
-      form.value = { ...form.value, ...store.draftEvent };
-      if (form.value.startAt) form.value.startAt = formatForDateTimeLocal(form.value.startAt);
-      if (form.value.endAt) form.value.endAt = formatForDateTimeLocal(form.value.endAt);
-    }
   }
 })
 
@@ -201,9 +253,21 @@ const saveAsDraft = async () => {
     const response = await EventService.saveAsDraft(sanitizePayload() as any);
     if (response && response.id) {
       form.value.id = response.id;
+
+      for (const draftForm of Object.values(store.draftForms)) {
+        const formPayload = JSON.parse(JSON.stringify(draftForm));
+        formPayload.eventId = response.id;
+        delete formPayload.id;
+
+        await FormService.createForm(response.id, formPayload);
+      }
+      store.clearDraftForms(); 
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
-    store.hasUnsavedChanges = false
+    
+    // CLEAR TEMP DATA ON EXPLICIT SAVE
+    store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
     showAlert("Success", "Event Saved As Draft", "blue")
@@ -224,10 +288,21 @@ const confirmPublish = async () => {
     const response = await EventService.publish(sanitizePayload() as any);
     if (response && response.id) {
       form.value.id = response.id;
+
+      for (const draftForm of Object.values(store.draftForms)) {
+        const formPayload = JSON.parse(JSON.stringify(draftForm));
+        formPayload.eventId = response.id;
+        delete formPayload.id;
+
+        await FormService.createForm(response.id, formPayload);
+      }
+      store.clearDraftForms(); 
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
-    store.setDraftEvent(null);
-    store.hasUnsavedChanges = false 
+    
+    // CLEAR TEMP DATA ON EXPLICIT PUBLISH
+    store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
     showAlert("Success", "Event Published Successfully", "blue")
@@ -252,14 +327,27 @@ const handleBackClick = () => {
   if (JSON.stringify(form.value) !== originalStateStr.value) {
     showLeaveModal.value = true
   } else {
-    router.back()
+    if (eventStatus.value) {
+      viewMode.value = 'preview'
+    } else {
+      router.back()
+    }
   }
 }
 
 const confirmLeave = () => { 
-  store.setDraftEvent(null); 
-  store.hasUnsavedChanges = false; 
-  router.back(); 
+  // CLEAR TEMP DATA ON EXPLICIT QUIT
+  store.clearTempData(); 
+  showLeaveModal.value = false;
+
+  if (eventStatus.value) {
+    if (originalStateStr.value) {
+      form.value = JSON.parse(originalStateStr.value);
+    }
+    viewMode.value = 'preview';
+  } else {
+    router.back(); 
+  }
 }
 </script>
 
@@ -295,7 +383,13 @@ const confirmLeave = () => {
     </div>
 
     <div v-if="viewMode === 'preview'" class="animate-fade-in">
-      <EventPreview :event="form" :viewLang="viewLang" />
+      <EventPreview 
+        :event="form" 
+        :viewLang="viewLang" 
+        :availableForms="availableForms" 
+        :isRegistered="isRegistered" 
+        :isOrganizer="isCurrentUserOrganizer"
+      />
     </div>
 
     <form v-else ref="eventFormRef" @submit.prevent>

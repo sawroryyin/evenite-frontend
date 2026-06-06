@@ -9,12 +9,10 @@ const props = withDefaults(defineProps<{
   variant: 'grid'
 })
 
-// Safely extract bilingual title
 const displayTitle = computed(() => {
   return props.event.title?.en || props.event.title?.th || 'Untitled Event'
 })
 
-// Safely extract the first category from the array
 const displayCategory = computed(() => {
   const cat = props.event.category
   if (Array.isArray(cat) && cat.length > 0) {
@@ -25,7 +23,6 @@ const displayCategory = computed(() => {
   return 'EVENT'
 })
 
-// Format the ISO date to a readable string
 const displayDate = computed(() => {
   if (!props.event.startAt) return 'TBA'
   return new Date(props.event.startAt).toLocaleDateString('en-US', {
@@ -33,13 +30,11 @@ const displayDate = computed(() => {
   })
 })
 
-// Safely extract bilingual location or online status
 const displayLocation = computed(() => {
   if (props.event.isOnline) return 'Online Event'
   return props.event.location?.en || props.event.location?.th || 'TBA'
 })
 
-// Fallback to a placeholder if no banner URL exists
 const displayImage = computed(() => {
   return props.event.bannerUrl || 'https://placehold.co/600x400/e9d5ff/6b21a8?text=Event'
 })

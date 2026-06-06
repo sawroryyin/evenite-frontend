@@ -17,38 +17,32 @@ const navigateTo = (routeName: string) => {
   router.push({ name: routeName })
 }
 
-// Compute dynamic UI values based on JWT payload via parsedToken
 const userInitial = computed(() => authStore.parsedToken?.email?.charAt(0).toUpperCase() || 'U')
 const isOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 const targetSwitchRole = computed(() => isOrganizer.value ? 'PARTICIPANT' : 'ORGANIZER')
 
 const handleLogout = () => {
-  // authStore handles clearing tokens and redirecting to login
   authStore.logout() 
 }
 
 const handleSwitchRole = async () => {
   try {
-    // 1. Check if they have the target profile created using the store's getters
     const hasTargetProfile = targetSwitchRole.value === 'ORGANIZER' 
       ? authStore.hasOrganizerProfile 
       : authStore.hasParticipantProfile
 
     if (!hasTargetProfile) {
-      // If no profile, route them to profile creation
       alert(`You must create a ${targetSwitchRole.value.toLowerCase()} profile first.`)
       navigateTo('profile-create') // Make sure this matches the route name in index.ts
       return
     }
 
-    // 2. Call backend to switch role & get new token
     const response = await api.patch('/users/me/switch-profile', { targetRole: targetSwitchRole.value })
     
     if (response.data.accessToken) {
       authStore.setTokens(response.data.accessToken, authStore.refreshToken as string)
       alert(`Switched to ${targetSwitchRole.value} view!`)
       closeSidebar()
-      // Redirect to respective dashboard
       router.push({ name: targetSwitchRole.value === 'ORGANIZER' ? 'event-list' : 'home' })
     }
   } catch (error) {
