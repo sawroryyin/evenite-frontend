@@ -74,7 +74,7 @@ const handleGenerate = async () => {
 
   try {
     const generatedData = await EventService.generateFromImage(selectedFile.value);
-    store.setDraftEvent(generatedData as any);
+    store.setTempEventData(generatedData as any)
     router.push({ name: "create-manual" });
   } catch (error: any) {
     // Show in-app alert and set redirect flag to true

@@ -17,7 +17,7 @@ const store = useEventCreationStore()
 const authStore = useAuthStore()
 
 const viewMode = ref<'create' | 'edit' | 'preview'>('create')
-const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'COMPLETED' | null | undefined>(null)
+const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'CONCLUDED' | 'ONGOING' | null | undefined>(null)
 const viewLang = ref<'en' | 'th'>('en')
 
 const t = translations['en'] 

@@ -51,26 +51,41 @@ const fetchEventsFromDatabase = async () => {
   }
 }
 
-// --- Live Filtering Logic ---
+// --- Live Filtering & Sorting Logic ---
 const filteredEvents = computed(() => {
-  // 'All' simply returns the full array
+  // Add the type annotation here:
+  let result: EventData[] = []
+
+  // 1. Filter based on active tab
   if (activeTab.value === 'All') {
-    return allEvents.value
+    result = [...allEvents.value] // Create a shallow copy so we don't mutate the original array
+  } else {
+    switch (activeTab.value) {
+      case 'Upcoming':
+        result = allEvents.value.filter(event => event.status === 'PUBLISHED')
+        break
+      case 'Ongoing':
+        result = allEvents.value.filter(event => event.status === 'ONGOING')
+        break
+      case 'Completed':
+        result = allEvents.value.filter(event => event.status === 'CONCLUDED')
+        break
+      case 'Draft':
+        result = allEvents.value.filter(event => event.status === 'DRAFT')
+        break
+      default:
+        result = []
+    }
   }
 
-  // Filter based on Prisma Status Enum
-  switch (activeTab.value) {
-    case 'Upcoming':
-      return allEvents.value.filter(event => event.status === 'PUBLISHED')
-    case 'Ongoing':
-      return allEvents.value.filter(event => event.status === 'ONGOING')
-    case 'Completed':
-      return allEvents.value.filter(event => event.status === 'CONCLUDED')
-    case 'Draft':
-      return allEvents.value.filter(event => event.status === 'DRAFT')
-    default:
-      return []
-  }
+  // 2. Sort from nearest to farthest (chronological order)
+  return result.sort((a, b) => {
+    // If an event doesn't have a startAt date (e.g., a draft), push it to the bottom by using Infinity
+    const timeA = a.startAt ? new Date(a.startAt).getTime() : Infinity
+    const timeB = b.startAt ? new Date(b.startAt).getTime() : Infinity
+    
+    return timeA - timeB
+  })
 })
 
 // Global Lifecycle Hooks Initialization

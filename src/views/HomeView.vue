@@ -111,11 +111,22 @@ const fetchHomeFeed = async () => {
   errorMessage.value = ''
   
   try {
-    // Fetch all public events once and save to master pool
-    const publicEvents = await EventService.getPublicEvents()
-    allPublicEvents.value = publicEvents
+    // Fetch all public events once
+    const rawPublicEvents = await EventService.getPublicEvents()
 
-    // Build "Selected for You"
+    // 1. GLOBAL FILTER: Keep ONLY strictly upcoming events
+    const now = new Date()
+    const upcomingPublicEvents = rawPublicEvents.filter(event => {
+      if (!event.startAt) return false
+      const startDate = new Date(event.startAt)
+      // Strictly greater than now ensures it hasn't started yet (not ongoing, not past)
+      return startDate > now 
+    })
+
+    // Assign the filtered list to the master pool so Search also only sees upcoming events
+    allPublicEvents.value = upcomingPublicEvents 
+
+    // 2. Build "Selected for You"
     let userPrefs: string[] = []
     if (authStore.currentRole === 'PARTICIPANT') {
       try {
@@ -128,25 +139,30 @@ const fetchHomeFeed = async () => {
     }
 
     if (userPrefs.length > 0) {
-      selectedEvents.value = publicEvents.filter(event => {
+      selectedEvents.value = upcomingPublicEvents.filter(event => {
         const eventCategories = Array.isArray(event.category) ? event.category : [event.category]
         return eventCategories.some(cat => userPrefs.includes(cat as string))
       })
     } else {
-      selectedEvents.value = publicEvents.slice(0, 5)
+      // Fallback: Show the soonest 5 upcoming events
+      selectedEvents.value = upcomingPublicEvents
+        .sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
+        .slice(0, 5)
     }
 
-    // Build "Upcoming Events"
-    const now = new Date()
+    // 3. Build "Upcoming Events"
+    // Note: If you want THIS specific section to only show the next 7 days, keep the nextWeek logic.
+    // If you want it to show ALL upcoming events, you can just assign upcomingPublicEvents directly.
     const nextWeek = new Date()
     nextWeek.setDate(now.getDate() + 7)
 
-    upcomingEvents.value = publicEvents.filter(event => {
-      if (!event.startAt) return false
-      const startDate = new Date(event.startAt)
-      return startDate >= now && startDate <= nextWeek
+    upcomingEvents.value = upcomingPublicEvents.filter(event => {
+      const startDate = new Date(event.startAt!)
+      // It is already filtered to be > now, so we only need to check the upper boundary
+      return startDate <= nextWeek 
     })
 
+    // Sort chronologically
     upcomingEvents.value.sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
 
   } catch (error) {
