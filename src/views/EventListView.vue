@@ -17,11 +17,15 @@ const errorMessage = ref('')
 
 const isOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 
-// Dynamic Tabs: Participants don't have Drafts
-const tabs = computed(() => 
-  isOrganizer.value ? ['Published', 'Draft', 'Completed'] : ['Registered', 'Completed']
-)
-const activeTab = ref(isOrganizer.value ? 'Published' : 'Registered')
+// Dynamic Tabs: Explicitly sets 5 tabs for Organizer, 4 for Participant
+const tabs = computed(() => {
+  if (isOrganizer.value) {
+    return ['All', 'Upcoming', 'Ongoing', 'Completed', 'Draft']
+  }
+  return ['All', 'Upcoming', 'Ongoing', 'Completed']
+})
+
+const activeTab = ref('All')
 
 // --- Database Sync Engine ---
 const fetchEventsFromDatabase = async () => {
@@ -35,29 +39,53 @@ const fetchEventsFromDatabase = async () => {
       allEvents.value = data
     } else {
       // Participant: Fetch events they registered for
-      // Backend returns EventRegistration with a nested 'event' object
       const data: any = await EventService.getRegisteredEvents()
       allEvents.value = data.map((item: any) => item.event ? item.event : item)
     }
     
   } catch (error) {
-    console.error('Error fetching event telemetry from database:', error)
+    console.error('Error fetching events from database:', error)
     errorMessage.value = 'Failed to sync with local event registry server. Please try again.'
   } finally {
     isLoading.value = false
   }
 }
 
-// --- Live Filtering Logic Node ---
+// --- Live Filtering & Sorting Logic ---
 const filteredEvents = computed(() => {
-  if (activeTab.value === 'Published' || activeTab.value === 'Registered') {
-    return allEvents.value.filter(event => event.status === 'PUBLISHED')
-  } else if (activeTab.value === 'Draft') {
-    return allEvents.value.filter(event => event.status === 'DRAFT')
-  } else if (activeTab.value === 'Completed') {
-    return allEvents.value.filter(event => event.status === 'COMPLETED')
+  // Add the type annotation here:
+  let result: EventData[] = []
+
+  // 1. Filter based on active tab
+  if (activeTab.value === 'All') {
+    result = [...allEvents.value] // Create a shallow copy so we don't mutate the original array
+  } else {
+    switch (activeTab.value) {
+      case 'Upcoming':
+        result = allEvents.value.filter(event => event.status === 'PUBLISHED')
+        break
+      case 'Ongoing':
+        result = allEvents.value.filter(event => event.status === 'ONGOING')
+        break
+      case 'Completed':
+        result = allEvents.value.filter(event => event.status === 'CONCLUDED')
+        break
+      case 'Draft':
+        result = allEvents.value.filter(event => event.status === 'DRAFT')
+        break
+      default:
+        result = []
+    }
   }
-  return []
+
+  // 2. Sort from nearest to farthest (chronological order)
+  return result.sort((a, b) => {
+    // If an event doesn't have a startAt date (e.g., a draft), push it to the bottom by using Infinity
+    const timeA = a.startAt ? new Date(a.startAt).getTime() : Infinity
+    const timeB = b.startAt ? new Date(b.startAt).getTime() : Infinity
+    
+    return timeA - timeB
+  })
 })
 
 // Global Lifecycle Hooks Initialization
@@ -81,13 +109,12 @@ onMounted(() => {
         </p>
       </div>
       
-      <!-- Only show Create Event button to Organizers -->
       <button 
         v-if="isOrganizer"
         @click="router.push({ name: 'create-options' })"
         class="bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 
         text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm flex items-center gap-1.5 
-        transition-transform transform active:scale-95 cursor-pointer"
+        transition-transform transform active:scale-95 cursor-pointer shrink-0"
       >
         <svg class="w-3.5 h-3.5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
@@ -96,15 +123,15 @@ onMounted(() => {
       </button>
     </div>
 
-    <div class="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 mb-4 relative z-10">
+    <div class="flex w-full bg-white rounded-xl shadow-sm border border-gray-100 p-1 mb-4 relative z-10">
       <button 
         v-for="tab in tabs" 
         :key="tab"
         @click="activeTab = tab"
-        class="flex-1 text-center py-1.5 text-[11px] font-bold rounded-lg transition-all"
+        class="flex-1 text-center py-1.5 px-0.5 text-[9.5px] min-[380px]:text-[10px] sm:text-[11px] font-bold rounded-lg transition-all tracking-tight whitespace-nowrap"
         :class="activeTab === tab ?
          'bg-linear-to-r from-purple-600 to-indigo-600 text-white shadow-xs' : 
-         'text-gray-500 hover:text-purple-600'"
+         'text-gray-500 hover:bg-gray-50 hover:text-purple-600'"
       >
         {{ tab }}
       </button>

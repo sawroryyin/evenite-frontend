@@ -14,14 +14,10 @@ const formType = route.params.formType as FormType;
 const form = ref<Form | null>(null);
 const isSubmitting = ref(false);
 
-// This object will hold the participant's answers.
-// Keys will be the field ID (or index), and values will be their input.
 const answers = ref<Record<string, any>>({});
 
 onMounted(async () => {
   try {
-    // Fetch the form schema built by the Organizer
-
     const eventData = await EventService.getEventById(eventId);
     if (eventData.status !== 'PUBLISHED') {
       alert('This form is not accepting responses yet because the event is not published.');
@@ -31,11 +27,9 @@ onMounted(async () => {
     
     form.value = await FormService.getForm(eventId, formType);
     
-    // Initialize the answers object
     if (form.value && form.value.fields) {
       form.value.fields.forEach((field, index) => {
         const key = field.id || index.toString();
-        // Set default values based on type
         if (field.type === 'CHECKBOX') answers.value[key] = [];
         else answers.value[key] = '';
       });
@@ -63,25 +57,22 @@ const submitForm = async () => {
 
   isSubmitting.value = true;
   try {
-    // Format the payload to send to your backend
     const payload = {
-      eventId,
-      formType,
-      responses: form.value.fields.map((field, index) => ({
+      answers: form.value.fields.map((field, index) => ({
         formFieldId: field.id || index.toString(),
-        label: field.label,
         value: answers.value[field.id || index.toString()]
       }))
     };
 
-    // Note: You will need to add `submitResponse` to your FormService.ts
-    // await FormService.submitResponse(eventId, formType, payload);
+    // This SINGLE call triggers your backend to save the answers AND register the user!
+    await FormService.submitResponse(eventId, formType, payload);
     
     console.log("Submitting Payload:", payload);
     alert('Successfully submitted!');
-    router.back()
+    router.back();
     
   } catch (error) {
+    console.error("Submission error:", error);
     alert('Error submitting form. Please try again.');
   } finally {
     isSubmitting.value = false;
