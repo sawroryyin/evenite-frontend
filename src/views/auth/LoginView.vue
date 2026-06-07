@@ -3,16 +3,21 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import api from '../../services/api'
+import ConfirmModal from '../../components/ConfirmModal.vue'
 
 const email = ref('')
 const password = ref('')
 const message = ref('')
+const showModal = ref(false)
 const isLoading = ref(false)
 const router = useRouter()
 const authStore = useAuthStore()
 
 const login = async () => {
   isLoading.value = true
+  message.value = ''
+  showModal.value = false
+  
   try {
     const { data } = await api.post('/auth/login', { email: email.value, password: password.value })
     authStore.setTokens(data.accessToken, data.refreshToken)
@@ -23,7 +28,12 @@ const login = async () => {
       router.push('/role-select')
     }
   } catch (error: any) {
-    message.value = error.response?.data?.message || 'Invalid credentials.'
+    message.value = error.response?.data?.message || 'Invalid credentials. Please try again.'
+    showModal.value = true
+    
+    // Clear all inputs on failed attempt
+    email.value = ''
+    password.value = '' 
   } finally {
     isLoading.value = false
   }
@@ -33,9 +43,10 @@ const login = async () => {
 <template>
   <div class="min-h-screen flex items-center justify-center bg-[#fafafa] font-['Lato'] px-4">
     <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-      <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight mb-6 text-center">Welcome Back</h1>
       
-      <p v-if="message" class="mb-4 text-[11px] font-bold p-3 rounded-lg bg-red-50 text-red-700 text-center">{{ message }}</p>
+      <!-- Simplified, clearer header -->
+      <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight mb-1 text-center">Sign In</h1>
+      <p class="text-sm font-medium text-gray-500 text-center mb-6">Welcome to Evenite</p>
 
       <form @submit.prevent="login" class="flex flex-col gap-4">
         <div>
@@ -50,9 +61,26 @@ const login = async () => {
           {{ isLoading ? 'Logging in...' : 'Log In' }}
         </button>
       </form>
-      <div class="mt-6 text-center flex flex-col gap-2">
-        <button @click="router.push('/register')" class="text-[11px] font-bold text-gray-500 hover:text-purple-600 transition-colors">Need an account? Register</button>
+      
+      <!-- Enlarged, prominent Register section -->
+      <div class="mt-8 flex flex-col items-center gap-3">
+        <div class="w-full h-px bg-gray-100 mb-2"></div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Don't have an account?</p>
+        <button @click="router.push('/register')" class="w-full bg-white border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-bold text-[12px] uppercase tracking-wider hover:border-purple-500 hover:text-purple-600 transition-all">
+          Register Here
+        </button>
       </div>
+
     </div>
+
+    <!-- Error Modal -->
+    <ConfirmModal
+      v-if="showModal"
+      title="Login Failed"
+      :description="message"
+      confirmText="Okay"
+      confirmTheme="red"
+      @confirm="showModal = false"
+    />
   </div>
 </template>
