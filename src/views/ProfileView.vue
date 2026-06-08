@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 import BottomNav from '../components/BottomNav.vue'
+import LoadingOverview from '../components/LoadingOverlay.vue'
+import { ALLOWED_EVENT_PREFERENCES } from '../types.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -15,6 +17,7 @@ const profileData = ref<any>({})
 const isEditing = ref(false)
 const isSaving = ref(false)
 const isLoading = ref(true)
+const isSwitchingRole = ref(false)
 const message = ref({ text: '', type: 'success' })
 
 // Image Upload States
@@ -28,12 +31,10 @@ const defaultAvatar = computed(() => activeRole.value === 'PARTICIPANT'
   : 'https://placehold.co/400x400?text=Organizer'
 )
 
-// Computed property to check if a custom image exists (either pending upload or saved in DB)
 const hasCustomImage = computed(() => {
   return !!imagePreviewUrl.value || !!profileData.value.imageUrl
 })
 
-// Preference Options based on UserPreferences Constant
 const PERSONAL_PREFS = [
   'MUSIC', 'GAMING', 'ART', 'SPORTS', 'PHOTOGRAPHY', 'COOKING', 
   'READING', 'TECHNOLOGY', 'FASHION', 'TRAVEL', 'FILM', 'DANCE', 'OTHER'
@@ -51,10 +52,16 @@ const fetchProfile = async () => {
     const endpoint = activeRole.value === 'PARTICIPANT' ? '/users/me/participant-profile' : '/users/me/organizer-profile'
     const { data } = await api.get(endpoint)
     
-    // Ensure nested objects exist to avoid undefined errors when binding to v-model
+    // ProfileView.vue - inside fetchProfile()
     if (activeRole.value === 'PARTICIPANT') {
       if (!data.preferences) {
+        // Add the missing event array here!
         data.preferences = { personal: [], event: [], language: [], personalOther: '' }
+      } else {
+        // Fallback safety: guarantee the arrays exist so v-model doesn't crash
+        if (!data.preferences.event) data.preferences.event = []
+        if (!data.preferences.language) data.preferences.language = []
+        if (!data.preferences.personal) data.preferences.personal = []
       }
     }
     
@@ -90,8 +97,8 @@ const onFileChange = (event: Event) => {
 
 const removePicture = () => {
   imageFile.value = null
-  imagePreviewUrl.value = null // Setting to null allows the UI to fall back to the defaultAvatar
-  profileData.value.imageUrl = '' // Clears the DB image
+  imagePreviewUrl.value = null 
+  profileData.value.imageUrl = '' 
 }
 
 const updateProfile = async () => {
@@ -99,7 +106,6 @@ const updateProfile = async () => {
   message.value.text = ''
   
   try {
-    // 1. Upload image first if a new one was selected
     if (imageFile.value) {
       const formData = new FormData()
       formData.append('image', imageFile.value)
@@ -113,12 +119,10 @@ const updateProfile = async () => {
       profileData.value.imageUrl = uploadRes.data.imageUrl
     }
 
-    // 2. Clear personalOther if 'OTHER' is not selected in preferences
     if (activeRole.value === 'PARTICIPANT' && !profileData.value.preferences.personal.includes('OTHER')) {
         profileData.value.preferences.personalOther = ''
     }
 
-    // 3. Update the rest of the profile text fields
     const endpoint = activeRole.value === 'PARTICIPANT' ? '/users/me/participant-profile' : '/users/me/organizer-profile'
     await api.patch(endpoint, profileData.value)
     
@@ -143,6 +147,32 @@ const cancelEdit = () => {
   fetchProfile() 
 }
 
+const switchRole = async () => {
+  const current = authStore.currentRole
+  const targetRole = current === 'PARTICIPANT' ? 'ORGANIZER' : 'PARTICIPANT'
+  const hasTargetProfile = targetRole === 'PARTICIPANT' ? authStore.hasParticipantProfile : authStore.hasOrganizerProfile
+
+  isSwitchingRole.value = true
+
+  setTimeout(async () => {
+    if (!hasTargetProfile) {
+      isSwitchingRole.value = false
+      router.push({ name: 'profile-create', query: { role: targetRole } })
+    } else {
+      try {
+        const { data } = await api.patch('/users/me/switch-profile', { targetRole })
+        authStore.setTokens(data.accessToken, authStore.refreshToken!)
+        
+        window.location.reload()
+      } catch (error) {
+        console.error('Failed to switch role', error)
+        showMessage('Failed to switch role.', 'error')
+        isSwitchingRole.value = false
+      }
+    }
+  }, 3000)
+}
+
 const showMessage = (text: string, type: 'success' | 'error') => {
   message.value = { text, type }
   setTimeout(() => { message.value.text = '' }, 5000)
@@ -154,8 +184,13 @@ const logout = () => {
 </script>
 
 <template>
-  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
+  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4 relative">
     
+    <LoadingOverview 
+      v-if="isSwitchingRole" 
+      :message="`Switching to ${activeRole === 'PARTICIPANT' ? 'Organizer' : 'Participant'} Mode...`" 
+    />
+
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-indigo-600 tracking-tight">
         My Profile
@@ -312,6 +347,27 @@ const logout = () => {
               </div>
 
               <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Event Preferences</label>
+                
+                <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
+                  <span v-if="!profileData.preferences?.event?.length" class="text-sm text-gray-400 italic">None selected</span>
+                  <span v-else v-for="pref in profileData.preferences.event" :key="pref" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
+                    {{ pref }}
+                  </span>
+                </div>
+
+                <div v-else class="flex flex-wrap gap-2">
+                  <label v-for="pref in ALLOWED_EVENT_PREFERENCES" :key="pref" class="select-none">
+                    <input type="checkbox" :value="pref" v-model="profileData.preferences.event" class="hidden" />
+                    <span class="inline-block px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer"
+                          :class="profileData.preferences.event.includes(pref) ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-indigo-300'">
+                      {{ pref }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Language Preference</label>
                 <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
                   <span v-if="!profileData.preferences?.language?.length" class="text-sm text-gray-400 italic">None selected</span>
@@ -399,7 +455,7 @@ const logout = () => {
               </button>
               
               <div class="flex gap-3 mt-2">
-                <button type="button" @click="router.push('/role-select')" class="flex-1 bg-purple-50 text-purple-700 border border-purple-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-purple-100 transition-all">
+                <button type="button" @click="switchRole" :disabled="isSwitchingRole" class="flex-1 bg-purple-50 text-purple-700 border border-purple-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-purple-100 transition-all">
                   Switch Role
                 </button>
                 <button type="button" @click="logout" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-red-100 transition-all">

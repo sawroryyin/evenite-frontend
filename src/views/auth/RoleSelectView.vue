@@ -1,45 +1,18 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../../stores/auth'
-import api from '../../services/api'
-import { ref } from 'vue'
 
 const router = useRouter()
-const authStore = useAuthStore()
-const isLoading = ref(false)
 
-const selectRole = async (targetRole: 'PARTICIPANT' | 'ORGANIZER') => {
-  const hasProfile = targetRole === 'PARTICIPANT' ? authStore.hasParticipantProfile : authStore.hasOrganizerProfile
-
-  if (!hasProfile) {
-    // FIXED: Using route 'name' instead of 'path' to avoid mismatch errors
-    router.push({ name: 'profile-create', query: { role: targetRole } })
-  } else {
-    // Prevent switching to the role you are already in
-    if (authStore.currentRole === targetRole) {
-      router.push({ name: 'home' })
-      return
-    }
-
-    isLoading.value = true
-    try {
-      const { data } = await api.patch('/users/me/switch-profile', { targetRole })
-      authStore.setTokens(data.accessToken, authStore.refreshToken!)
-      router.push({ name: 'home' })
-    } catch (error) {
-      console.error('Failed to switch role', error)
-    } finally {
-      isLoading.value = false
-    }
-  }
+const selectRole = (role: 'PARTICIPANT' | 'ORGANIZER') => {
+  router.push({ name: 'profile-create', query: { role } })
 }
 </script>
 
-<template>
+<template>  
   <div class="min-h-screen flex items-center justify-center bg-[#fafafa] font-['Lato'] px-4">
     <div class="max-w-xl w-full">
-      <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2 text-center">Choose Your Role</h1>
-      <p class="text-[12px] text-gray-500 text-center mb-8 font-bold">You can switch between these profiles anytime.</p>
+      <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2 text-center">Choose Your Starting Role</h1>
+      <p class="text-[12px] text-gray-500 text-center mb-8 font-bold">Select how you want to start using Evenite. You can create the other profile later.</p>
       
       <div class="grid md:grid-cols-2 gap-4">
         <div @click="selectRole('PARTICIPANT')" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-300 cursor-pointer transition-all hover:-translate-y-1">
