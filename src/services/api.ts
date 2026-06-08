@@ -30,10 +30,16 @@ api.interceptors.response.use(
     const originalRequest = error.config
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      
+      // FIX: Bypass the refresh token logic if the user is just trying to log in or register.
+      // This prevents the interceptor from calling logout() and reloading the page.
+      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')) {
+        return Promise.reject(error)
+      }
 
       console.log('INTERCEPTOR CAUGHT 401! Generating new access token...');
       
-      if (originalRequest.url.includes('/auth/refresh')) {
+      if (originalRequest.url?.includes('/auth/refresh')) {
         useAuthStore().logout()   
         return Promise.reject(error)
       }

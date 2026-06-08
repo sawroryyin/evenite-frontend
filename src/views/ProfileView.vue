@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 import BottomNav from '../components/BottomNav.vue'
+import LoadingOverview from '../components/LoadingOverlay.vue'
+import AlertBox from '../components/ConfirmModal.vue'
+import { ALLOWED_EVENT_PREFERENCES } from '../types.ts'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -11,13 +14,32 @@ const authStore = useAuthStore()
 const activeRole = ref<'PARTICIPANT' | 'ORGANIZER'>('PARTICIPANT')
 const profileData = ref<any>({})
 
-// UI States
 const isEditing = ref(false)
 const isSaving = ref(false)
 const isLoading = ref(true)
+const isSwitchingRole = ref(false)
 const message = ref({ text: '', type: 'success' })
 
-// Image Upload States
+const showAlert = ref(false)
+const alertTitle = ref('')
+const alertDescription = ref('')
+const alertAction = ref<'SWITCH_SUCCESS' | 'MISSING_PROFILE' | 'NONE'>('NONE')
+const targetRoleToSwitch = ref<'PARTICIPANT' | 'ORGANIZER'>('PARTICIPANT')
+
+const triggerAlert = (title: string, description: string, action: 'SWITCH_SUCCESS' | 'MISSING_PROFILE' | 'NONE' = 'NONE') => {
+  alertTitle.value = title
+  alertDescription.value = description
+  alertAction.value = action
+  showAlert.value = true
+}
+
+const onAlertConfirm = () => {
+  showAlert.value = false
+  if (alertAction.value === 'MISSING_PROFILE') {
+    router.push({ name: 'profile-create', query: { role: targetRoleToSwitch.value } })
+  }
+}
+
 const fileInput = ref<HTMLInputElement | null>(null)
 const imageFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
@@ -28,12 +50,10 @@ const defaultAvatar = computed(() => activeRole.value === 'PARTICIPANT'
   : 'https://placehold.co/400x400?text=Organizer'
 )
 
-// Computed property to check if a custom image exists (either pending upload or saved in DB)
 const hasCustomImage = computed(() => {
   return !!imagePreviewUrl.value || !!profileData.value.imageUrl
 })
 
-// Preference Options based on UserPreferences Constant
 const PERSONAL_PREFS = [
   'MUSIC', 'GAMING', 'ART', 'SPORTS', 'PHOTOGRAPHY', 'COOKING', 
   'READING', 'TECHNOLOGY', 'FASHION', 'TRAVEL', 'FILM', 'DANCE', 'OTHER'
@@ -51,10 +71,13 @@ const fetchProfile = async () => {
     const endpoint = activeRole.value === 'PARTICIPANT' ? '/users/me/participant-profile' : '/users/me/organizer-profile'
     const { data } = await api.get(endpoint)
     
-    // Ensure nested objects exist to avoid undefined errors when binding to v-model
     if (activeRole.value === 'PARTICIPANT') {
       if (!data.preferences) {
         data.preferences = { personal: [], event: [], language: [], personalOther: '' }
+      } else {
+        if (!data.preferences.event) data.preferences.event = []
+        if (!data.preferences.language) data.preferences.language = []
+        if (!data.preferences.personal) data.preferences.personal = []
       }
     }
     
@@ -78,8 +101,17 @@ const onFileChange = (event: Event) => {
   if (target.files && target.files.length > 0) {
     const file = target.files[0]
     
+    // C4 & C5: Check format
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      triggerAlert('Invalid File', 'Unsupported image format')
+      target.value = ''
+      return
+    }
+    
     if (file.size > 5 * 1024 * 1024) {
-      showMessage('Image size must be less than 5MB.', 'error')
+      triggerAlert('File Too Large', 'File size must not exceed 5MB.')
+      target.value = ''
       return
     }
 
@@ -90,16 +122,20 @@ const onFileChange = (event: Event) => {
 
 const removePicture = () => {
   imageFile.value = null
-  imagePreviewUrl.value = null // Setting to null allows the UI to fall back to the defaultAvatar
-  profileData.value.imageUrl = '' // Clears the DB image
+  imagePreviewUrl.value = null 
+  profileData.value.imageUrl = '' 
 }
 
 const updateProfile = async () => {
+  if (activeRole.value === 'ORGANIZER' && (!profileData.value.name || !profileData.value.name.trim())) {
+    triggerAlert('Action Required', 'Organizer name is required')
+    return
+  }
+
   isSaving.value = true
   message.value.text = ''
   
   try {
-    // 1. Upload image first if a new one was selected
     if (imageFile.value) {
       const formData = new FormData()
       formData.append('image', imageFile.value)
@@ -113,12 +149,10 @@ const updateProfile = async () => {
       profileData.value.imageUrl = uploadRes.data.imageUrl
     }
 
-    // 2. Clear personalOther if 'OTHER' is not selected in preferences
     if (activeRole.value === 'PARTICIPANT' && !profileData.value.preferences.personal.includes('OTHER')) {
         profileData.value.preferences.personalOther = ''
     }
 
-    // 3. Update the rest of the profile text fields
     const endpoint = activeRole.value === 'PARTICIPANT' ? '/users/me/participant-profile' : '/users/me/organizer-profile'
     await api.patch(endpoint, profileData.value)
     
@@ -127,6 +161,7 @@ const updateProfile = async () => {
     imageFile.value = null 
     imagePreviewUrl.value = null
     
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     await fetchProfile()
   } catch (err: any) {
     showMessage(err.response?.data?.message || 'Failed to update profile.', 'error')
@@ -140,7 +175,50 @@ const cancelEdit = () => {
   imageFile.value = null
   imagePreviewUrl.value = null
   message.value.text = ''
+  window.scrollTo({ top: 0, behavior: 'smooth' })
   fetchProfile() 
+}
+
+const switchRole = async () => {
+  const current = authStore.currentRole
+  const targetRole = current === 'PARTICIPANT' ? 'ORGANIZER' : 'PARTICIPANT'
+  const hasTargetProfile = targetRole === 'PARTICIPANT' ? authStore.hasParticipantProfile : authStore.hasOrganizerProfile
+  
+  targetRoleToSwitch.value = targetRole
+
+  if (!hasTargetProfile) {
+    const roleName = targetRole === 'ORGANIZER' ? 'Organizer' : 'Participant'
+    triggerAlert(
+      'Profile Not Found', 
+      `You haven't created an ${roleName} profile yet. Please create one to switch.`, 
+      'MISSING_PROFILE'
+    )
+    return
+  }
+
+  isSwitchingRole.value = true
+
+  setTimeout(async () => {
+    try {
+      const { data } = await api.patch('/users/me/switch-profile', { targetRole })
+      authStore.setTokens(data.accessToken, authStore.refreshToken!)
+      
+      activeRole.value = targetRole
+      
+      await fetchProfile()
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+
+      isSwitchingRole.value = false
+      const roleName = targetRole === 'ORGANIZER' ? 'Organizer' : 'Participant'
+      triggerAlert('Success', `Switched to ${roleName} profile.`, 'SWITCH_SUCCESS')
+      
+    } catch (error) {
+      console.error('Failed to switch role', error)
+      isSwitchingRole.value = false
+      triggerAlert('Error', 'Failed to switch profile. Please try again later.')
+    }
+  }, 3000)
 }
 
 const showMessage = (text: string, type: 'success' | 'error') => {
@@ -154,8 +232,21 @@ const logout = () => {
 </script>
 
 <template>
-  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
+  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4 relative">
     
+    <AlertBox 
+      v-if="showAlert" 
+      :title="alertTitle" 
+      :description="alertDescription" 
+      confirmText="OK" 
+      @confirm="onAlertConfirm" 
+    />
+    
+    <LoadingOverview 
+      v-if="isSwitchingRole" 
+      :message="`Switching to ${activeRole === 'PARTICIPANT' ? 'Organizer' : 'Participant'} Profile...`" 
+    />
+
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-indigo-600 tracking-tight">
         My Profile
@@ -312,6 +403,27 @@ const logout = () => {
               </div>
 
               <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Event Preferences</label>
+                
+                <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
+                  <span v-if="!profileData.preferences?.event?.length" class="text-sm text-gray-400 italic">None selected</span>
+                  <span v-else v-for="pref in profileData.preferences.event" :key="pref" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
+                    {{ pref }}
+                  </span>
+                </div>
+
+                <div v-else class="flex flex-wrap gap-2">
+                  <label v-for="pref in ALLOWED_EVENT_PREFERENCES" :key="pref" class="select-none">
+                    <input type="checkbox" :value="pref" v-model="profileData.preferences.event" class="hidden" />
+                    <span class="inline-block px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer"
+                          :class="profileData.preferences.event.includes(pref) ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-indigo-300'">
+                      {{ pref }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Language Preference</label>
                 <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
                   <span v-if="!profileData.preferences?.language?.length" class="text-sm text-gray-400 italic">None selected</span>
@@ -339,7 +451,7 @@ const logout = () => {
               <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Organization Name *</label>
                 <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.name || '-' }}</p>
-                <input v-else v-model="profileData.name" required type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                <input v-else v-model="profileData.name" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
               </div>
               
               <div>
@@ -399,8 +511,8 @@ const logout = () => {
               </button>
               
               <div class="flex gap-3 mt-2">
-                <button type="button" @click="router.push('/role-select')" class="flex-1 bg-purple-50 text-purple-700 border border-purple-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-purple-100 transition-all">
-                  Switch Role
+                <button type="button" @click="switchRole" :disabled="isSwitchingRole" class="flex-1 bg-purple-50 text-purple-700 border border-purple-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-purple-100 transition-all">
+                  Switch Profile
                 </button>
                 <button type="button" @click="logout" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-red-100 transition-all">
                   Log Out
@@ -412,7 +524,6 @@ const logout = () => {
         </form>
       </div>
     </div>
-    
     <BottomNav />
   </div>
 </template>

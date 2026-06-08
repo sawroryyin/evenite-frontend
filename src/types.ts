@@ -110,3 +110,26 @@ export interface Form {
   description: string | null;
   fields: FormField[];
 }
+
+export const ALLOWED_EVENT_PREFERENCES = [
+  'SEMINAR',
+  'WORKSHOP',
+  'LECTURE',
+  'CONFERENCE',
+  'HACKATHON',
+  'COMPETITION',
+  'CLUB_ACTIVITY',
+  'ORIENTATION',
+  'VOLUNTEER',
+  'TRIP',
+  'SPORT',
+  'CULTURAL',
+  'FESTIVAL',
+  'NETWORKING',
+  'CAREER_FAIR',
+  'PARTY',
+  'INTERNSHIP',
+  'OTHER'
+] as const;
+
+export const LANG_PREFS = ['en', 'th'] as const;
