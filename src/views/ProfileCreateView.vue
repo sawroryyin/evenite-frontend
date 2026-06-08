@@ -4,6 +4,28 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 import LoadingOverview from '../components/LoadingOverlay.vue'
+
+import AlertBox from '../components/ConfirmModal.vue' 
+
+const showAlert = ref(false)
+const alertTitle = ref('')
+const alertDescription = ref('')
+const isSuccessAlert = ref(false)
+
+const triggerAlert = (title: string, description: string, success = false) => {
+  alertTitle.value = title
+  alertDescription.value = description
+  isSuccessAlert.value = success
+  showAlert.value = true
+}
+
+const onAlertConfirm = () => {
+  showAlert.value = false
+  if (isSuccessAlert.value) {
+    router.push({ name: 'profile' })
+  }
+}
+
 import { ALLOWED_EVENT_PREFERENCES, LANG_PREFS } from '../types.ts'
 
 const route = useRoute()
@@ -13,7 +35,6 @@ const authStore = useAuthStore()
 const isLoading = ref(false)
 const role = ref<'PARTICIPANT' | 'ORGANIZER'>('PARTICIPANT')
 
-// Image Upload Refs
 const fileInput = ref<HTMLInputElement | null>(null)
 const imageFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
@@ -28,7 +49,7 @@ const pForm = ref({
   contactEmail: '', contactPhone: '', contactLineId: '',
   preferences: { 
     personal: [] as string[], 
-    event: [] as string[], // Add this
+    event: [] as string[], 
     language: [] as string[], 
     personalOther: '' 
   }
@@ -49,21 +70,40 @@ const onFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     const file = target.files[0]
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB.')
+    
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      triggerAlert('Invalid File', 'Unsupported image format')
+      target.value = '' 
       return
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      triggerAlert('File Too Large', 'File size must not exceed 5MB.')
+      target.value = '' 
+      return
+    }
+    
     imageFile.value = file
     imagePreviewUrl.value = URL.createObjectURL(file)
   }
 }
 
 const submitProfile = async () => {
+  if (role.value === 'PARTICIPANT' && (!pForm.value.firstName || !pForm.value.firstName.trim())) {
+    triggerAlert('Missing Information', 'First name is required')
+    return 
+  }
+
+  if (role.value === 'ORGANIZER' && (!oForm.value.name || !oForm.value.name.trim())) {
+    triggerAlert('Missing Information', 'Organizer name is required')
+    return 
+  }
+
   isLoading.value = true
   try {
     let imageUrl = ''
     
-    // 1. Upload image first if one is selected
     if (imageFile.value) {
       const formData = new FormData()
       formData.append('image', imageFile.value)
@@ -78,7 +118,6 @@ const submitProfile = async () => {
       imageUrl = uploadRes.data.imageUrl
     }
 
-    // 2. Submit Profile
     if (role.value === 'PARTICIPANT') {
       if (!pForm.value.preferences.personal.includes('OTHER')) pForm.value.preferences.personalOther = ''
       const payload = { ...pForm.value, imageUrl }
@@ -89,9 +128,12 @@ const submitProfile = async () => {
       const { data } = await api.post('/users/me/organizer-profile', payload)
       authStore.setTokens(data.accessToken, authStore.refreshToken!)
     }
-    router.push({name: 'home'})
+    
+    triggerAlert('Success!', 'Your profile has been created successfully.', true)
+    
   } catch (error) {
     console.error('Failed to create profile', error)
+    triggerAlert('Error', 'Failed to create profile. Please try again later.')
   } finally {
     isLoading.value = false
   }
@@ -100,31 +142,34 @@ const submitProfile = async () => {
 const removePicture = () => {
   imageFile.value = null
   imagePreviewUrl.value = null
-  if (fileInput.value) fileInput.value.value = '' // Resets the actual file input
+  if (fileInput.value) fileInput.value.value = '' 
 }
 
-// Add this inside <script setup lang="ts">
 const handleCancel = () => {
-  // Logic to determine if the "other" profile exists
-  // You might need to check your authStore or check if the user has 
-  // already created the alternate profile previously.
   const hasParticipant = authStore.hasParticipantProfile; 
   const hasOrganizer = authStore.hasOrganizerProfile;
   
   const hasOtherProfile = role.value === 'PARTICIPANT' ? hasOrganizer : hasParticipant;
 
   if (hasOtherProfile) {
-    // Navigate to the Profile View to show the existing other profile
     router.push({ name: 'profile' }); 
   } else {
-    // No other profile exists, return to selection
     router.push({ name: 'role-select' }); 
   }
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-[#fafafa] font-['Lato'] px-4 py-8">
+  <div class="min-h-screen flex items-center justify-center bg-[#fafafa] font-['Lato'] px-4 py-8 relative">
+    
+    <AlertBox 
+      v-if="showAlert" 
+      :title="alertTitle" 
+      :description="alertDescription" 
+      confirmText="OK" 
+      @confirm="onAlertConfirm" 
+    />
+    
     <LoadingOverview v-if="isLoading" message="Creating your profile..." />
 
     <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl w-full">
@@ -160,7 +205,7 @@ const handleCancel = () => {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">First Name *</label>
-                <input v-model="pForm.firstName" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" />
+                <input v-model="pForm.firstName" type="text" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" />
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Last Name</label>
@@ -259,7 +304,7 @@ const handleCancel = () => {
 
             <div>
               <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Organization Name *</label>
-              <input v-model="oForm.name" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" />
+              <input v-model="oForm.name" type="text" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" />
             </div>
             
             <div>
