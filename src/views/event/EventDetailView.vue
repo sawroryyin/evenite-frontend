@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, toRaw, provide, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useEventCreationStore } from '../stores/eventCreation'
-import { EventService } from '../services/EventService'
-import { translations } from '../locales/eventForm'
+import { useEventCreationStore } from '../../stores/eventCreation.ts'
+import { EventService } from '../../services/EventService.ts'
+import { translations } from '../../locales/eventForm.ts'
 
-import ConfirmModal from '../components/ConfirmModal.vue'
-import EventPreview from './EventDetailPreview.vue'
-import EventForm from '../components/EventDetailForm.vue'
-import { FormService } from '../services/FormService'
-import { useAuthStore } from '../stores/auth.ts'
+import ConfirmModal from '../../components/ConfirmModal.vue'
+import EventPreview from '../event/EventDetailPreview.vue'
+import EventForm from '../../components/event/EventDetailForm.vue'
+import { FormService } from '../../services/FormService.ts'
+import { useAuthStore } from '../../stores/auth.ts'
 
 const router = useRouter()
 const route = useRoute()

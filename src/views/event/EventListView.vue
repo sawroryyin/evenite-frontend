@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { EventService } from '../services/EventService'
-import { useAuthStore } from '../stores/auth'
-import type { EventData } from '../types' 
-import BottomNav from '../components/BottomNav.vue'
-import EventCardList from '../components/EventCardList.vue'
+import { EventService } from '../../services/EventService.ts'
+import { useAuthStore } from '../../stores/auth.ts'
+import type { EventData } from '../../types.ts' 
+import BottomNav from '../../components/BottomNav.vue'
+import EventCardList from '../../components/event/EventCardList.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

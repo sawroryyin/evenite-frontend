@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useEventCreationStore } from '../stores/eventCreation'
-import { EventService } from '../services/EventService'
-import LoadingOverlay from "../components/LoadingOverlay.vue"
-import ConfirmModal from '../components/ConfirmModal.vue'
+import { useEventCreationStore } from '../../stores/eventCreation.ts'
+import { EventService } from '../../services/EventService.ts'
+import LoadingOverlay from "../../components/LoadingOverlay.vue"
+import ConfirmModal from '../../components/ConfirmModal.vue'
 
 const router = useRouter()
 const store = useEventCreationStore()

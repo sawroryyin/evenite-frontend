@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { FormService } from '../services/FormService';
-import { FormType } from '../types';
+import { FormService } from '../../services/FormService';
+import { FormType } from '../../types';
 
 const route = useRoute();
 const router = useRouter();

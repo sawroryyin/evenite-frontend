@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EventData } from '../types' // Adjust path if needed
+import type { EventData } from '../../types' // Adjust path if needed
 
 const props = defineProps<{
   event: EventData

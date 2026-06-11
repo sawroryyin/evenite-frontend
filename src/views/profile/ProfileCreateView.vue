@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import api from '../services/api'
-import LoadingOverview from '../components/LoadingOverlay.vue'
+import { useAuthStore } from '../../stores/auth.ts'
+import api from '../../services/api.ts'
+import LoadingOverview from '../../components/LoadingOverlay.vue'
 
-import AlertBox from '../components/ConfirmModal.vue' 
+import AlertBox from '../../components/ConfirmModal.vue' 
 
 const showAlert = ref(false)
 const alertTitle = ref('')
@@ -26,7 +26,7 @@ const onAlertConfirm = () => {
   }
 }
 
-import { ALLOWED_EVENT_PREFERENCES, LANG_PREFS } from '../types.ts'
+import { ALLOWED_EVENT_PREFERENCES, LANG_PREFS } from '../../types.ts'
 
 const route = useRoute()
 const router = useRouter()
