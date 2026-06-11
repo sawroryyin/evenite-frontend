@@ -4,7 +4,7 @@ import FormBasicInfo from './EventBasicInfo.vue'
 import FormDateLocation from './EventDateLocation.vue'
 import FormAgenda from './EventAgenda.vue'
 import FormCatering from './EventCatering.vue'
-import EventFormLinks from './EventFormLinks.vue' // <-- IMPORT HERE
+import EventFormLinks from '../form/EventFormLinks.vue'
 import FormContact from './EventContact.vue'
 
 defineProps<{ 

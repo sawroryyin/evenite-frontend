@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { EventService } from '../services/EventService'
 import type { EventData } from '../types'
 import BottomNav from '../components/BottomNav.vue'
-import EventCard from '../components/EventCard.vue'
+import EventCard from '../components/event/EventCard.vue'
 
 const router = useRouter()
 const allEvents = ref<EventData[]>([])

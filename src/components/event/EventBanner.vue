@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { EventService } from '../services/EventService'
+import { EventService } from '../../services/EventService'
 
 const props = defineProps<{ 
   form: any; 

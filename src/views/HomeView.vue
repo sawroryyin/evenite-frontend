@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { EventService } from '../services/EventService'
 import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
-import EventCard from '../components/EventCard.vue'
+import EventCard from '../components/event/EventCard.vue'
 import BottomNav from '../components/BottomNav.vue'
 import type { EventData } from '../types' // Adjust path if needed
 

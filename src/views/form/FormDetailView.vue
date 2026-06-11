@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { FormService } from '../services/FormService';
-import { EventService } from '../services/EventService';
-import { FormType, FieldType, type Form } from '../types';
-import { useEventCreationStore } from '../stores/eventCreation';
-import ConfirmModal from '../components/ConfirmModal.vue';
+import { FormService } from '../../services/FormService';
+import { EventService } from '../../services/EventService';
+import { FormType, FieldType, type Form } from '../../types';
+import { useEventCreationStore } from '../../stores/eventCreation';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 
 const store = useEventCreationStore();
 

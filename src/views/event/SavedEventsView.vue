@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import type { EventData } from '../types' // Adjust path if needed
+import type { EventData } from '../../types' // Adjust path if needed
 
 const router = useRouter()
 

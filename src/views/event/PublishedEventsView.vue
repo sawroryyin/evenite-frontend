@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import type { EventData } from '../types'
+import type { EventData } from '../../types'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 

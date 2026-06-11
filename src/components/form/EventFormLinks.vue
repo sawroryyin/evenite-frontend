@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { FormService } from '../services/FormService'
+import { FormService } from '../../services/FormService'
 
 const props = defineProps<{
   eventId?: string;
