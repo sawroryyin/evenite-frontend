@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { FormService } from '../../services/FormService';
 import { FormType, type Form } from '../../types';
 import { EventService } from '../../services/EventService';
+import api from '../../services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -27,11 +28,25 @@ onMounted(async () => {
     
     form.value = await FormService.getForm(eventId, formType);
     
+    let userProfile: any = {};
+    try {
+      const { data } = await api.get('/users/me/participant-profile');
+      userProfile = data;
+    } catch (profileError) {
+      console.warn("Could not load user profile for auto-fill. Defaulting to blank form.");
+    }
+
     if (form.value && form.value.fields) {
       form.value.fields.forEach((field, index) => {
         const key = field.id || index.toString();
-        if (field.type === 'CHECKBOX') answers.value[key] = [];
-        else answers.value[key] = '';
+        
+        if (field.autoFillKey && userProfile[field.autoFillKey]) {
+          answers.value[key] = userProfile[field.autoFillKey];
+        } 
+        else {
+          if (field.type === 'CHECKBOX') answers.value[key] = [];
+          else answers.value[key] = '';
+        }
       });
     }
   } catch (error) {

@@ -27,6 +27,18 @@ const availableFieldTypes = Object.values(FieldType);
 
 const isNewForm = ref(route.query.isNew === 'true');
 
+const AUTOFILL_OPTIONS = [
+  { label: 'None', value: null },
+  { label: 'First Name', value: 'firstName' },
+  { label: 'Last Name', value: 'lastName' },
+  { label: 'Nickname', value: 'nickname' },
+  { label: 'Student ID', value: 'studentId' },
+  { label: 'Major', value: 'major' },
+  { label: 'Email', value: 'contactEmail' },
+  { label: 'Phone Number', value: 'contactPhone' },
+  { label: 'Line ID', value: 'contactLineId' }
+];
+
 onMounted(async () => {
   if (eventId === 'new') {
     const existingDraft = store.draftForms[formType];
@@ -91,7 +103,8 @@ const addField = (type: FieldType) => {
     isRequired: false,
     order: form.value.fields.length,
     options: (type === FieldType.CHOICE || type === FieldType.CHECKBOX) ? ['Option 1', 'Option 2'] : [],
-    maxRating: type === 'RATING' ? 5 : undefined
+    maxRating: type === 'RATING' ? 5 : undefined,
+    autoFillKey: null // <-- ADD THIS LINE
   });
   showFieldTypeModal.value = false;
 };
@@ -302,16 +315,38 @@ const formattedFormType = computed(() =>
             </label>
           </div>
 
-          <div class="flex justify-between items-center mt-2 border-t border-[#EEEDFE] pt-2">
-            <label class="flex items-center gap-2 text-xs font-bold text-[#26215C]/70 cursor-pointer">
-              <input type="checkbox" v-model="field.isRequired" class="w-4 h-4 text-[#534AB7] rounded border-[#CECBF6] focus:ring-[#7F77DD]" /> 
-              Required
-            </label>
+          <div class="mt-3 border-t border-[#EEEDFE] pt-3 flex flex-col gap-3">
             
-            <button type="button" @click="removeField(index)" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors tracking-wide uppercase cursor-pointer">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-              Remove
-            </button>
+            <div class="flex justify-between items-center">
+              <label class="flex items-center gap-2 text-[11px] font-bold text-[#26215C]/80 cursor-pointer hover:text-[#3C3489] transition-colors uppercase tracking-wider">
+                <div class="relative flex items-center">
+                  <input type="checkbox" v-model="field.isRequired" class="peer w-4 h-4 text-[#534AB7] bg-[#EEEDFE]/30 border border-[#CECBF6] rounded focus:ring-2 focus:ring-[#7F77DD]/30 focus:ring-offset-0 transition-all cursor-pointer appearance-none checked:bg-[#534AB7] checked:border-[#534AB7]" />
+                  <svg class="absolute w-3 h-3 text-white top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                Required
+              </label>
+
+              <button type="button" @click="removeField(index)" class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors tracking-wider uppercase cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <span class="hidden sm:inline">Remove</span>
+              </button>
+            </div>
+
+            <div v-if="['TEXT', 'TEXTAREA', 'NUMBER'].includes(field.type)" class="flex items-center">
+              <div class="flex items-center bg-[#EEEDFE]/30 border border-[#CECBF6] hover:border-[#7F77DD] hover:bg-[#EEEDFE]/50 rounded-lg px-2.5 py-1.5 transition-all relative group cursor-pointer shadow-sm">
+                <svg class="w-3.5 h-3.5 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                
+                <select v-model="field.autoFillKey" class="pl-2 pr-5 bg-transparent text-[11px] font-bold text-[#534AB7] focus:outline-none cursor-pointer appearance-none w-full tracking-wide">
+                  <option :value="null">No Auto-fill Link</option>
+                  <option v-for="opt in AUTOFILL_OPTIONS.filter(o => o.value !== null)" :key="opt.label" :value="opt.value">
+                    Auto-fill: {{ opt.label }}
+                  </option>
+                </select>
+                
+                <svg class="w-3.5 h-3.5 text-[#534AB7]/50 absolute right-2 pointer-events-none group-hover:text-[#534AB7] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+            
           </div>
         </div>
       </div>
@@ -328,9 +363,16 @@ const formattedFormType = computed(() =>
       </div>
 
       <div v-for="(field, index) in form.fields" :key="field.id" class="p-5 bg-[#FFFFFF] border border-[#CECBF6] rounded-2xl shadow-sm">
-        <label class="block font-bold text-[#26215C] mb-3 text-sm">
-          {{ field.label }} <span v-if="field.isRequired" class="text-red-500 ml-1">*</span>
-        </label>
+        <div class="flex justify-between items-start mb-3">
+          <label class="block font-bold text-[#26215C] text-sm">
+            {{ field.label }} <span v-if="field.isRequired" class="text-red-500 ml-1">*</span>
+          </label>
+          
+          <span v-if="field.autoFillKey" class="flex items-center gap-1 bg-[#EEEDFE] text-[#534AB7] px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-[#CECBF6] shadow-sm">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Auto-fills
+          </span>
+        </div>
         
         <input v-if="['TEXT', 'NUMBER', 'DATE'].includes(field.type)" :type="field.type.toLowerCase()" class="w-full p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm text-[#26215C]" disabled placeholder="Participant response..." />
         
