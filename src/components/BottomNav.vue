@@ -23,7 +23,7 @@ const filteredNavItems = computed(() => {
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pb-safe z-50 
+  <nav class="fixed bottom-0 left-0 w-full bg-[#FFFFFF] border-t border-[#CECBF6] pb-safe z-50 
   shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] font-['Lato']">
     <div class="flex justify-around items-center h-14 max-w-3xl mx-auto px-2">
       <button 
@@ -31,7 +31,7 @@ const filteredNavItems = computed(() => {
         :key="item.name"
         @click="router.push({ name: item.name })"
         class="flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors duration-200"
-        :class="route.name === item.name ? 'text-purple-600' : 'text-gray-400 hover:text-purple-400'"
+        :class="route.name === item.name ? 'text-[#534AB7]' : 'text-[#26215C]/30 hover:text-[#3C3489]'"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"></path>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EventData } from '../../types' // Adjust path if needed
+import type { EventData } from '../../types'
 
 const props = defineProps<{
   event: EventData
@@ -13,47 +13,44 @@ const formatDate = (dateString?: string) => {
   })
 }
 
-// Maps backend enum status to frontend text and tailwind styles
-const statusDisplay = computed(() => {
+// Converts backend enum status to frontend text
+const statusText = computed(() => {
   switch (props.event.status) {
     case 'ONGOING':
-      return { text: 'Ongoing', class: 'bg-green-100 text-green-800' }
+      return 'Ongoing'
     case 'PUBLISHED':
-      return { text: 'Upcoming', class: 'bg-blue-100 text-blue-800' }
+      return 'Upcoming'
     case 'CONCLUDED':
-      return { text: 'Completed', class: 'bg-purple-100 text-purple-800' }
+      return 'Completed'
     case 'DRAFT':
-      return { text: 'Draft', class: 'bg-amber-100 text-amber-800' }
+      return 'Draft'
     default:
-      return { text: props.event.status || 'Unknown', class: 'bg-slate-100 text-slate-700' }
+      return props.event.status || 'Unknown'
   }
 })
 </script>
 
 <template>
-  <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex justify-between items-center transition-transform 
+  <div class="bg-[#FFFFFF] p-4 rounded-xl shadow-xs border border-[#CECBF6] flex justify-between items-center transition-transform 
   active:scale-[0.995]">
     <div class="pr-3 truncate">
       <div class="flex items-center gap-2 mb-1">
-        <span 
-          class="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-2xs"
-          :class="statusDisplay.class"
-        >
-          {{ statusDisplay.text }}
+        <span class="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-2xs bg-[#EEEDFE] text-[#3C3489]">
+          {{ statusText }}
         </span>
-        <span class="text-[10px] text-gray-400 font-semibold font-['Lato']">
+        <span class="text-[10px] text-[#26215C]/70 font-semibold font-['Lato']">
           {{ formatDate(event.startAt || event.updatedAt) }}
         </span>
       </div>
-      <h3 class="font-bold text-gray-900 text-sm tracking-tight truncate">
+      <h3 class="font-bold text-[#26215C] text-sm tracking-tight truncate">
         {{ event.title?.en || event.title?.th || 'Untitled Event' }}
       </h3>
     </div>
     
     <router-link 
       :to="{ name: 'event-detail', params: { id: event.id } }"
-      class="bg-[#fafafa] hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 text-gray-700 border 
-      border-gray-200 text-[11px] font-bold py-1.5 px-3 rounded-xl transition-all shrink-0"
+      class="bg-[#FFFFFF] hover:bg-[#EEEDFE] hover:text-[#3C3489] hover:border-[#534AB7] text-[#534AB7] border 
+      border-[#CECBF6] text-[11px] font-bold py-1.5 px-3 rounded-xl transition-colors shrink-0"
     >
       View
     </router-link>
