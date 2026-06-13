@@ -11,23 +11,23 @@ const emit = defineEmits(["confirm", "cancel"]);
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 transition-opacity">
-    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full animate-fade-in font-['Lato']">
-      <h3 class="text-lg font-bold text-gray-900 mb-2">{{ title }}</h3>
-      <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+  <div class="fixed inset-0 bg-[#26215C]/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 transition-opacity">
+    <div class="bg-[#FFFFFF] p-6 rounded-2xl shadow-sm border border-[#CECBF6] max-w-sm w-full animate-fade-in font-['Lato']">
+      <h3 class="text-[18px] font-['Nunito'] font-black text-[#26215C] mb-2">{{ title }}</h3>
+      <p class="text-[13px] text-[#26215C]/70 mb-6 leading-relaxed">
         {{ description }}
       </p>
       <div class="flex justify-end gap-3">
         <button
           v-if="cancelText"
           @click="emit('cancel')"
-          class="px-4 py-2 text-sm bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+          class="px-4 py-2.5 bg-[#EEEDFE]/50 hover:bg-[#EEEDFE] text-[#26215C]/70 hover:text-[#26215C] border border-[#CECBF6] font-bold text-[11px] uppercase tracking-wider rounded-xl transition-colors cursor-pointer">
           {{ cancelText }}
         </button>
         <button
           @click="emit('confirm')"
-          :class="confirmTheme === 'red' ? 'bg-red-600 hover:bg-red-700' : 'bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700'"
-          class="px-4 py-2 text-sm text-white font-bold rounded-xl transition-colors shadow-sm">
+          :class="confirmTheme === 'red' ? 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF]' : 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF]'"
+          class="px-4 py-2.5 font-bold text-[11px] uppercase tracking-wider rounded-xl shadow-sm transition-colors cursor-pointer">
           {{ confirmText }}
         </button>
       </div>

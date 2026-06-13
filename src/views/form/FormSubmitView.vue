@@ -43,7 +43,6 @@ onMounted(async () => {
 const submitForm = async () => {
   if (!form.value) return;
 
-  // Basic Validation
   for (const [index, field] of form.value.fields.entries()) {
     const key = field.id || index.toString();
     const answer = answers.value[key];
@@ -64,7 +63,6 @@ const submitForm = async () => {
       }))
     };
 
-    // This SINGLE call triggers your backend to save the answers AND register the user!
     await FormService.submitResponse(eventId, formType, payload);
     
     console.log("Submitting Payload:", payload);

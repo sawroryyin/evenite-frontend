@@ -18,16 +18,13 @@ const navigateToSubmitForm = (type: string) => {
   router.push(`/events/${props.event.id}/forms/${type}/submit`) 
 }
 
-// Helper to determine if the event starts and ends on the same day
 const isSingleDay = computed(() => {
-  // If there is no end date provided, it's inherently a single-day event.
   if (!props.event.startAt || !props.event.endAt) return true;
   const start = new Date(props.event.startAt);
   const end = new Date(props.event.endAt);
   return start.toDateString() === end.toDateString();
 })
 
-// Helper to split date into logical parts for the UI
 const formatDateObj = (isoString: string | undefined) => {
   if (!isoString) return { date: 'TBA', time: '', full: 'TBA' };
   
@@ -39,9 +36,9 @@ const formatDateObj = (isoString: string | undefined) => {
   const timePart = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   
   return {
-    date: `${datePart} (${weekdayPart})`, // e.g. Jun 22, 2026 (Mon)
-    time: timePart, // e.g. 07:00 AM
-    full: `${datePart} (${weekdayPart}) ${timePart}` // e.g. Jun 22, 2026 (Mon) 07:00 AM
+    date: `${datePart} (${weekdayPart})`,
+    time: timePart,
+    full: `${datePart} (${weekdayPart}) ${timePart}`
   };
 }
 
@@ -113,7 +110,6 @@ const mapEmbedUrl = computed(() => {
               <div>
                 <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1.5">Date & Time</h3>
                 
-                <!-- Display Logic for Date & Time based on provided constraints -->
                 <template v-if="isSingleDay">
                   <p class="text-sm font-bold text-[#26215C]">{{ formatDateObj(event.startAt).date }}</p>
                   <p class="text-xs text-[#26215C]/70 font-semibold mt-0.5">

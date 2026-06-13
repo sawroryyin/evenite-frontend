@@ -15,7 +15,6 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
 
-// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -53,7 +52,6 @@ const handleFileSelect = (e: Event) => {
     return;
   }
 
-  // Set file and create local preview
   selectedFile.value = file;
   previewUrl.value = URL.createObjectURL(file);
 };
@@ -77,14 +75,12 @@ const handleGenerate = async () => {
     store.setTempEventData(generatedData as any)
     router.push({ name: "create-manual" });
   } catch (error: any) {
-    // Show in-app alert and set redirect flag to true
     showAlert("Error", "There was an error in creating an event, try creating manually.", "red", true);
   } finally {
     isLoading.value = false;
   }
 };
 
-// Clean up object URL when component unmounts to prevent memory leaks
 onUnmounted(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
 });

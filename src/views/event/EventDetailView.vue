@@ -32,7 +32,6 @@ const originalStateStr = ref('')
 const availableForms = ref<any[]>([]) 
 const isRegistered = ref(false)
 
-// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -78,7 +77,6 @@ const formatForDateTimeLocal = (isoString: string | undefined) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-// CONTINUOUS SYNC: Watch for changes and save to temp data automatically
 watch(form, (newVal) => {
   if (viewMode.value === 'create' || viewMode.value === 'edit') {
     store.setTempEventData(JSON.parse(JSON.stringify(newVal)));
@@ -93,12 +91,10 @@ watch(form, (newVal) => {
 
 onMounted(async () => {
   const eventId = route.params.id as string
-  
-  // Safely check for both 'new' and 'create' depending on how the router is pushed
+
   const isNewEvent = !eventId || eventId === 'new' || eventId === 'create';
 
   if (!isNewEvent) {
-    // IT IS AN EXISTING EVENT
     try {
       const data = await EventService.getEventById(eventId)
       eventStatus.value = data.status
@@ -125,13 +121,10 @@ onMounted(async () => {
       router.back()
     }
   } else {
-    // IT IS A NEW EVENT
     viewMode.value = 'create'
 
-    // SMART TEMP DATA CHECK: Ensure it doesn't belong to a previous draft!
     if (store.tempEventData && Object.keys(store.tempEventData).length > 0) {
       
-      // If there is NO ID, it's a true new event in progress. Safe to restore.
       if (!store.tempEventData.id) {
         const draft = { ...store.tempEventData };
         
@@ -140,8 +133,6 @@ onMounted(async () => {
         
         form.value = { ...form.value, ...draft };
       } else {
-        // It has an ID! This means it's ghost data from a previous saved draft. 
-        // Do not restore it into a new event. Wipe it instead.
         store.clearTempData();
       }
     }
@@ -301,7 +292,6 @@ const confirmPublish = async () => {
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     
-    // CLEAR TEMP DATA ON EXPLICIT PUBLISH
     store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
@@ -336,7 +326,6 @@ const handleBackClick = () => {
 }
 
 const confirmLeave = () => { 
-  // CLEAR TEMP DATA ON EXPLICIT QUIT
   store.clearTempData(); 
   showLeaveModal.value = false;
 
@@ -368,10 +357,6 @@ const confirmLeave = () => {
       <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
         {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
       </h1>
-
-      <!-- <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
-          My Events
-        </h1> -->
       
       <div class="flex items-center gap-2 w-full md:w-auto">
         <div class="flex bg-[#EEEDFE]/50 border border-[#CECBF6] p-0.5 rounded-lg w-full md:w-32">

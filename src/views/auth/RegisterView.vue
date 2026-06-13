@@ -33,8 +33,6 @@ const register = async () => {
     message.value = error.response?.data?.message || 'Registration failed. Please try again.'
     isSuccess.value = false
     showModal.value = true
-    
-    // Clear all inputs on failed attempt
     email.value = ''
     password.value = ''
   } finally {
@@ -73,8 +71,7 @@ const register = async () => {
       </div>
 
     </div>
-
-    <!-- Success/Error Modal -->
+    
     <ConfirmModal
       v-if="showModal"
       :title="isSuccess ? 'Success' : 'Registration Failed'"

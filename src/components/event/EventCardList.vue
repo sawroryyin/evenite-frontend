@@ -13,7 +13,6 @@ const formatDate = (dateString?: string) => {
   })
 }
 
-// Converts backend enum status to frontend text
 const statusText = computed(() => {
   switch (props.event.status) {
     case 'ONGOING':

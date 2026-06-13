@@ -8,13 +8,11 @@ const props = defineProps<{
   viewMode?: 'create' | 'edit'
 }>()
 
-// --- Local State for Date Display Modes ---
 const isMultiDay = ref(false)
 const singleDate = ref('')
 const startTime = ref('')
 const endTime = ref('')
 
-// Utility to safely extract date and time from datetime-local strings
 const parseDateTime = (dtStr: string) => {
   if (!dtStr) return { date: '', time: '' }
   const [datePart, timePart] = dtStr.split('T')
@@ -24,7 +22,6 @@ const parseDateTime = (dtStr: string) => {
   }
 }
 
-// Initialize fields on load
 onMounted(() => {
   const start = parseDateTime(props.form.startAt)
   const end = parseDateTime(props.form.endAt)
@@ -33,13 +30,11 @@ onMounted(() => {
   startTime.value = start.time
   endTime.value = end.time
 
-  // Auto-detect multi-day if start date and end date exist and are different
   if (start.date && end.date && start.date !== end.date) {
     isMultiDay.value = true
   }
 })
 
-// Sync Single Day UI back to the main form data
 watch([singleDate, startTime, endTime], () => {
   if (!isMultiDay.value) {
     if (singleDate.value) {
@@ -53,7 +48,6 @@ watch([singleDate, startTime, endTime], () => {
   }
 })
 
-// Re-sync local state when switching from Multi-Day back to Single Day
 watch(isMultiDay, (newVal) => {
   if (!newVal) {
     const start = parseDateTime(props.form.startAt)
@@ -63,10 +57,8 @@ watch(isMultiDay, (newVal) => {
     startTime.value = start.time || ''
     endTime.value = end.time || ''
     
-    // Force the single day logic to apply strictly to form fields immediately
     if (singleDate.value) {
       props.form.startAt = startTime.value ? `${singleDate.value}T${startTime.value}` : `${singleDate.value}T00:00`
-      // FIX: Set to null if endTime is empty, instead of defaulting to 23:59
       props.form.endAt = endTime.value ? `${singleDate.value}T${endTime.value}` : null
     }
   }
@@ -78,7 +70,6 @@ watch(isMultiDay, (newVal) => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <h2 class="text-base font-bold text-[#26215C]">{{ t.dateLocation }}</h2>
       
-      <!-- Event Duration Toggle -->
       <div class="flex bg-[#EEEDFE]/50 border border-[#CECBF6] p-1 rounded-xl w-full sm:w-56 shrink-0">
         <button 
           type="button"
@@ -97,7 +88,6 @@ watch(isMultiDay, (newVal) => {
       </div>
     </div>
     
-    <!-- 1. Single Day Fields -->
     <div v-if="!isMultiDay" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 bg-[#EEEDFE]/10 p-3 rounded-xl border border-[#CECBF6]/50">
       <div class="sm:col-span-1">
         <label class="block text-xs font-bold text-[#26215C] mb-1.5">
@@ -122,7 +112,6 @@ watch(isMultiDay, (newVal) => {
       </div>
     </div>
 
-    <!-- 2. Multi-Day Fields -->
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 bg-[#EEEDFE]/10 p-3 rounded-xl border border-[#CECBF6]/50">
       <div>
         <label class="block text-xs font-bold text-[#26215C] mb-1.5">{{ t.startDate }} <span class="text-red-500">*</span></label>
@@ -136,14 +125,12 @@ watch(isMultiDay, (newVal) => {
       </div>
     </div>
 
-    <!-- Checkbox Online -->
     <div class="flex items-center gap-2.5 mb-4 bg-[#EEEDFE]/30 p-3 rounded-xl border border-[#CECBF6]">
       <input type="checkbox" v-model="form.isOnline" id="isOnline" class="w-4 h-4 text-[#534AB7] border-[#CECBF6] rounded 
       focus:ring-[#7F77DD] transition-colors cursor-pointer" />
       <label for="isOnline" class="text-xs font-bold text-[#26215C] cursor-pointer">{{ t.isOnline }}</label>
     </div>
 
-    <!-- Physical Location Fields -->
     <div v-if="!form.isOnline" class="space-y-4">
       <div v-if="viewLang === 'en'">
         <label class="block text-xs font-bold text-[#26215C] mb-1.5">{{ t.locationEn }} <span class="text-red-500">*</span></label>

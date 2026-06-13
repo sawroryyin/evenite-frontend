@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EventData } from '../../types' // Adjust path if necessary
+import type { EventData } from '../../types'
 
 const props = withDefaults(defineProps<{
   event: EventData | any,
-  variant?: 'hero' | 'grid' // Accepts the variant prop passed from HomeView
+  variant?: 'hero' | 'grid'
 }>(), {
   variant: 'grid'
 })

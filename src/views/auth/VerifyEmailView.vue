@@ -14,7 +14,6 @@ const isLoading = ref(false)
 const isResending = ref(false)
 const showResendForm = ref(false)
 
-// Helper to show temporary messages
 const showMessage = (text: string, type: 'success' | 'error') => {
   message.value = { text, type }
   setTimeout(() => { message.value.text = '' }, 5000)
@@ -34,7 +33,6 @@ const verify = async () => {
     
     showMessage('Email verified successfully! Redirecting to login...', 'success')
     
-    // Redirect to login after 1.5 seconds
     setTimeout(() => {
       router.push('/auth/login')
     }, 1500)
@@ -58,7 +56,7 @@ const resendCode = async () => {
   try {
     await api.post('/auth/resend-verification', { email: emailInput.value })
     showMessage('Verification code resent! Please check your email.', 'success')
-    showResendForm.value = false // Switch back to the verify form
+    showResendForm.value = false
   } catch (error: any) {
     showMessage(error.response?.data?.message || 'Failed to resend verification code.', 'error')
   } finally {
@@ -76,7 +74,7 @@ onMounted(() => {
 
   if (urlToken) {
     tokenInput.value = urlToken
-    verify() // Auto-verify if they clicked the link in their email
+    verify()
   }
 })
 </script>

@@ -10,14 +10,12 @@ import EventCardList from '../../components/event/EventCardList.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
-// --- State Management Engine ---
 const allEvents = ref<EventData[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 
 const isOrganizer = computed(() => authStore.currentRole === 'ORGANIZER')
 
-// Dynamic Tabs: Explicitly sets 5 tabs for Organizer, 4 for Participant
 const tabs = computed(() => {
   if (isOrganizer.value) {
     return ['All', 'Upcoming', 'Ongoing', 'Completed', 'Draft']
@@ -27,18 +25,15 @@ const tabs = computed(() => {
 
 const activeTab = ref('All')
 
-// --- Database Sync Engine ---
 const fetchEventsFromDatabase = async () => {
   try {
     isLoading.value = true
     errorMessage.value = ''
     
     if (isOrganizer.value) {
-      // Organizer: Fetch events they created
       const data = await EventService.getCreatedEvents()
       allEvents.value = data
     } else {
-      // Participant: Fetch events they registered for
       const data: any = await EventService.getRegisteredEvents()
       allEvents.value = data.map((item: any) => item.event ? item.event : item)
     }
@@ -51,13 +46,11 @@ const fetchEventsFromDatabase = async () => {
   }
 }
 
-// --- Live Filtering & Sorting Logic ---
 const filteredEvents = computed(() => {
   let result: EventData[] = []
 
-  // 1. Filter based on active tab
   if (activeTab.value === 'All') {
-    result = [...allEvents.value] // Create a shallow copy so we don't mutate the original array
+    result = [...allEvents.value]
   } else {
     switch (activeTab.value) {
       case 'Upcoming':
@@ -77,9 +70,7 @@ const filteredEvents = computed(() => {
     }
   }
 
-  // 2. Sort from nearest to farthest (chronological order)
   return result.sort((a, b) => {
-    // If an event doesn't have a startAt date (e.g., a draft), push it to the bottom by using Infinity
     const timeA = a.startAt ? new Date(a.startAt).getTime() : Infinity
     const timeB = b.startAt ? new Date(b.startAt).getTime() : Infinity
     
@@ -87,7 +78,6 @@ const filteredEvents = computed(() => {
   })
 })
 
-// Global Lifecycle Hooks Initialization
 onMounted(() => {
   window.scrollTo({ top: 0, behavior: 'instant' })
   fetchEventsFromDatabase()

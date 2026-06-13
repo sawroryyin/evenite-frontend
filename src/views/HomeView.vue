@@ -11,17 +11,14 @@ import type { EventData } from '../types'
 const router = useRouter()
 const authStore = useAuthStore()
 
-// --- Core State Management ---
 const isLoading = ref(true)
 const errorMessage = ref('')
 
-// Home Feed Data
 const allPublicEvents = ref<EventData[]>([]) 
 const selectedEvents = ref<EventData[]>([])
 const upcomingEvents = ref<EventData[]>([])
 const activeSwipeIndex = ref(0)
 
-// --- Search / Filter States ---
 const isSearchMode = ref(false)
 const searchInput = ref('')
 const appliedSearchQuery = ref('')
@@ -38,7 +35,6 @@ const closeDropdowns = () => {
   isDateOpen.value = false
 }
 
-// Exit search mode and return to Home
 const exitSearch = () => {
   isSearchMode.value = false
   searchInput.value = ''

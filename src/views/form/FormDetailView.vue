@@ -20,7 +20,6 @@ const showFieldTypeModal = ref(false);
 const form = ref<Form>({ eventId, type: formType, title: '', description: '', fields: [] });
 const originalForm = ref<Form | null>(null);
 
-// Mocks for Event Status (Replace with actual Event status fetch)
 const eventStatus = ref('DRAFT'); 
 const hasResponses = ref(false);
 
@@ -69,7 +68,6 @@ onMounted(async () => {
     }
   } catch (error: any) {
     console.error('Failed to load form details', error);
-    // Safely fallback to create mode if the API fails
     isEditMode.value = true; 
     isNewForm.value = true;
     originalForm.value = JSON.parse(JSON.stringify(form.value));
@@ -121,7 +119,6 @@ const moveField = (index: number, direction: -1 | 1) => {
 };
 
 const saveForm = async () => {
-  // Validation
   if (!form.value.title?.trim()) return showAlert('Validation Error', 'Form Title is required.', 'red');
   if (!form.value.description?.trim()) return showAlert('Validation Error', 'Form Description is required.', 'red');
   if (form.value.fields.length === 0) return showAlert('Validation Error', 'At least one field is required.', 'red');

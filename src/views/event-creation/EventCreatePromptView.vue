@@ -12,7 +12,6 @@ const store = useEventCreationStore()
 const promptText = ref('')
 const isLoading = ref(false)
 
-// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -43,7 +42,7 @@ const handleTextGenerate = async () => {
   const error = validatePrompt(promptText.value)
   if (error) {
     showAlert("Validation Error", error, "red")
-    promptText.value = '' // Auto-clear the input
+    promptText.value = ''
     return
   }
 
@@ -55,7 +54,6 @@ const handleTextGenerate = async () => {
     store.setTempEventData(generatedData as any)
     router.push({ name: 'create-manual' })
   } catch (error: any) {
-    // Show in-app alert and set redirect flag to true
     showAlert("Error", "There was an error in creating an event, try creating manually.", "red", true)
   } finally {
     isLoading.value = false

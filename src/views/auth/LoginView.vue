@@ -31,7 +31,6 @@ const login = async () => {
     message.value = error.response?.data?.message || 'Invalid credentials. Please try again.'
     showModal.value = true
     
-    // Clear all inputs on failed attempt
     email.value = ''
     password.value = '' 
   } finally {
@@ -71,7 +70,6 @@ const login = async () => {
 
     </div>
 
-    <!-- Error Modal -->
     <ConfirmModal
       v-if="showModal"
       title="Login Failed"

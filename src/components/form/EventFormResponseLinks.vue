@@ -9,11 +9,9 @@ const props = defineProps<{
   availableForms?: any[]; 
 }>()
 
-// Check if specific forms exist
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
 
-// Navigation handler for organizers to view responses
 const navigateToResponses = (type: string) => {
   router.push(`/events/${props.eventId}/forms/${type}/responses`) 
 }

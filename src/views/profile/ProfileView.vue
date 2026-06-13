@@ -239,7 +239,7 @@ const logout = () => {
     />
 
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight">
+      <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
         My Profile
       </h1>
       <span class="bg-[#EEEDFE] text-[#3C3489] px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border border-[#CECBF6]">

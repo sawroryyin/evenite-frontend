@@ -10,12 +10,10 @@ const router = useRouter()
 const allEvents = ref<EventData[]>([])
 const isLoading = ref(true)
 
-// --- Search States ---
-const searchInput = ref('') // What the user is currently typing
-const appliedSearchQuery = ref('') // The query actually used to filter results
-const isSearching = ref(false) // Controls the 3-second loading spinner
+const searchInput = ref('')
+const appliedSearchQuery = ref('')
+const isSearching = ref(false)
 
-// --- Custom Dropdown State ---
 const isCategoryOpen = ref(false)
 const isDateOpen = ref(false)
 
@@ -40,7 +38,7 @@ const categoryOptions = [
   { value: 'CULTURAL', label: 'Cultural', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { value: 'FESTIVAL', label: 'Festival', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
   { value: 'NETWORKING', label: 'Networking', icon: 'M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z' },
-  { value: 'CAREER_FAIR', label: 'Career Fair', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+  { value: 'CAREER_FAIR', label: 'Career Fair', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
   { value: 'PARTY', label: 'Party', icon: 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3' },
   { value: 'INTERNSHIP', label: 'Internship', icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z M12 14v6' },
   { value: 'OTHER', label: 'Other', icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z' }
@@ -62,25 +60,22 @@ const activeDate = computed(() => dateOptions.find(d => d.value === activeDateVa
 const selectCategory = (val: string) => { activeCategoryValue.value = val; isCategoryOpen.value = false }
 const selectDate = (val: string) => { activeDateValue.value = val; isDateOpen.value = false }
 
-// --- Trigger Search Function with 3-second Delay ---
+
 const triggerSearch = () => {
-  if (isSearching.value) return; // Prevent multiple presses
+  if (isSearching.value) return;
   
   isSearching.value = true
   
   setTimeout(() => {
-    // Actually apply the query for the filteredEvents to read
     appliedSearchQuery.value = searchInput.value
     isSearching.value = false
   }, 3000)
 }
 
-// Determine if the user has applied filters/search yet
 const hasActiveFilters = computed(() => {
   return appliedSearchQuery.value.trim().length > 0 || activeCategoryValue.value !== 'All' || activeDateValue.value !== 'latest'
 })
 
-// Fetch all available public events
 onMounted(async () => {
   try {
     const data = await EventService.getPublicEvents()
@@ -92,11 +87,9 @@ onMounted(async () => {
   }
 })
 
-// Filter Logic based on the APPLIED search query (not the active input)
 const filteredEvents = computed(() => {
   let result = allEvents.value
 
-  // 1. Filter by Search Query
   if (appliedSearchQuery.value.trim()) {
     const q = appliedSearchQuery.value.toLowerCase()
     result = result.filter(e => {
@@ -113,7 +106,6 @@ const filteredEvents = computed(() => {
     })
   }
 
-  // 2. Filter by Category Dropdown
   if (activeCategoryValue.value !== 'All') {
     result = result.filter(e => {
       const cats = Array.isArray(e.category) ? e.category : [e.category]
@@ -121,7 +113,6 @@ const filteredEvents = computed(() => {
     })
   }
 
-  // 3. Filter by Date Dropdown
   const now = new Date()
   if (activeDateValue.value !== 'latest') {
     result = result.filter(e => {
@@ -143,7 +134,6 @@ const filteredEvents = computed(() => {
     })
   }
 
-  // Always sort by closest starting date
   result.sort((a, b) => {
     const dA = a.startAt ? new Date(a.startAt).getTime() : 0
     const dB = b.startAt ? new Date(b.startAt).getTime() : 0
@@ -155,7 +145,7 @@ const filteredEvents = computed(() => {
 </script>
 
 <template>
-  <div class="pb-24 max-w-3xl mx-auto font-['Plus_Jakarta_Sans'] bg-[#fafafa] min-h-screen overflow-x-hidden relative">
+  <div class="pb-24 max-w-3xl mx-auto font-['Lato'] bg-[#FFFFFF] min-h-screen overflow-x-hidden relative">
     
     <div 
       v-if="isCategoryOpen || isDateOpen" 
@@ -164,18 +154,17 @@ const filteredEvents = computed(() => {
     ></div>
 
     <div class="mb-4 pt-4 px-4 relative z-10">
-      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-linear-to-r 
-      from-purple-600 to-indigo-600 tracking-tight leading-none">
+      <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
         Search Events
       </h1>
-      <p class="text-[11px] font-['Lato'] text-gray-400 font-medium mt-1.5 tracking-wide">
+      <p class="text-[11px] font-['Lato'] text-[#26215C]/60 font-medium mt-1.5 tracking-wide">
         Find exactly what you're looking for
       </p>
     </div>
 
     <div class="relative w-full px-4 mb-3 z-10">
       <button @click="triggerSearch" class="absolute inset-y-0 left-0 pl-7 flex items-center pr-2 cursor-pointer outline-none">
-        <svg class="w-3.5 h-3.5 text-purple-400 hover:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-[#534AB7]/70 hover:text-[#534AB7] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
@@ -186,25 +175,25 @@ const filteredEvents = computed(() => {
         @keyup.enter="triggerSearch"
         type="text" 
         placeholder="Search... (Press Enter to search)" 
-        class="w-full text-[12px] border-none rounded-xl py-2.5 pl-9 pr-4 focus:outline-none focus:ring-1.5 
-        focus:ring-purple-400 bg-white shadow-sm font-['Lato']" 
+        class="w-full text-[13px] border border-[#CECBF6] rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 
+        focus:ring-[#7F77DD] bg-[#EEEDFE]/30 focus:bg-[#FFFFFF] text-[#26215C] shadow-sm font-['Lato'] transition-all" 
       />
     </div>
 
-    <div class="grid grid-cols-2 gap-2.5 px-4 mb-6 relative z-40 font-['Lato']">
+    <div class="grid grid-cols-2 gap-3 px-4 mb-6 relative z-40 font-['Lato']">
       <div class="relative">
         <button 
           @click="isCategoryOpen = !isCategoryOpen; isDateOpen = false" 
-          class="w-full flex items-center justify-between bg-white border-none text-gray-700 text-[11px] 
-          py-2 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-1.5 focus:ring-purple-400 font-bold shadow-sm cursor-pointer transition-shadow"
+          class="w-full flex items-center justify-between bg-[#EEEDFE]/30 hover:bg-[#EEEDFE] border border-[#CECBF6] text-[#26215C] text-[12px] 
+          py-2.5 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7F77DD] font-bold shadow-sm cursor-pointer transition-colors"
         >
-          <div class="flex items-center gap-1.5 truncate font-['Lato']">
-            <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-2 truncate font-['Lato']">
+            <svg class="w-4 h-4 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeCategory.icon"></path>
             </svg>
-            <span class="truncate text-[12px]">{{ activeCategory.label }}</span>
+            <span class="truncate">{{ activeCategory.label }}</span>
           </div>
-          <svg class="w-3 h-3 text-purple-400 shrink-0 transition-transform duration-200" 
+          <svg class="w-3.5 h-3.5 text-[#534AB7]/70 shrink-0 transition-transform duration-200" 
           :class="{ 'rotate-180': isCategoryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7">
             </path>
@@ -213,20 +202,20 @@ const filteredEvents = computed(() => {
 
         <ul 
           v-if="isCategoryOpen" 
-          class="absolute top-full left-0 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 
-          overflow-y-auto scrollbar-hide py-1 z-50 origin-top"
+          class="absolute top-full left-0 w-full mt-2 bg-[#FFFFFF] border border-[#CECBF6] rounded-xl shadow-xl max-h-56 
+          overflow-y-auto scrollbar-hide py-1.5 z-50 origin-top"
         >
           <li 
             v-for="cat in categoryOptions" 
             :key="cat.value" 
             @click="selectCategory(cat.value)"
             :class="[
-              'flex items-center gap-2 px-3 py-2 text-[11px] font-bold cursor-pointer transition-colors',
-              activeCategoryValue === cat.value ? 'text-purple-700 bg-purple-50/80' : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
+              'flex items-center gap-2 px-3 py-2.5 text-[12px] font-bold cursor-pointer transition-colors',
+              activeCategoryValue === cat.value ? 'text-[#534AB7] bg-[#EEEDFE]' : 'text-[#26215C]/80 hover:bg-[#EEEDFE]/50 hover:text-[#534AB7]'
             ]"
           >
-            <svg class="w-3.5 h-3.5 shrink-0" :class="activeCategoryValue === cat.value ? 'text-purple-600' 
-            : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 shrink-0" :class="activeCategoryValue === cat.value ? 'text-[#534AB7]' 
+            : 'text-[#26215C]/40'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="cat.icon"></path>
             </svg>
             {{ cat.label }}
@@ -237,37 +226,37 @@ const filteredEvents = computed(() => {
       <div class="relative font-['Lato']">
         <button 
           @click="isDateOpen = !isDateOpen; isCategoryOpen = false" 
-          class="w-full flex items-center justify-between bg-white border-none text-gray-700 text-[11px] 
-          py-2 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-1.5 focus:ring-purple-400 font-bold shadow-sm cursor-pointer transition-shadow"
+          class="w-full flex items-center justify-between bg-[#EEEDFE]/30 hover:bg-[#EEEDFE] border border-[#CECBF6] text-[#26215C] text-[12px] 
+          py-2.5 pl-3 pr-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7F77DD] font-bold shadow-sm cursor-pointer transition-colors"
         >
-          <div class="flex items-center gap-1.5 truncate text-[12px]">
-            <svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-2 truncate">
+            <svg class="w-4 h-4 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeDate.icon"></path>
             </svg>
             <span class="truncate">{{ activeDate.label }}</span>
           </div>
-          <svg class="w-3 h-3 text-purple-400 shrink-0 transition-transform duration-200" 
+          <svg class="w-3.5 h-3.5 text-[#534AB7]/70 shrink-0 transition-transform duration-200" 
           :class="{ 'rotate-180': isDateOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
         </button>
 
         <ul 
           v-if="isDateOpen" 
-          class="absolute top-full right-0 w-full mt-1.5 bg-white border border-gray-100 rounded-xl 
-          shadow-xl overflow-hidden py-1 z-50 origin-top"
+          class="absolute top-full right-0 w-full mt-2 bg-[#FFFFFF] border border-[#CECBF6] rounded-xl 
+          shadow-xl overflow-hidden py-1.5 z-50 origin-top"
         >
           <li 
             v-for="date in dateOptions" 
             :key="date.value" 
             @click="selectDate(date.value)"
             :class="[
-              'flex items-center gap-2 px-3 py-2 text-[11px] font-bold cursor-pointer transition-colors',
-              activeDateValue === date.value ? 'text-purple-700 bg-purple-50/80' 
-              : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
+              'flex items-center gap-2 px-3 py-2.5 text-[12px] font-bold cursor-pointer transition-colors',
+              activeDateValue === date.value ? 'text-[#534AB7] bg-[#EEEDFE]' 
+              : 'text-[#26215C]/80 hover:bg-[#EEEDFE]/50 hover:text-[#534AB7]'
             ]"
           >
-            <svg class="w-3.5 h-3.5 shrink-0" :class="activeDateValue === date.value ? 'text-purple-600' 
-            : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 shrink-0" :class="activeDateValue === date.value ? 'text-[#534AB7]' 
+            : 'text-[#26215C]/40'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="date.icon"></path>
             </svg>
             {{ date.label }}
@@ -279,26 +268,26 @@ const filteredEvents = computed(() => {
     <div class="px-4 relative z-10">
       
       <div v-if="isLoading || isSearching" class="text-center py-16">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
-        <p class="text-gray-400 text-[11px] mt-3 font-medium">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#534AB7] mx-auto"></div>
+        <p class="text-[#26215C]/60 text-[12px] mt-4 font-bold tracking-wider uppercase">
           {{ isSearching ? 'Searching...' : 'Loading events...' }}
         </p>
       </div>
 
-      <div v-else-if="!hasActiveFilters" class="flex flex-col items-center justify-center mt-20 opacity-50">
-        <svg class="w-12 h-12 text-purple-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-else-if="!hasActiveFilters" class="flex flex-col items-center justify-center mt-20 opacity-60">
+        <svg class="w-16 h-16 text-[#CECBF6] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
-        <p class="text-xs font-['Lato'] text-gray-500 font-medium text-center">
+        <p class="text-[13px] font-['Lato'] text-[#26215C]/60 font-medium text-center leading-relaxed">
           Type a keyword and press <b>Enter</b> <br/> or apply filters to discover campus experiences.
         </p>
       </div>
 
       <div v-else-if="filteredEvents.length > 0">
-        <p class="text-xs font-['Space_Grotesk'] font-bold mb-3 tracking-tight uppercase text-purple-900/40">
+        <p class="text-[11px] font-['Lato'] font-bold mb-4 tracking-widest uppercase text-[#26215C]/50 border-b border-[#CECBF6] pb-2">
           Search Results ({{ filteredEvents.length }})
         </p>
-        <div class="grid grid-cols-2 gap-2.5">
+        <div class="grid grid-cols-2 gap-3">
           <EventCard 
             v-for="event in filteredEvents" 
             :key="event.id" 
@@ -309,11 +298,11 @@ const filteredEvents = computed(() => {
         </div>
       </div>
 
-      <div v-else class="flex flex-col items-center justify-center mt-20 opacity-50">
-        <svg class="w-12 h-12 text-purple-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-else class="flex flex-col items-center justify-center mt-20 opacity-60">
+        <svg class="w-16 h-16 text-[#CECBF6] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <p class="text-xs font-['Lato'] text-gray-500 font-medium text-center">
+        <p class="text-[13px] font-['Lato'] text-[#26215C]/60 font-medium text-center leading-relaxed">
           No events found matching your search. <br/> Try adjusting your filters.
         </p>
       </div>
@@ -332,4 +321,4 @@ const filteredEvents = computed(() => {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-</style>
+</style>  
