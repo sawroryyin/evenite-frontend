@@ -167,6 +167,11 @@ const updateProfile = async () => {
   }
 }
 
+const startEditing = () => {
+  isEditing.value = true
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 const cancelEdit = () => {
   isEditing.value = false
   imageFile.value = null
@@ -442,7 +447,7 @@ const logout = () => {
               
               <div>
                 <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Bio / Description</label>
-                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg whitespace-pre-wrap min-h-[4rem]">{{ profileData.bio || 'No bio provided.' }}</p>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg whitespace-pre-wrap min-h-16">{{ profileData.bio || 'No bio provided.' }}</p>
                 <textarea v-else v-model="profileData.bio" rows="4" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all"></textarea>
               </div>
 
@@ -492,7 +497,7 @@ const logout = () => {
             </div>
 
             <div v-else class="flex flex-col gap-3">
-              <button type="button" @click="isEditing = true" class="w-full bg-[#534AB7] text-[#FFFFFF] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm hover:bg-[#3C3489] transition-colors cursor-pointer">
+              <button type="button" @click="startEditing" class="w-full bg-[#534AB7] text-[#FFFFFF] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm hover:bg-[#3C3489] transition-colors cursor-pointer">
                 Edit Profile
               </button>
               

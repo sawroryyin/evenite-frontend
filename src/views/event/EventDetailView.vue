@@ -16,7 +16,13 @@ const route = useRoute()
 const store = useEventCreationStore()
 const authStore = useAuthStore()
 
-const viewMode = ref<'create' | 'edit' | 'preview'>('create')
+const isInitialNewEvent = !route.params.id || route.params.id === 'new' || route.params.id === 'create';
+const requestedInitialEdit = route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true';
+
+const viewMode = ref<'create' | 'edit' | 'preview'>(
+  isInitialNewEvent ? 'create' : (requestedInitialEdit ? 'edit' : 'preview')
+)
+
 const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'CONCLUDED' | 'ONGOING' | null | undefined>(null)
 const viewLang = ref<'en' | 'th'>('en')
 
@@ -257,7 +263,6 @@ const saveAsDraft = async () => {
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     
-    // CLEAR TEMP DATA ON EXPLICIT SAVE
     store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
@@ -310,7 +315,11 @@ const confirmPublish = async () => {
 
 const handleBackClick = () => {
   if (viewMode.value === 'preview') {
-    router.back()
+    if (isInitialNewEvent) {
+      router.push('/event') 
+    } else {
+      router.back()
+    }
     return
   }
   
