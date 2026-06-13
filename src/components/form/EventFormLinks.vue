@@ -51,8 +51,8 @@ const navigateToForm = (formType: 'REGISTRATION' | 'FEEDBACK') => {
 </script>
 
 <template>
-  <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-    <h2 class="text-base font-bold text-gray-900 mb-4">Event Forms</h2>
+  <section class="bg-[#FFFFFF] p-4 rounded-xl border border-[#CECBF6] shadow-sm">
+    <h2 class="text-base font-bold text-[#26215C] mb-4">Event Forms</h2>
     
     <div v-if="!eventId" class="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-start gap-2">
       <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@ const navigateToForm = (formType: 'REGISTRATION' | 'FEEDBACK') => {
       <button 
         type="button" 
         @click="navigateToForm('REGISTRATION')" 
-        class="relative flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 py-3 rounded-xl font-bold text-sm transition-all flex flex-col justify-center items-center gap-1"
+        class="relative flex-1 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] hover:border-[#534AB7] py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer"
       >
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +73,7 @@ const navigateToForm = (formType: 'REGISTRATION' | 'FEEDBACK') => {
           </svg>
           Registration Form
         </div>
-        <span v-if="!isLoading" :class="registrationExists ? 'text-green-600 bg-green-100' : 'text-gray-500 bg-gray-200'" class="text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+        <span v-if="!isLoading" :class="registrationExists ? 'text-green-700 bg-green-100 border border-green-200' : 'text-[#26215C]/50 bg-[#EEEDFE] border border-[#CECBF6]'" class="text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
           {{ registrationExists ? 'Created' : 'Not Created' }}
         </span>
       </button>
@@ -81,7 +81,7 @@ const navigateToForm = (formType: 'REGISTRATION' | 'FEEDBACK') => {
       <button 
         type="button" 
         @click="navigateToForm('FEEDBACK')" 
-        class="relative flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-3 rounded-xl font-bold text-sm transition-all flex flex-col justify-center items-center gap-1"
+        class="relative flex-1 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] hover:border-[#534AB7] py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer"
       >
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ const navigateToForm = (formType: 'REGISTRATION' | 'FEEDBACK') => {
           </svg>
           Feedback Form
         </div>
-        <span v-if="!isLoading" :class="feedbackExists ? 'text-green-600 bg-green-100' : 'text-gray-500 bg-gray-200'" class="text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+        <span v-if="!isLoading" :class="feedbackExists ? 'text-green-700 bg-green-100 border border-green-200' : 'text-[#26215C]/50 bg-[#EEEDFE] border border-[#CECBF6]'" class="text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
           {{ feedbackExists ? 'Created' : 'Not Created' }}
         </span>
       </button>

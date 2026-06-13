@@ -20,15 +20,15 @@ const navigateToResponses = (type: string) => {
 </script>
 
 <template>
-  <section v-if="hasRegistration || hasFeedback" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-    <h2 class="text-base font-bold text-gray-900 mb-4">Participant Responses</h2>
+  <section v-if="hasRegistration || hasFeedback" class="bg-[#FFFFFF] p-4 rounded-xl border border-[#CECBF6] shadow-sm">
+    <h2 class="text-base font-bold text-[#26215C] mb-4">Participant Responses</h2>
 
     <div class="flex flex-col sm:flex-row gap-3">
       <button 
         v-if="hasRegistration"
         type="button" 
         @click="navigateToResponses('REGISTRATION')" 
-        class="relative flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 py-3 rounded-xl font-bold text-sm transition-all flex flex-col justify-center items-center gap-1"
+        class="relative flex-1 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] hover:border-[#534AB7] py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer"
       >
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,7 +36,7 @@ const navigateToResponses = (type: string) => {
           </svg>
           Registration Responses
         </div>
-        <span class="text-purple-600 bg-purple-100 border border-purple-200 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
+        <span class="text-[#534AB7] bg-[#EEEDFE] border border-[#CECBF6] text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
           View Data
         </span>
       </button>
@@ -45,7 +45,7 @@ const navigateToResponses = (type: string) => {
         v-if="hasFeedback"
         type="button" 
         @click="navigateToResponses('FEEDBACK')" 
-        class="relative flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-3 rounded-xl font-bold text-sm transition-all flex flex-col justify-center items-center gap-1"
+        class="relative flex-1 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] hover:border-[#534AB7] py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer"
       >
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@ const navigateToResponses = (type: string) => {
           </svg>
           Feedback Responses
         </div>
-        <span class="text-indigo-600 bg-indigo-100 border border-indigo-200 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
+        <span class="text-[#534AB7] bg-[#EEEDFE] border border-[#CECBF6] text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
           View Data
         </span>
       </button>

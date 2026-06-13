@@ -82,12 +82,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-[#fafafa] font-['Lato'] px-4 py-8">
-    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
+  <div class="flex justify-center bg-[#FFFFFF] font-['Lato'] px-4 py-8 mt-8">
+    <div class="bg-[#FFFFFF] p-8 rounded-2xl shadow-sm border border-[#CECBF6] max-w-md w-full">
       
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Verify Account</h1>
-        <p class="text-[11px] font-bold text-purple-600 uppercase tracking-wider">
+        <h1 class="text-2xl font-black text-[#26215C] uppercase tracking-tight mb-2">Verify Account</h1>
+        <p class="text-[11px] font-bold text-[#534AB7] uppercase tracking-wider">
           {{ showResendForm ? 'Resend Verification Code' : 'Secure your Evenite access' }}
         </p>
       </div>
@@ -99,20 +99,20 @@ onMounted(() => {
 
       <form v-if="!showResendForm" @submit.prevent="verify" class="flex flex-col gap-6">
         <div>
-          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Verification Code</label>
+          <label class="block text-[10px] font-bold text-[#26215C]/70 uppercase tracking-wider mb-2">Verification Code</label>
           <input 
             v-model="tokenInput" 
             type="text" 
             placeholder="Paste your code here" 
             required
-            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
+            class="w-full px-4 py-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-center font-mono text-sm focus:outline-none focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#7F77DD] text-[#26215C] transition-all" 
           />
         </div>
 
         <button 
           type="submit" 
           :disabled="isLoading || (message.text !== '' && message.type === 'success')" 
-          class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm hover:bg-gray-800 disabled:opacity-50 transition-all"
+          class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm disabled:opacity-50 transition-colors cursor-pointer"
         >
           {{ isLoading ? 'VERIFYING...' : 'VERIFY NOW' }}
         </button>
@@ -121,7 +121,7 @@ onMounted(() => {
           <button 
             type="button" 
             @click="showResendForm = true" 
-            class="text-[11px] font-bold text-gray-500 hover:text-purple-600 transition-colors uppercase tracking-wider"
+            class="text-[11px] font-bold text-[#26215C]/60 hover:text-[#534AB7] transition-colors uppercase tracking-wider cursor-pointer"
           >
             Didn't receive a code? <span class="underline">Resend</span>
           </button>
@@ -130,20 +130,20 @@ onMounted(() => {
 
       <form v-else @submit.prevent="resendCode" class="flex flex-col gap-6">
         <div>
-          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+          <label class="block text-[10px] font-bold text-[#26215C]/70 uppercase tracking-wider mb-2">Email Address</label>
           <input 
             v-model="emailInput" 
             type="email" 
             placeholder="student@university.edu" 
             required
-            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
+            class="w-full px-4 py-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm focus:outline-none focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#7F77DD] text-[#26215C] transition-all" 
           />
         </div>
 
         <button 
           type="submit" 
           :disabled="isResending" 
-          class="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm disabled:opacity-50 transition-all"
+          class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm disabled:opacity-50 transition-colors cursor-pointer"
         >
           {{ isResending ? 'SENDING...' : 'RESEND CODE' }}
         </button>
@@ -152,7 +152,7 @@ onMounted(() => {
           <button 
             type="button" 
             @click="showResendForm = false" 
-            class="text-[11px] font-bold text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-wider"
+            class="text-[11px] font-bold text-[#26215C]/60 hover:text-[#26215C] transition-colors uppercase tracking-wider cursor-pointer"
           >
             &larr; Back to Verification
           </button>
