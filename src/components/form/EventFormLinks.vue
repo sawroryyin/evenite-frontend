@@ -2,12 +2,15 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { FormService } from '../../services/FormService'
+import { useEventCreationStore } from '../../stores/eventCreation'
 
 const props = defineProps<{
   eventId?: string;
 }>()
 
 const router = useRouter()
+
+const store = useEventCreationStore()
 
 const registrationExists = ref(false)
 const feedbackExists = ref(false)
@@ -17,8 +20,8 @@ const checkFormStatuses = async () => {
   isLoading.value = true;
   
   if (!props.eventId || props.eventId === 'new') {
-    registrationExists.value = false;
-    feedbackExists.value = false;
+    registrationExists.value = !!store.draftForms['REGISTRATION'];
+    feedbackExists.value = !!store.draftForms['FEEDBACK'];
     isLoading.value = false;
     return; 
   }

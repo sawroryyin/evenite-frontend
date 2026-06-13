@@ -22,18 +22,27 @@ const parseDateTime = (dtStr: string) => {
   }
 }
 
-onMounted(() => {
-  const start = parseDateTime(props.form.startAt)
-  const end = parseDateTime(props.form.endAt)
-  
-  singleDate.value = start.date
-  startTime.value = start.time
-  endTime.value = end.time
+// Replace onMounted with an immediate watcher to sync external store restorations
+watch(
+  () => [props.form.startAt, props.form.endAt],
+  ([newStart, newEnd]) => {
+    const start = parseDateTime(newStart as string)
+    const end = parseDateTime(newEnd as string)
 
-  if (start.date && end.date && start.date !== end.date) {
-    isMultiDay.value = true
-  }
-})
+    // Initialize multi-day toggle if start and end dates differ
+    if (start.date && end.date && start.date !== end.date) {
+      isMultiDay.value = true
+    }
+
+    if (!isMultiDay.value) {
+      // The conditionals prevent infinite loop overlaps with the other watcher
+      if (singleDate.value !== start.date) singleDate.value = start.date
+      if (startTime.value !== start.time) startTime.value = start.time
+      if (endTime.value !== end.time) endTime.value = end.time
+    }
+  },
+  { immediate: true }
+)
 
 watch([singleDate, startTime, endTime], () => {
   if (!isMultiDay.value) {

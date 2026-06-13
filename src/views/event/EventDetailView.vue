@@ -35,6 +35,8 @@ const showLeaveModal = ref(false)
 const eventFormRef = ref<HTMLFormElement | null>(null)
 const originalStateStr = ref('')
 
+const isDataReady = ref(false)
+
 const availableForms = ref<any[]>([]) 
 const isRegistered = ref(false)
 
@@ -78,8 +80,17 @@ const form = ref<any>({
 
 const formatForDateTimeLocal = (isoString: string | undefined) => {
   if (!isoString) return '';
+  
+  // FIX: If the string is already in YYYY-MM-DDTHH:mm format, bypass parsing 
+  // to avoid 'Invalid Date' bugs in Safari/WebKit.
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(isoString)) {
+    return isoString.substring(0, 16);
+  }
+
   const date = new Date(isoString);
-  if (isNaN(date.getTime())) return '';
+  // Fallback: if parsing still fails, return the raw string instead of clearing it
+  if (isNaN(date.getTime())) return isoString; 
+  
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
@@ -145,6 +156,8 @@ onMounted(async () => {
     
     originalStateStr.value = JSON.stringify(form.value)
   }
+
+  isDataReady.value = true
 })
 
 const handleTranslate = async () => {
@@ -260,6 +273,9 @@ const saveAsDraft = async () => {
       }
       store.clearDraftForms(); 
 
+      // FIX: Fetch the newly created forms so EventDetailPreview receives them!
+      availableForms.value = await FormService.getFormsByEventId(response.id);
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     
@@ -293,6 +309,9 @@ const confirmPublish = async () => {
         await FormService.createForm(response.id, formPayload);
       }
       store.clearDraftForms(); 
+
+      // FIX: Fetch the newly created forms so EventDetailPreview receives them!
+      availableForms.value = await FormService.getFormsByEventId(response.id);
 
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
@@ -349,7 +368,7 @@ const confirmLeave = () => {
 }
 </script>
 
-<template>
+<template v-if="isDataReady">
   <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
     
     <div v-if="isTranslating" class="fixed inset-0 bg-[#FFFFFF]/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
