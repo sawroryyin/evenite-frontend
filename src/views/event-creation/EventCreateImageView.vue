@@ -15,7 +15,6 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
 
-// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -53,7 +52,6 @@ const handleFileSelect = (e: Event) => {
     return;
   }
 
-  // Set file and create local preview
   selectedFile.value = file;
   previewUrl.value = URL.createObjectURL(file);
 };
@@ -77,14 +75,12 @@ const handleGenerate = async () => {
     store.setTempEventData(generatedData as any)
     router.push({ name: "create-manual" });
   } catch (error: any) {
-    // Show in-app alert and set redirect flag to true
     showAlert("Error", "There was an error in creating an event, try creating manually.", "red", true);
   } finally {
     isLoading.value = false;
   }
 };
 
-// Clean up object URL when component unmounts to prevent memory leaks
 onUnmounted(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
 });
@@ -97,7 +93,7 @@ onUnmounted(() => {
 
     <button
       @click="router.back()"
-      class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 font-bold text-[11px] transition 
+      class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 font-bold text-[11px] transition-colors 
       cursor-pointer uppercase tracking-wide"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,8 +103,8 @@ onUnmounted(() => {
     </button>
     
     <div class="mb-5">
-      <h1 class="text-[18px] font-black tracking-tight text-gray-900 mb-1">Generate from Image</h1>
-      <p class="text-[11px] text-gray-400 font-medium leading-snug">
+      <h1 class="text-[18px] font-black tracking-tight text-[#26215C] mb-1">Generate from Image</h1>
+      <p class="text-[11px] text-[#26215C]/70 font-medium leading-snug">
         Upload an event poster or screenshot, and we'll extract the details for you.
       </p>
     </div>
@@ -125,11 +121,11 @@ onUnmounted(() => {
       <button
         @click="fileInput?.click()"
         :disabled="isLoading"
-        class="px-4 py-8 border-2 border-gray-300 border-dashed rounded-xl w-full text-[12px] font-bold flex flex-col 
-        items-center gap-2.5 text-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 
-        transition-colors cursor-pointer hover:bg-gray-50 hover:border-gray-400 shadow-sm bg-white"
+        class="px-4 py-8 border-2 border-[#CECBF6] border-dashed rounded-xl w-full text-[12px] font-bold flex flex-col 
+        items-center gap-2.5 text-[#26215C]/70 disabled:bg-[#EEEDFE]/50 disabled:text-[#26215C]/40 disabled:border-[#CECBF6]/50 
+        transition-colors cursor-pointer hover:bg-[#EEEDFE]/50 hover:border-[#7F77DD] shadow-sm bg-[#FFFFFF]"
       >
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-7 h-7 text-[#7F77DD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
         </svg>
@@ -138,12 +134,12 @@ onUnmounted(() => {
     </template>
 
     <template v-else>
-      <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden border border-gray-200 shadow-sm mb-4 bg-gray-100">
+      <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden border border-[#CECBF6] shadow-sm mb-4 bg-[#EEEDFE]/30">
         <img :src="previewUrl" class="w-full h-full object-contain" />
         <button 
           @click="clearImage" 
-          class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-600 px-3 py-1.5 rounded-lg text-[10px] 
-          font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100"
+          class="absolute top-2 right-2 bg-[#FFFFFF]/90 backdrop-blur-sm text-red-600 px-3 py-1.5 rounded-lg text-[10px] 
+          font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100 cursor-pointer"
         >
           Remove
         </button>
@@ -152,8 +148,8 @@ onUnmounted(() => {
       <button 
         @click="handleGenerate" 
         :disabled="isLoading"
-        class="bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl 
-        w-full text-[12px] font-bold disabled:opacity-50 transition shadow-sm cursor-pointer"
+        class="bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] px-4 py-2.5 rounded-xl 
+        w-full text-[12px] font-bold disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
       >
         Generate Event
       </button>

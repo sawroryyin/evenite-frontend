@@ -18,7 +18,6 @@ const isEditing = ref(false)
 const isSaving = ref(false)
 const isLoading = ref(true)
 const isSwitchingRole = ref(false)
-const message = ref({ text: '', type: 'success' })
 
 const showAlert = ref(false)
 const alertTitle = ref('')
@@ -44,10 +43,10 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const imageFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
 
-// Default Image Fallbacks
+// Default Image Fallbacks mapped to brand colors
 const defaultAvatar = computed(() => activeRole.value === 'PARTICIPANT' 
-  ? 'https://placehold.co/400x400?text=Profile' 
-  : 'https://placehold.co/400x400?text=Organizer'
+  ? 'https://placehold.co/400x400/EEEDFE/3C3489?text=Profile' 
+  : 'https://placehold.co/400x400/EEEDFE/3C3489?text=Organizer'
 )
 
 const hasCustomImage = computed(() => {
@@ -84,7 +83,7 @@ const fetchProfile = async () => {
     profileData.value = { ...data }
   } catch (err) {
     console.error(err)
-    showMessage('Failed to load profile data.', 'error')
+    triggerAlert('Error', 'Failed to load profile data.')
   } finally {
     isLoading.value = false
   }
@@ -101,7 +100,6 @@ const onFileChange = (event: Event) => {
   if (target.files && target.files.length > 0) {
     const file = target.files[0]
     
-    // C4 & C5: Check format
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
       triggerAlert('Invalid File', 'Unsupported image format')
@@ -133,7 +131,6 @@ const updateProfile = async () => {
   }
 
   isSaving.value = true
-  message.value.text = ''
   
   try {
     if (imageFile.value) {
@@ -156,7 +153,7 @@ const updateProfile = async () => {
     const endpoint = activeRole.value === 'PARTICIPANT' ? '/users/me/participant-profile' : '/users/me/organizer-profile'
     await api.patch(endpoint, profileData.value)
     
-    showMessage('Profile updated successfully.', 'success')
+    triggerAlert('Success', 'Profile updated successfully.')
     isEditing.value = false
     imageFile.value = null 
     imagePreviewUrl.value = null
@@ -164,17 +161,21 @@ const updateProfile = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
     await fetchProfile()
   } catch (err: any) {
-    showMessage(err.response?.data?.message || 'Failed to update profile.', 'error')
+    triggerAlert('Error', err.response?.data?.message || 'Failed to update profile.')
   } finally {
     isSaving.value = false
   }
+}
+
+const startEditing = () => {
+  isEditing.value = true
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const cancelEdit = () => {
   isEditing.value = false
   imageFile.value = null
   imagePreviewUrl.value = null
-  message.value.text = ''
   window.scrollTo({ top: 0, behavior: 'smooth' })
   fetchProfile() 
 }
@@ -221,18 +222,13 @@ const switchRole = async () => {
   }, 3000)
 }
 
-const showMessage = (text: string, type: 'success' | 'error') => {
-  message.value = { text, type }
-  setTimeout(() => { message.value.text = '' }, 5000)
-}
-
 const logout = () => {
   authStore.logout()
 }
 </script>
 
 <template>
-  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4 relative">
+  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4 relative">
     
     <AlertBox 
       v-if="showAlert" 
@@ -248,30 +244,25 @@ const logout = () => {
     />
 
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-[22px] font-['Nunito'] font-black text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-indigo-600 tracking-tight">
+      <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
         My Profile
       </h1>
-      <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
+      <span class="bg-[#EEEDFE] text-[#3C3489] px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border border-[#CECBF6]">
         {{ activeRole }}
       </span>
     </div>
 
-    <div v-if="message.text" class="mb-4 text-[11px] font-bold p-3 rounded-lg text-center transition-all"
-         :class="message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'">
-      {{ message.text }}
+    <div v-if="isLoading" class="bg-[#FFFFFF] p-12 rounded-2xl shadow-sm border border-[#CECBF6] flex justify-center items-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#534AB7]"></div>
     </div>
 
-    <div v-if="isLoading" class="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 flex justify-center items-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-    </div>
-
-    <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 pb-6 overflow-hidden">
+    <div v-else class="bg-[#FFFFFF] rounded-2xl shadow-sm border border-[#CECBF6] pb-6 overflow-hidden">
       
-      <div class="h-32 bg-linear-to-r from-purple-200 via-purple-300 to-indigo-300 w-full relative"></div>
+      <div class="h-22 bg-[#EEEDFE] w-full relative"></div>
       
-      <div class="px-6 relative flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start -mt-16 mb-8 gap-5">
+      <div class="px-6 relative flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start -mt-16 mb-4 gap-5">
         
-        <div class="w-32 h-32 rounded-full border-4 border-white bg-white shadow-md overflow-hidden shrink-0 z-10 relative group"
+        <div class="w-32 h-32 rounded-full border-4 border-[#FFFFFF] bg-[#FFFFFF] shadow-md overflow-hidden shrink-0 z-10 relative group"
              :class="isEditing ? 'cursor-pointer' : ''"
              @click="triggerFileInput">
           <img 
@@ -290,7 +281,7 @@ const logout = () => {
             v-if="!hasCustomImage"
             type="button" 
             @click="triggerFileInput" 
-            class="bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5"
+            class="bg-[#EEEDFE] text-[#534AB7] hover:bg-[#CECBF6] border border-[#CECBF6] px-4 py-2.5 rounded-xl text-[11px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
             Upload Picture
@@ -300,10 +291,10 @@ const logout = () => {
             v-if="hasCustomImage" 
             type="button" 
             @click="removePicture" 
-            class="bg-white text-red-500 hover:bg-red-50 border border-gray-200 hover:border-red-200 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5"
+            class="bg-[#FFFFFF] text-red-500 hover:bg-red-50 border border-[#CECBF6] hover:border-red-200 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            Remove
+            Remove Picture
           </button>
           
           <input type="file" ref="fileInput" @change="onFileChange" accept="image/jpeg, image/png, image/webp" class="hidden" />
@@ -315,108 +306,108 @@ const logout = () => {
           
           <template v-if="activeRole === 'PARTICIPANT'">
             <div class="space-y-4">
-              <h2 class="text-sm font-black text-gray-900 border-b border-gray-100 pb-2">Personal Information</h2>
+              <h2 class="text-sm font-black text-[#26215C] border-b border-[#CECBF6] pb-2">Personal Information</h2>
               
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">First Name *</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.firstName || '-' }}</p>
-                  <input v-else v-model="profileData.firstName" required type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">First Name *</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.firstName || '-' }}</p>
+                  <input v-else v-model="profileData.firstName" required type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Last Name</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.lastName || '-' }}</p>
-                  <input v-else v-model="profileData.lastName" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Last Name</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.lastName || '-' }}</p>
+                  <input v-else v-model="profileData.lastName" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nickname</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.nickname || '-' }}</p>
-                  <input v-else v-model="profileData.nickname" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Nickname</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.nickname || '-' }}</p>
+                  <input v-else v-model="profileData.nickname" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Student ID</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.studentId || '-' }}</p>
-                  <input v-else v-model="profileData.studentId" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Student ID</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.studentId || '-' }}</p>
+                  <input v-else v-model="profileData.studentId" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Major</label>
-                <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.major || '-' }}</p>
-                <input v-else v-model="profileData.major" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Major</label>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.major || '-' }}</p>
+                <input v-else v-model="profileData.major" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
               </div>
             </div>
 
             <div class="space-y-4 pt-2">
-              <h2 class="text-sm font-black text-gray-900 border-b border-gray-100 pb-2">Contact Details</h2>
+              <h2 class="text-sm font-black text-[#26215C] border-b border-[#CECBF6] pb-2">Contact Details</h2>
               
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Contact Email</label>
-                <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.contactEmail || '-' }}</p>
-                <input v-else v-model="profileData.contactEmail" type="email" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Contact Email</label>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.contactEmail || '-' }}</p>
+                <input v-else v-model="profileData.contactEmail" type="email" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Phone Number</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.contactPhone || '-' }}</p>
-                  <input v-else v-model="profileData.contactPhone" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Phone Number</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.contactPhone || '-' }}</p>
+                  <input v-else v-model="profileData.contactPhone" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">LINE ID</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.contactLineId || '-' }}</p>
-                  <input v-else v-model="profileData.contactLineId" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">LINE ID</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.contactLineId || '-' }}</p>
+                  <input v-else v-model="profileData.contactLineId" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
               </div>
             </div>
 
             <div class="space-y-4 pt-2">
-              <h2 class="text-sm font-black text-gray-900 border-b border-gray-100 pb-2">Preferences</h2>
+              <h2 class="text-sm font-black text-[#26215C] border-b border-[#CECBF6] pb-2">Preferences</h2>
               
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Interests</label>
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-2">Interests</label>
                 <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
-                  <span v-if="!profileData.preferences?.personal?.length" class="text-sm text-gray-400 italic">None selected</span>
-                  <span v-else v-for="pref in profileData.preferences.personal" :key="pref" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
+                  <span v-if="!profileData.preferences?.personal?.length" class="text-sm text-[#26215C]/40 italic">None selected</span>
+                  <span v-else v-for="pref in profileData.preferences.personal" :key="pref" class="bg-[#EEEDFE]/50 text-[#3C3489] border border-[#CECBF6] px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
                     {{ pref }}
                   </span>
-                  <span v-if="profileData.preferences?.personal?.includes('OTHER') && profileData.preferences.personalOther" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
+                  <span v-if="profileData.preferences?.personal?.includes('OTHER') && profileData.preferences.personalOther" class="bg-[#EEEDFE]/50 text-[#3C3489] border border-[#CECBF6] px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
                     {{ profileData.preferences.personalOther }}
                   </span>
                 </div>
                 <div v-else class="flex flex-wrap gap-2">
-                  <label v-for="pref in PERSONAL_PREFS" :key="pref" class="select-none">
+                  <label v-for="pref in PERSONAL_PREFS" :key="pref" class="select-none cursor-pointer group">
                     <input type="checkbox" :value="pref" v-model="profileData.preferences.personal" class="hidden" />
                     <span class="inline-block px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer"
-                          :class="profileData.preferences.personal.includes(pref) ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-purple-300'">
+                          :class="profileData.preferences.personal.includes(pref) ? 'bg-[#534AB7] border-[#534AB7] text-[#FFFFFF]' : 'bg-[#FFFFFF] border-[#CECBF6] text-[#26215C]/60 group-hover:border-[#7F77DD] group-hover:text-[#3C3489]'">
                       {{ pref }}
                     </span>
                   </label>
                 </div>
                 
                 <div v-if="isEditing && profileData.preferences.personal.includes('OTHER')" class="mt-3">
-                  <input v-model="profileData.preferences.personalOther" type="text" placeholder="Please specify other interests..." maxlength="100" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <input v-model="profileData.preferences.personalOther" type="text" placeholder="Please specify other interests..." maxlength="100" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Event Preferences</label>
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-2">Event Preferences</label>
                 
                 <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
-                  <span v-if="!profileData.preferences?.event?.length" class="text-sm text-gray-400 italic">None selected</span>
-                  <span v-else v-for="pref in profileData.preferences.event" :key="pref" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
+                  <span v-if="!profileData.preferences?.event?.length" class="text-sm text-[#26215C]/40 italic">None selected</span>
+                  <span v-else v-for="pref in profileData.preferences.event" :key="pref" class="bg-[#EEEDFE]/50 text-[#3C3489] border border-[#CECBF6] px-3 py-1 rounded-full text-[10px] font-bold tracking-wide">
                     {{ pref }}
                   </span>
                 </div>
 
                 <div v-else class="flex flex-wrap gap-2">
-                  <label v-for="pref in ALLOWED_EVENT_PREFERENCES" :key="pref" class="select-none">
+                  <label v-for="pref in ALLOWED_EVENT_PREFERENCES" :key="pref" class="select-none cursor-pointer group">
                     <input type="checkbox" :value="pref" v-model="profileData.preferences.event" class="hidden" />
                     <span class="inline-block px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer"
-                          :class="profileData.preferences.event.includes(pref) ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-indigo-300'">
+                          :class="profileData.preferences.event.includes(pref) ? 'bg-[#3C3489] border-[#3C3489] text-[#FFFFFF]' : 'bg-[#FFFFFF] border-[#CECBF6] text-[#26215C]/60 group-hover:border-[#534AB7] group-hover:text-[#3C3489]'">
                       {{ pref }}
                     </span>
                   </label>
@@ -424,18 +415,18 @@ const logout = () => {
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Language Preference</label>
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-2">Language Preference</label>
                 <div v-if="!isEditing" class="flex flex-wrap gap-1.5 py-1">
-                  <span v-if="!profileData.preferences?.language?.length" class="text-sm text-gray-400 italic">None selected</span>
-                  <span v-else v-for="lang in profileData.preferences.language" :key="lang" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase">
+                  <span v-if="!profileData.preferences?.language?.length" class="text-sm text-[#26215C]/40 italic">None selected</span>
+                  <span v-else v-for="lang in profileData.preferences.language" :key="lang" class="bg-[#EEEDFE]/50 text-[#3C3489] border border-[#CECBF6] px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase">
                     {{ lang }}
                   </span>
                 </div>
                 <div v-else class="flex gap-2">
-                  <label v-for="lang in LANG_PREFS" :key="lang" class="select-none">
+                  <label v-for="lang in LANG_PREFS" :key="lang" class="select-none cursor-pointer group">
                     <input type="checkbox" :value="lang" v-model="profileData.preferences.language" class="hidden" />
                     <span class="inline-block px-4 py-1.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer uppercase"
-                          :class="profileData.preferences.language.includes(lang) ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-purple-300'">
+                          :class="profileData.preferences.language.includes(lang) ? 'bg-[#534AB7] border-[#534AB7] text-[#FFFFFF]' : 'bg-[#FFFFFF] border-[#CECBF6] text-[#26215C]/60 group-hover:border-[#7F77DD] group-hover:text-[#3C3489]'">
                       {{ lang }}
                     </span>
                   </label>
@@ -446,75 +437,75 @@ const logout = () => {
 
           <template v-else>
             <div class="space-y-4">
-              <h2 class="text-sm font-black text-gray-900 border-b border-gray-100 pb-2">Organization Information</h2>
+              <h2 class="text-sm font-black text-[#26215C] border-b border-[#CECBF6] pb-2">Organization Information</h2>
 
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Organization Name *</label>
-                <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.name || '-' }}</p>
-                <input v-else v-model="profileData.name" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Organization Name *</label>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.name || '-' }}</p>
+                <input v-else v-model="profileData.name" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
               </div>
               
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Bio / Description</label>
-                <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5 whitespace-pre-wrap">{{ profileData.bio || 'No bio provided.' }}</p>
-                <textarea v-else v-model="profileData.bio" rows="4" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Bio / Description</label>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg whitespace-pre-wrap min-h-16">{{ profileData.bio || 'No bio provided.' }}</p>
+                <textarea v-else v-model="profileData.bio" rows="4" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all"></textarea>
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Website / External URL</label>
-                <p v-if="!isEditing" class="text-sm font-medium text-purple-600 py-1.5 break-all">
-                  <a v-if="profileData.externalUrl" :href="profileData.externalUrl" target="_blank" class="hover:underline">{{ profileData.externalUrl }}</a>
-                  <span v-else class="text-gray-900">-</span>
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Website / External URL</label>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#534AB7] bg-gray-50 px-3 py-2 rounded-lg break-all">
+                  <a v-if="profileData.externalUrl" :href="profileData.externalUrl" target="_blank" class="hover:underline hover:text-[#3C3489] transition-colors">{{ profileData.externalUrl }}</a>
+                  <span v-else class="text-[#26215C]">-</span>
                 </p>
-                <input v-else v-model="profileData.externalUrl" type="url" placeholder="https://" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                <input v-else v-model="profileData.externalUrl" type="url" placeholder="https://" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
               </div>
             </div>
 
             <div class="space-y-4 pt-2">
-              <h2 class="text-sm font-black text-gray-900 border-b border-gray-100 pb-2">Contact Details</h2>
+              <h2 class="text-sm font-black text-[#26215C] border-b border-[#CECBF6] pb-2">Contact Details</h2>
 
               <div>
-                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Contact Email</label>
-                <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.contactEmail || '-' }}</p>
-                <input v-else v-model="profileData.contactEmail" type="email" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Contact Email</label>
+                <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.contactEmail || '-' }}</p>
+                <input v-else v-model="profileData.contactEmail" type="email" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
               </div>
 
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Phone Number</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.contactPhone || '-' }}</p>
-                  <input v-else v-model="profileData.contactPhone" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">Phone Number</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.contactPhone || '-' }}</p>
+                  <input v-else v-model="profileData.contactPhone" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">LINE ID</label>
-                  <p v-if="!isEditing" class="text-sm font-medium text-gray-900 py-1.5">{{ profileData.contactLineId || '-' }}</p>
-                  <input v-else v-model="profileData.contactLineId" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 transition-all" />
+                  <label class="block text-[11px] font-semibold text-[#26215C]/50 uppercase tracking-widest mb-1.5">LINE ID</label>
+                  <p v-if="!isEditing" class="text-[15px] font-bold text-[#26215C] bg-gray-50 px-3 py-2 rounded-lg">{{ profileData.contactLineId || '-' }}</p>
+                  <input v-else v-model="profileData.contactLineId" type="text" class="w-full px-3 py-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm focus:ring-2 focus:ring-[#7F77DD] focus:outline-none focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
                 </div>
               </div>
             </div>
           </template>
 
-          <div class="mt-4 pt-6 border-t border-gray-100">
+          <div class="mt-4 pt-6 border-t border-[#CECBF6]">
             
             <div v-if="isEditing" class="flex gap-3">
-              <button type="button" @click="cancelEdit" :disabled="isSaving" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider hover:bg-gray-200 transition-all disabled:opacity-50">
+              <button type="button" @click="cancelEdit" :disabled="isSaving" class="flex-1 bg-[#EEEDFE]/50 hover:bg-[#EEEDFE] text-[#26215C]/70 hover:text-[#26215C] border border-[#CECBF6] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" :disabled="isSaving" class="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm hover:bg-gray-800 transition-all disabled:opacity-50">
+              <button type="submit" :disabled="isSaving" class="flex-1 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50 cursor-pointer">
                 {{ isSaving ? 'Saving...' : 'Save Changes' }}
               </button>
             </div>
 
             <div v-else class="flex flex-col gap-3">
-              <button type="button" @click="isEditing = true" class="w-full bg-linear-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm hover:from-purple-700 hover:to-indigo-700 transition-all">
+              <button type="button" @click="startEditing" class="w-full bg-[#534AB7] text-[#FFFFFF] py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm hover:bg-[#3C3489] transition-colors cursor-pointer">
                 Edit Profile
               </button>
               
               <div class="flex gap-3 mt-2">
-                <button type="button" @click="switchRole" :disabled="isSwitchingRole" class="flex-1 bg-purple-50 text-purple-700 border border-purple-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-purple-100 transition-all">
+                <button type="button" @click="switchRole" :disabled="isSwitchingRole" class="flex-1 bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-[#CECBF6] hover:text-[#3C3489] transition-colors cursor-pointer">
                   Switch Profile
                 </button>
-                <button type="button" @click="logout" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-red-100 transition-all">
+                <button type="button" @click="logout" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-red-100 transition-colors cursor-pointer">
                   Log Out
                 </button>
               </div>

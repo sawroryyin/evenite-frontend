@@ -6,53 +6,53 @@ const router = useRouter()
 <template>
   <div class="p-4 max-w-md mx-auto font-['Lato']">
 
-    <button @click="router.back()" class="mb-5 text-gray-500 hover:text-gray-800 flex items-center gap-1.5 font-bold 
-    text-[11px] transition cursor-pointer uppercase tracking-wide">
+    <button @click="router.back()" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 font-bold 
+    text-[11px] transition-colors cursor-pointer uppercase tracking-wide">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
         stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
     </button>
 
-    <h1 class="text-[18px] font-black text-center mb-1 text-gray-900 tracking-tight">Create an Event</h1>
-    <p class="text-gray-400 text-center mb-6 text-[11px] font-medium">How would you like to build your event?</p>
+    <h1 class="text-[18px] font-black text-center mb-1 text-[#26215C] tracking-tight">Create an Event</h1>
+    <p class="text-[#26215C]/70 text-center mb-6 text-[11px] font-medium">How would you like to build your event?</p>
 
     <div class="space-y-3">
-      <div @click="router.push({ name: 'create-prompt' })" class="border border-gray-200 rounded-xl p-4 flex items-center 
-      gap-3 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition shadow-sm">
-        <div class="bg-blue-100 text-blue-600 p-2.5 rounded-lg shrink-0">
+      <div @click="router.push({ name: 'create-prompt' })" class="bg-[#FFFFFF] border border-[#CECBF6] rounded-xl p-4 flex items-center 
+      gap-3 cursor-pointer hover:border-[#534AB7] hover:bg-[#EEEDFE]/50 transition-colors shadow-sm">
+        <div class="bg-[#EEEDFE] text-[#534AB7] p-2.5 rounded-lg shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
             stroke-linejoin="round" stroke-width="2" 
             d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
         </div>
         <div>
-          <h3 class="font-bold text-[13px] text-gray-800 mb-0.5">Generate from Prompt</h3>
-          <p class="text-[11px] text-gray-500 leading-snug">Type a description and let AI fill the details automatically.</p>
+          <h3 class="font-bold text-[13px] text-[#26215C] mb-0.5">Generate from Prompt</h3>
+          <p class="text-[11px] text-[#26215C]/70 leading-snug">Type a description and let AI fill the details automatically.</p>
         </div>
       </div>
 
-      <div @click="router.push({ name: 'create-image' })" class="border border-gray-200 rounded-xl p-4 flex items-center 
-      gap-3 cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition shadow-sm">
-        <div class="bg-purple-100 text-purple-600 p-2.5 rounded-lg shrink-0">
+      <div @click="router.push({ name: 'create-image' })" class="bg-[#FFFFFF] border border-[#CECBF6] rounded-xl p-4 flex items-center 
+      gap-3 cursor-pointer hover:border-[#534AB7] hover:bg-[#EEEDFE]/50 transition-colors shadow-sm">
+        <div class="bg-[#EEEDFE] text-[#534AB7] p-2.5 rounded-lg shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
             stroke-linejoin="round" stroke-width="2" 
             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         </div>
         <div>
-          <h3 class="font-bold text-[13px] text-gray-800 mb-0.5">Generate from Image</h3>
-          <p class="text-[11px] text-gray-500 leading-snug">Upload a poster or screenshot to extract the data.</p>
+          <h3 class="font-bold text-[13px] text-[#26215C] mb-0.5">Generate from Image</h3>
+          <p class="text-[11px] text-[#26215C]/70 leading-snug">Upload a poster or screenshot to extract the data.</p>
         </div>
       </div>
 
-      <div @click="router.push({ name: 'create-manual' })" class="border border-gray-200 rounded-xl p-4 flex items-center 
-      gap-3 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition shadow-sm">
-        <div class="bg-gray-100 text-gray-600 p-2.5 rounded-lg shrink-0">
+      <div @click="router.push({ name: 'create-manual' })" class="bg-[#FFFFFF] border border-[#CECBF6] rounded-xl p-4 flex items-center 
+      gap-3 cursor-pointer hover:border-[#534AB7] hover:bg-[#EEEDFE]/50 transition-colors shadow-sm">
+        <div class="bg-[#EEEDFE] text-[#534AB7] p-2.5 rounded-lg shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
             stroke-linejoin="round" stroke-width="2" 
             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
         </div>
         <div>
-          <h3 class="font-bold text-[13px] text-gray-800 mb-0.5">Create Manually</h3>
-          <p class="text-[11px] text-gray-500 leading-snug">Start from a blank form and fill it out yourself.</p>
+          <h3 class="font-bold text-[13px] text-[#26215C] mb-0.5">Create Manually</h3>
+          <p class="text-[11px] text-[#26215C]/70 leading-snug">Start from a blank form and fill it out yourself.</p>
         </div>
       </div>
     </div>

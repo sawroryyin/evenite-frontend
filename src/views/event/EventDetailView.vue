@@ -16,7 +16,13 @@ const route = useRoute()
 const store = useEventCreationStore()
 const authStore = useAuthStore()
 
-const viewMode = ref<'create' | 'edit' | 'preview'>('create')
+const isInitialNewEvent = !route.params.id || route.params.id === 'new' || route.params.id === 'create';
+const requestedInitialEdit = route.query.mode === 'edit' || sessionStorage.getItem('returnToEventEditMode') === 'true';
+
+const viewMode = ref<'create' | 'edit' | 'preview'>(
+  isInitialNewEvent ? 'create' : (requestedInitialEdit ? 'edit' : 'preview')
+)
+
 const eventStatus = ref<'DRAFT' | 'PUBLISHED' | 'CONCLUDED' | 'ONGOING' | null | undefined>(null)
 const viewLang = ref<'en' | 'th'>('en')
 
@@ -29,10 +35,11 @@ const showLeaveModal = ref(false)
 const eventFormRef = ref<HTMLFormElement | null>(null)
 const originalStateStr = ref('')
 
+const isDataReady = ref(false)
+
 const availableForms = ref<any[]>([]) 
 const isRegistered = ref(false)
 
-// Alert Modal State
 const alertState = ref({
   show: false,
   title: '',
@@ -73,12 +80,20 @@ const form = ref<any>({
 
 const formatForDateTimeLocal = (isoString: string | undefined) => {
   if (!isoString) return '';
+  
+  // FIX: If the string is already in YYYY-MM-DDTHH:mm format, bypass parsing 
+  // to avoid 'Invalid Date' bugs in Safari/WebKit.
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(isoString)) {
+    return isoString.substring(0, 16);
+  }
+
   const date = new Date(isoString);
-  if (isNaN(date.getTime())) return '';
+  // Fallback: if parsing still fails, return the raw string instead of clearing it
+  if (isNaN(date.getTime())) return isoString; 
+  
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-// CONTINUOUS SYNC: Watch for changes and save to temp data automatically
 watch(form, (newVal) => {
   if (viewMode.value === 'create' || viewMode.value === 'edit') {
     store.setTempEventData(JSON.parse(JSON.stringify(newVal)));
@@ -93,12 +108,10 @@ watch(form, (newVal) => {
 
 onMounted(async () => {
   const eventId = route.params.id as string
-  
-  // Safely check for both 'new' and 'create' depending on how the router is pushed
+
   const isNewEvent = !eventId || eventId === 'new' || eventId === 'create';
 
   if (!isNewEvent) {
-    // IT IS AN EXISTING EVENT
     try {
       const data = await EventService.getEventById(eventId)
       eventStatus.value = data.status
@@ -125,13 +138,10 @@ onMounted(async () => {
       router.back()
     }
   } else {
-    // IT IS A NEW EVENT
     viewMode.value = 'create'
 
-    // SMART TEMP DATA CHECK: Ensure it doesn't belong to a previous draft!
     if (store.tempEventData && Object.keys(store.tempEventData).length > 0) {
       
-      // If there is NO ID, it's a true new event in progress. Safe to restore.
       if (!store.tempEventData.id) {
         const draft = { ...store.tempEventData };
         
@@ -140,14 +150,14 @@ onMounted(async () => {
         
         form.value = { ...form.value, ...draft };
       } else {
-        // It has an ID! This means it's ghost data from a previous saved draft. 
-        // Do not restore it into a new event. Wipe it instead.
         store.clearTempData();
       }
     }
     
     originalStateStr.value = JSON.stringify(form.value)
   }
+
+  isDataReady.value = true
 })
 
 const handleTranslate = async () => {
@@ -263,10 +273,12 @@ const saveAsDraft = async () => {
       }
       store.clearDraftForms(); 
 
+      // FIX: Fetch the newly created forms so EventDetailPreview receives them!
+      availableForms.value = await FormService.getFormsByEventId(response.id);
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     
-    // CLEAR TEMP DATA ON EXPLICIT SAVE
     store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
@@ -298,10 +310,12 @@ const confirmPublish = async () => {
       }
       store.clearDraftForms(); 
 
+      // FIX: Fetch the newly created forms so EventDetailPreview receives them!
+      availableForms.value = await FormService.getFormsByEventId(response.id);
+
       router.replace({ params: { id: response.id } }).catch(() => {});
     }
     
-    // CLEAR TEMP DATA ON EXPLICIT PUBLISH
     store.clearTempData();
     originalStateStr.value = JSON.stringify(form.value) 
     
@@ -320,7 +334,11 @@ const confirmPublish = async () => {
 
 const handleBackClick = () => {
   if (viewMode.value === 'preview') {
-    router.back()
+    if (isInitialNewEvent) {
+      router.push('/event') 
+    } else {
+      router.back()
+    }
     return
   }
   
@@ -336,7 +354,6 @@ const handleBackClick = () => {
 }
 
 const confirmLeave = () => { 
-  // CLEAR TEMP DATA ON EXPLICIT QUIT
   store.clearTempData(); 
   showLeaveModal.value = false;
 
@@ -351,31 +368,31 @@ const confirmLeave = () => {
 }
 </script>
 
-<template>
-  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#fafafa] min-h-screen font-['Lato'] px-4">
+<template v-if="isDataReady">
+  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
     
-    <div v-if="isTranslating" class="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
-      <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-3"></div>
-      <p class="text-purple-800 font-bold tracking-widest uppercase text-sm animate-pulse">Translating...</p>
+    <div v-if="isTranslating" class="fixed inset-0 bg-[#FFFFFF]/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
+      <div class="w-10 h-10 border-4 border-[#CECBF6] border-t-[#534AB7] rounded-full animate-spin mb-3"></div>
+      <p class="text-[#26215C] font-bold tracking-widest uppercase text-sm animate-pulse">Translating...</p>
     </div>
 
-    <button @click="handleBackClick" class="mb-4 text-gray-500 hover:text-purple-700 flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
+    <button @click="handleBackClick" class="mb-4 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       {{ t.back }}
     </button>
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-gray-100 pb-3 gap-3">
-      <h1 class="text-xl font-bold text-gray-900 tracking-tight uppercase">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-[#CECBF6] pb-3 gap-3">
+      <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
         {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
       </h1>
       
       <div class="flex items-center gap-2 w-full md:w-auto">
-        <div class="flex bg-gray-200 p-0.5 rounded-lg w-full md:w-32">
-          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">EN</button>
-          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-purple-600'" class="flex-1 py-1 rounded-md text-[10px] font-black transition-all">TH</button>
+        <div class="flex bg-[#EEEDFE]/50 border border-[#CECBF6] p-0.5 rounded-lg w-full md:w-32">
+          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-[#534AB7] shadow-sm text-[#FFFFFF]' : 'text-[#26215C]/70 hover:text-[#3C3489]'" class="flex-1 py-1 rounded-md text-[10px] font-black transition-colors">EN</button>
+          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-[#534AB7] shadow-sm text-[#FFFFFF]' : 'text-[#26215C]/70 hover:text-[#3C3489]'" class="flex-1 py-1 rounded-md text-[10px] font-black transition-colors">TH</button>
         </div>
         
-        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-linear-to-r from-purple-600 to-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-purple-700 disabled:bg-gray-400 transition-all flex items-center gap-1 whitespace-nowrap">
+        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-[#534AB7] text-[#FFFFFF] px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm hover:bg-[#3C3489] disabled:opacity-50 transition-all flex items-center gap-1 whitespace-nowrap cursor-pointer">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
           <span class="hidden sm:inline">Auto Translate</span>
         </button>
@@ -396,17 +413,17 @@ const confirmLeave = () => {
       <EventForm :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     </form>
 
-    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
+    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" class="fixed bottom-0 left-0 right-0 bg-[#FFFFFF] border-t border-[#CECBF6] p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
       
       <div class="max-w-3xl w-full flex justify-center gap-4 md:gap-6 px-4 md:px-0">
         
         <template v-if="viewMode === 'preview' && eventStatus === 'DRAFT'">
-          <button @click="viewMode = 'edit'" class="w-35 md:w-40 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 py-2.5 rounded-xl font-bold text-[11px] transition-all">Edit Draft</button>
+          <button @click="viewMode = 'edit'" class="w-35 md:w-40 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-2.5 rounded-xl font-bold text-[11px] transition-colors cursor-pointer">Edit Draft</button>
         </template>
         
         <template v-if="viewMode === 'create' || viewMode === 'edit'">
-          <button @click="saveAsDraft" :disabled="isSaving" class="w-35 md:w-40 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 py-2.5 rounded-xl font-bold text-[11px] transition-all disabled:opacity-50">Save Draft</button>
-          <button @click="triggerPublish" :disabled="isSaving" class="w-35 md:w-40 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-linear-to-r hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-[11px] transition-all disabled:opacity-50 shadow-sm">Publish</button>
+          <button @click="saveAsDraft" :disabled="isSaving" class="w-35 md:w-40 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-2.5 rounded-xl font-bold text-[11px] transition-colors disabled:opacity-50 cursor-pointer">Save Draft</button>
+          <button @click="triggerPublish" :disabled="isSaving" class="w-35 md:w-40 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-2.5 rounded-xl font-bold text-[11px] transition-colors disabled:opacity-50 shadow-sm cursor-pointer">Publish</button>
         </template>
 
       </div>

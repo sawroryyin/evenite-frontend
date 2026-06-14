@@ -14,10 +14,8 @@ const fetchPublishedEvents = async () => {
     isLoading.value = true
     errorMessage.value = ''
     
-    // Fetch all events from backend
     const response = await axios.get<EventData[]>('http://localhost:3000/events')
-    
-    // Filter only the PUBLISHED events
+  
     publishedEvents.value = response.data.filter(event => event.status === 'PUBLISHED')
     
   } catch (error) {
@@ -53,23 +51,19 @@ onMounted(() => {
     <h1 class="text-2xl font-bold text-gray-800 mb-2">Published Events</h1>
     <p class="text-gray-500 mb-6">Manage your live events, track attendance, and communicate with participants.</p>
 
-    <!-- Loading State -->
     <div v-if="isLoading" class="text-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
       <p class="text-gray-500 mt-4">Loading your events...</p>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="errorMessage" class="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200 text-center">
       {{ errorMessage }}
     </div>
 
-    <!-- Empty State -->
     <div v-else-if="publishedEvents.length === 0" class="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
       <p class="text-gray-500">You haven't published any events yet.</p>
     </div>
 
-    <!-- Data State -->
     <div v-else class="space-y-4">
       <div v-for="event in publishedEvents" :key="event.id" class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
         <div v-for="event in publishedEvents" :key="event.id" class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">

@@ -15,10 +15,8 @@ const fetchDrafts = async () => {
     isLoading.value = true
     errorMessage.value = ''
     
-    // Fetch all events from backend
     const response = await axios.get<EventData[]>('http://localhost:3000/events')
     
-    // Filter only the DRAFT events
     draftEvents.value = response.data.filter(event => event.status === 'DRAFT')
     
   } catch (error) {
@@ -59,23 +57,19 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- Loading State -->
     <div v-if="isLoading" class="text-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
       <p class="text-gray-500 mt-4">Loading drafts...</p>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="errorMessage" class="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200 text-center">
       {{ errorMessage }}
     </div>
 
-    <!-- Empty State -->
     <div v-else-if="draftEvents.length === 0" class="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
       <p class="text-gray-500">You don't have any saved drafts.</p>
     </div>
 
-    <!-- Data State -->
     <div v-else class="space-y-4">
       <div v-for="draft in draftEvents" :key="draft.id" class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -87,8 +81,7 @@ onMounted(() => {
             {{ draft.title?.en || draft.title?.th || 'Untitled Event' }}
             </h3>
         </div>
-        
-        <!-- Updated: Only the View Button -->  
+         
         <div class="flex gap-2 w-full sm:w-auto">
             <button @click="router.push({ name: 'event-detail', params: { id: draft.id } })" class="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm shadow transition">
             View
