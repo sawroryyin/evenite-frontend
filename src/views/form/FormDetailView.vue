@@ -217,7 +217,7 @@ const alertState = ref({
   show: false,
   title: '',
   description: '',
-  theme: 'blue' as 'blue' | 'red'
+  theme: 'blue' as 'blue' | 'red' 
 });
 
 const confirmState = ref({
@@ -280,7 +280,9 @@ const formattedFormType = computed(() =>
                   </button>
                   <div class="w-px h-4 bg-[#CECBF6]"></div>
                   <button type="button" @click="moveField(index, 1)" :disabled="index === form.fields.length - 1" class="p-1 text-[#26215C]/50 hover:text-[#7F77DD] disabled:opacity-30 disabled:hover:text-[#26215C]/50 transition-colors cursor-pointer">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7-7-7-7"></path></svg>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 9l7 7 7-7"></path>
+                    </svg>                  
                   </button>
                 </div>
              </div>
