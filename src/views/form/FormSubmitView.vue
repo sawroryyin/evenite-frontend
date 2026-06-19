@@ -72,10 +72,35 @@ const submitForm = async () => {
   isSubmitting.value = true;
   try {
     const payload = {
-      answers: form.value.fields.map((field, index) => ({
-        formFieldId: field.id || index.toString(),
-        value: answers.value[field.id || index.toString()]
-      }))
+      answers: form.value.fields.map((field, index) => {
+        const key = field.id || index.toString();
+        const rawValue = answers.value[key];
+        let finalValue: any;
+
+        // 1. CHECKBOX: Must be a literal Array
+        if (field.type === 'CHECKBOX') {
+          // Fallback to empty array if nothing is selected
+          finalValue = Array.isArray(rawValue) ? rawValue : (rawValue ? [rawValue] : []);
+        } 
+        // 2. CHOICE: If your backend ALSO expects an array for radio buttons, wrap it.
+        // (If your backend actually expects a string for CHOICE, change this to String(rawValue))
+        else if (field.type === 'CHOICE') {
+          finalValue = rawValue ? [rawValue] : []; 
+        }
+        // 3. NUMBER/RATING: Must be a literal Number
+        else if (field.type === 'NUMBER' || field.type === 'RATING') {
+          finalValue = rawValue ? Number(rawValue) : null;
+        } 
+        // 4. Everything else (TEXT, DATE, etc.): Must be a String
+        else {
+          finalValue = rawValue ? String(rawValue) : '';
+        }
+
+        return {
+          formFieldId: key,
+          value: finalValue
+        };
+      })
     };
 
     await FormService.submitResponse(eventId, formType, payload);
@@ -84,8 +109,8 @@ const submitForm = async () => {
     alert('Successfully submitted!');
     router.back();
     
-  } catch (error) {
-    console.error("Submission error:", error);
+  } catch (error: any) {
+    console.error("Submission error details:", error.response?.data || error);
     alert('Error submitting form. Please try again.');
   } finally {
     isSubmitting.value = false;

@@ -87,11 +87,10 @@ const handleSwitchRole = async () => {
     @click="closeSidebar"
   ></div>
 
-  <aside 
-    class="fixed top-0 right-0 h-full w-72 bg-[#FFFFFF] shadow-2xl z-80 transform transition-transform duration-300 ease-in-out 
-    flex flex-col font-sans"
-    :class="isSidebarOpen ? 'translate-x-0' : 'translate-x-full'"
-  >
+  <aside  
+      class="fixed top-0 right-0 h-full w-72 bg-[#FFFFFF] z-80 transform transition-all duration-300 ease-in-out flex flex-col font-sans"
+      :class="isSidebarOpen ? 'translate-x-0 shadow-2xl' : 'translate-x-full shadow-none'"
+    >
     <div class="p-4 flex justify-between items-center bg-[#EEEDFE]">
       <h2 class="text-base font-bold text-[#26215C]">Account Menu</h2>
       <button @click="closeSidebar" class="p-1 text-[#534AB7] hover:bg-[#3C3489] hover:text-white rounded-full transition-colors">
