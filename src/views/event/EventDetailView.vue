@@ -80,18 +80,18 @@ const form = ref<any>({
 
 const formatForDateTimeLocal = (isoString: string | undefined) => {
   if (!isoString) return '';
-  
-  // FIX: If the string is already in YYYY-MM-DDTHH:mm format, bypass parsing 
-  // to avoid 'Invalid Date' bugs in Safari/WebKit.
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(isoString)) {
-    return isoString.substring(0, 16);
-  }
 
   const date = new Date(isoString);
-  // Fallback: if parsing still fails, return the raw string instead of clearing it
+
   if (isNaN(date.getTime())) return isoString; 
   
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  const yyyy = date.getFullYear();
+  const MM = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const HH = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+
+  return `${yyyy}-${MM}-${dd}T${HH}:${mm}`;
 };
 
 watch(form, (newVal) => {
