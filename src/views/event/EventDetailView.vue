@@ -140,6 +140,8 @@ onMounted(async () => {
   } else {
     viewMode.value = 'create'
 
+    originalStateStr.value = JSON.stringify(form.value)
+
     if (store.tempEventData && Object.keys(store.tempEventData).length > 0) {
       
       if (!store.tempEventData.id) {
@@ -153,8 +155,6 @@ onMounted(async () => {
         store.clearTempData();
       }
     }
-    
-    originalStateStr.value = JSON.stringify(form.value)
   }
 
   isDataReady.value = true
