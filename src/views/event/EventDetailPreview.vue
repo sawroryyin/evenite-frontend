@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { RegistrationService } from '../../services/RegistrationService'
+import ConfirmModal from '../../components/ConfirmModal.vue'
 
 const router = useRouter()
 
@@ -11,11 +13,81 @@ const props = defineProps<{
   isOrganizer?: boolean;
 }>()
 
+// Registration & Ticket State
+const userTicket = ref<any>(null)
+const isLoadingTicket = ref(false)
+
+// Modals State
+const alertState = ref({ show: false, title: '', description: '', theme: 'blue' as 'blue' | 'red' })
+const confirmState = ref({ show: false, title: '', description: '', confirmText: '', theme: 'blue' as 'blue' | 'red', onConfirm: () => {} })
+
+const fetchUserTicket = async () => {
+  if (props.isOrganizer || !props.event?.id) return;
+  try {
+    isLoadingTicket.value = true;
+    userTicket.value = await RegistrationService.getTicketByEvent(props.event.id);
+  } catch (e) {
+    userTicket.value = null; // Backend throws 404/Exception if no valid ticket exists
+  } finally {
+    isLoadingTicket.value = false;
+  }
+}
+
+onMounted(() => {
+  fetchUserTicket();
+})
+
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
 
+// URS requirement: Check if the seat is available
+const isEventFull = computed(() => {
+  if (props.event.seatLimit === null || props.event.seatLimit === undefined) return false;
+  return props.event.seatsTaken >= props.event.seatLimit;
+});
+
 const navigateToSubmitForm = (type: string) => {
-  router.push(`/events/${props.event.id}/forms/${type}/submit`) 
+  if (type === 'REGISTRATION') {
+    router.push(`/events/${props.event.id}/register`)
+  } else {
+    router.push(`/events/${props.event.id}/forms/${type}/submit`) 
+  }
+}
+
+const viewTicket = () => {
+  if (userTicket.value) {
+    router.push(`/events/${props.event.id}/tickets/${userTicket.value.id}`)
+  }
+}
+
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
+  alertState.value = { show: true, title, description, theme };
+}
+
+// URS requirement: Cancel Registration Flow
+const confirmCancelRegistration = () => {
+  confirmState.value = {
+    show: true,
+    title: 'Cancel Registration',
+    description: 'Are you sure you want to cancel your registration for this event?',
+    confirmText: 'Confirm',
+    theme: 'red',
+    onConfirm: async () => {
+      confirmState.value.show = false;
+      try {
+        await RegistrationService.cancelRegistration(props.event.id);
+        showAlert('Success', 'Registration cancelled successfully.', 'blue');
+        
+        // Refresh local UI states
+        await fetchUserTicket(); 
+        props.event.seatsTaken = Math.max(0, props.event.seatsTaken - 1);
+      } catch (e: any) {
+        // Backend handles logic to throw error if event already started, etc.
+        const errorMsg = e.response?.data?.message || 'There was an error in cancelling registration. Please try again.';
+        showAlert('Error', errorMsg, 'red');
+      }
+    }
+  }
 }
 
 const isSingleDay = computed(() => {
@@ -180,7 +252,7 @@ const mapEmbedUrl = computed(() => {
               </svg>
               <div>
                 <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1">Capacity</h3>
-                <p class="text-sm font-semibold text-[#26215C]">{{ event.seatLimit }} seats available</p>
+                <p class="text-sm font-semibold text-[#26215C]">{{ event.seatsTaken }} / {{ event.seatLimit }} seats booked</p>
               </div>
             </div>
           
@@ -220,21 +292,44 @@ const mapEmbedUrl = computed(() => {
             </div>
           </div>
 
-          <div v-if="(hasRegistration || hasFeedback) && !isOrganizer" 
+          <!-- Feature 4: Participant Actions Section -->
+          <div v-if="(hasRegistration || hasFeedback || userTicket) && !isOrganizer && !isLoadingTicket" 
                class="bg-[#EEEDFE]/50 p-6 rounded-xl border border-[#CECBF6] shadow-sm space-y-4">
             
             <div class="text-center">
-              <h3 class="text-lg font-black text-[#26215C] tracking-tight">Join the Experience</h3>
-              <p class="text-xs text-[#26215C]/70 mt-1">Don't miss out on this event!</p>
+              <h3 class="text-lg font-black text-[#26215C] tracking-tight">
+                {{ userTicket && userTicket.registration.status === 'CONFIRMED' ? 'You are registered!' : 'Join the Experience' }}
+              </h3>
+              <p class="text-xs text-[#26215C]/70 mt-1">
+                {{ userTicket && userTicket.registration.status === 'CONFIRMED' ? 'We look forward to seeing you.' : "Don't miss out on this event!" }}
+              </p>
             </div>
 
-            <div class="flex flex-col gap-3 mt-4">
+            <!-- Pre-Registration View -->
+            <div v-if="!userTicket || userTicket.registration.status === 'CANCELLED'" class="flex flex-col gap-3 mt-4">
+              
+              <!-- Check Event Full Capacity -->
+              <div v-if="isEventFull" class="text-center p-3 bg-red-50 text-red-600 rounded-xl border border-red-200 text-sm font-bold shadow-sm">
+                All seats are fully taken for this event
+              </div>
+
               <button v-if="hasRegistration" @click="navigateToSubmitForm('REGISTRATION')" 
-                class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                <svg class="w-5 h-5 text-[#EEEDFE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                :disabled="isEventFull"
+                :class="isEventFull ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5'"
+                class="w-full transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                <svg v-if="!isEventFull" class="w-5 h-5 text-[#EEEDFE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
                 </svg>
                 Register Now
+              </button>
+            </div>
+
+            <!-- Post-Registration View -->
+            <div v-if="userTicket && userTicket.registration.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
+              
+              <button @click="viewTicket"
+                class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                View ticket
               </button>
 
               <button v-if="hasFeedback" @click="navigateToSubmitForm('FEEDBACK')" 
@@ -244,6 +339,12 @@ const mapEmbedUrl = computed(() => {
                 </svg>
                 Give Feedback
               </button>
+
+              <button @click="confirmCancelRegistration"
+                class="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-sm transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                Cancel Registration
+              </button>
+
             </div>
           </div>
 
@@ -272,5 +373,26 @@ const mapEmbedUrl = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Modals -->
+    <ConfirmModal 
+      v-if="alertState.show"
+      :title="alertState.title"
+      :description="alertState.description"
+      :confirmTheme="alertState.theme"
+      confirmText="OK"
+      @confirm="alertState.show = false"
+    />
+
+    <ConfirmModal 
+      v-if="confirmState.show"
+      :title="confirmState.title"
+      :description="confirmState.description"
+      :confirmTheme="confirmState.theme"
+      :confirmText="confirmState.confirmText"
+      cancelText="Cancel"
+      @cancel="confirmState.show = false"
+      @confirm="confirmState.onConfirm"
+    />
   </div>
 </template>
