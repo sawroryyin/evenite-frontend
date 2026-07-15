@@ -27,7 +27,7 @@ const fetchUserTicket = async () => {
     isLoadingTicket.value = true;
     userTicket.value = await RegistrationService.getTicketByEvent(props.event.id);
   } catch (e) {
-    userTicket.value = null; // Backend throws 404/Exception if no valid ticket exists
+    userTicket.value = null; 
   } finally {
     isLoadingTicket.value = false;
   }
@@ -44,6 +44,12 @@ const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'F
 const isEventFull = computed(() => {
   if (props.event.seatLimit === null || props.event.seatLimit === undefined) return false;
   return props.event.seatsTaken >= props.event.seatLimit;
+});
+
+// URS requirement: Prevent cancellation if event has started
+const isEventStarted = computed(() => {
+  if (!props.event.startAt) return false;
+  return new Date(props.event.startAt) <= new Date();
 });
 
 const navigateToSubmitForm = (type: string) => {
@@ -66,6 +72,10 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
 
 // URS requirement: Cancel Registration Flow
 const confirmCancelRegistration = () => {
+  if (isEventStarted.value) {
+    return showAlert('Error', 'Cannot cancel registration because the event has already started.', 'red');
+  }
+
   confirmState.value = {
     show: true,
     title: 'Cancel Registration',
@@ -82,7 +92,6 @@ const confirmCancelRegistration = () => {
         await fetchUserTicket(); 
         props.event.seatsTaken = Math.max(0, props.event.seatsTaken - 1);
       } catch (e: any) {
-        // Backend handles logic to throw error if event already started, etc.
         const errorMsg = e.response?.data?.message || 'There was an error in cancelling registration. Please try again.';
         showAlert('Error', errorMsg, 'red');
       }
@@ -117,7 +126,6 @@ const formatDateObj = (isoString: string | undefined) => {
 const mapEmbedUrl = computed(() => {
   if (props.event.mapLink && !props.event.isOnline) {
     const locationText = props.event.location?.en || props.event.location?.th;
-    
     if (locationText) {
       return `https://maps.google.com/maps?q=${encodeURIComponent(locationText)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
@@ -131,7 +139,6 @@ const mapEmbedUrl = computed(() => {
   <div class="font-['Lato'] max-w-6xl mx-auto space-y-6">
     
     <div class="bg-[#FFFFFF] rounded-xl shadow-sm overflow-hidden border border-[#CECBF6]">
-      
       <div class="w-full h-48 md:h-64 relative border-b border-[#CECBF6]">
         <img v-if="event.bannerUrl" :src="event.bannerUrl" class="w-full h-full object-cover" />
         <div v-else class="w-full h-full flex items-center justify-center text-[#26215C]/70 font-medium text-sm bg-[#EEEDFE]/50">
@@ -140,7 +147,6 @@ const mapEmbedUrl = computed(() => {
       </div>
 
       <div class="p-5 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        
         <div class="md:col-span-2 space-y-8">
           <div>
             <h1 class="text-2xl md:text-3xl font-bold text-[#26215C] mb-3 leading-tight tracking-tight">
@@ -162,8 +168,7 @@ const mapEmbedUrl = computed(() => {
             <h2 class="text-lg font-bold text-[#26215C] border-b border-[#CECBF6] pb-2 mb-4">Event Agenda</h2>
             <ul class="space-y-4 relative border-l-2 border-[#CECBF6] ml-2 pl-5">
               <li v-for="(item, index) in event.agenda" :key="index" class="relative">
-                <span class="absolute -left-6.5 top-1 w-3 h-3 bg-[#7F77DD] rounded-full border-2 
-                border-[#FFFFFF] shadow-sm"></span>
+                <span class="absolute -left-6.5 top-1 w-3 h-3 bg-[#7F77DD] rounded-full border-2 border-[#FFFFFF] shadow-sm"></span>
                 <p class="text-sm font-bold text-[#534AB7] tracking-wide">{{ item.time || '--:--' }}</p>
                 <p class="text-[#26215C] text-sm mt-1">{{ viewLang === 'en' ? item.activity.en : item.activity.th }}</p>
               </li>
@@ -172,7 +177,6 @@ const mapEmbedUrl = computed(() => {
         </div>
 
         <div class="space-y-4">
-          
           <div class="bg-[#EEEDFE]/30 p-5 rounded-xl border border-[#CECBF6] space-y-5">
             <div class="flex items-start gap-3">
               <svg class="w-5 h-5 text-[#7F77DD] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +185,6 @@ const mapEmbedUrl = computed(() => {
               </svg>
               <div>
                 <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1.5">Date & Time</h3>
-                
                 <template v-if="isSingleDay">
                   <p class="text-sm font-bold text-[#26215C]">{{ formatDateObj(event.startAt).date }}</p>
                   <p class="text-xs text-[#26215C]/70 font-semibold mt-0.5">
@@ -189,7 +192,6 @@ const mapEmbedUrl = computed(() => {
                     <template v-if="event.endAt"> - {{ formatDateObj(event.endAt).time }}</template>
                   </p>
                 </template>
-
                 <template v-else>
                   <p class="text-[13px] font-semibold text-[#26215C]">
                     <span class="text-[#534AB7] font-bold">Start - </span>{{ formatDateObj(event.startAt).full }}
@@ -212,8 +214,7 @@ const mapEmbedUrl = computed(() => {
                 </svg>
                 <div>
                   <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1">Location</h3>
-                  <p v-if="event.isOnline" class="text-sm font-bold text-[#3C3489] bg-[#EEEDFE] 
-                  inline-block px-2 py-1 rounded">Online Event</p>
+                  <p v-if="event.isOnline" class="text-sm font-bold text-[#3C3489] bg-[#EEEDFE] inline-block px-2 py-1 rounded">Online Event</p>
                   <p v-else class="text-sm font-semibold text-[#26215C]">
                     {{ viewLang === 'en' ? event.location.en : event.location.th || 'TBA' }}
                   </p>
@@ -221,34 +222,20 @@ const mapEmbedUrl = computed(() => {
               </div>
               
               <div v-if="!event.isOnline" class="w-full space-y-2">
-                <div v-if="mapEmbedUrl" class="w-full rounded-lg overflow-hidden border border-[#CECBF6] shadow-sm 
-                bg-[#EEEDFE]/50 h-32 md:h-40">
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    frameborder="0" 
-                    style="border:0;" 
-                    :src="mapEmbedUrl"
-                    allowfullscreen="false" 
-                    loading="lazy">
-                  </iframe>
+                <div v-if="mapEmbedUrl" class="w-full rounded-lg overflow-hidden border border-[#CECBF6] shadow-sm bg-[#EEEDFE]/50 h-32 md:h-40">
+                  <iframe width="100%" height="100%" frameborder="0" style="border:0;" :src="mapEmbedUrl" allowfullscreen="false" loading="lazy"></iframe>
                 </div>
-
-                <a v-if="event.mapLink" :href="event.mapLink" target="_blank" class="text-[#534AB7] 
-                hover:text-[#3C3489] hover:underline text-xs font-bold inline-block mt-2 transition-colors">
+                <a v-if="event.mapLink" :href="event.mapLink" target="_blank" class="text-[#534AB7] hover:text-[#3C3489] hover:underline text-xs font-bold inline-block mt-2 transition-colors">
                   Open in Google Maps ↗
                 </a>
               </div>
             </div>
           </div>
 
-          <div v-if="event.seatLimit || event.hasCatering || event.contactName || event.contactEmail" 
-            class="bg-[#EEEDFE]/30 p-5 rounded-xl border border-[#CECBF6] space-y-5">
-  
+          <div v-if="event.seatLimit || event.hasCatering || event.contactName || event.contactEmail" class="bg-[#EEEDFE]/30 p-5 rounded-xl border border-[#CECBF6] space-y-5">
             <div v-if="event.seatLimit" class="flex items-start gap-3">
               <svg class="w-5 h-5 text-[#7F77DD] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               <div>
                 <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1">Capacity</h3>
@@ -260,8 +247,7 @@ const mapEmbedUrl = computed(() => {
           
             <div v-if="event.hasCatering" class="flex items-start gap-3">
               <svg class="w-5 h-5 text-[#7F77DD] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
               </svg>
               <div>
                 <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1">Catering</h3>
@@ -276,16 +262,13 @@ const mapEmbedUrl = computed(() => {
 
             <div v-if="event.contactName || event.contactEmail" class="flex items-start gap-3">
               <svg class="w-5 h-5 text-[#7F77DD] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <div>
                 <h3 class="text-xs font-bold text-[#26215C]/70 uppercase tracking-widest mb-1">Organizer Contact</h3>
                 <p class="text-sm font-semibold text-[#26215C]">{{ event.contactName }}</p>
                 <p class="text-sm mt-0.5">
-                  <a :href="'mailto:'+event.contactEmail" class="text-[#534AB7] 
-                    hover:underline hover:text-[#3C3489] transition-colors">{{ event.contactEmail }}
-                  </a>
+                  <a :href="'mailto:'+event.contactEmail" class="text-[#534AB7] hover:underline hover:text-[#3C3489] transition-colors">{{ event.contactEmail }}</a>
                 </p>
                 <p v-if="event.contactPhone" class="text-sm text-[#26215C]/70 mt-0.5">{{ event.contactPhone }}</p>
               </div>
@@ -293,9 +276,7 @@ const mapEmbedUrl = computed(() => {
           </div>
 
           <!-- Feature 4: Participant Actions Section -->
-          <div v-if="(hasRegistration || hasFeedback || userTicket) && !isOrganizer && !isLoadingTicket" 
-               class="bg-[#EEEDFE]/50 p-6 rounded-xl border border-[#CECBF6] shadow-sm space-y-4">
-            
+          <div v-if="(hasRegistration || hasFeedback || userTicket) && !isOrganizer && !isLoadingTicket" class="bg-[#EEEDFE]/50 p-6 rounded-xl border border-[#CECBF6] shadow-sm space-y-4">
             <div class="text-center">
               <h3 class="text-lg font-black text-[#26215C] tracking-tight">
                 {{ userTicket && userTicket.registration.status === 'CONFIRMED' ? 'You are registered!' : 'Join the Experience' }}
@@ -307,8 +288,6 @@ const mapEmbedUrl = computed(() => {
 
             <!-- Pre-Registration View -->
             <div v-if="!userTicket || userTicket.registration.status === 'CANCELLED'" class="flex flex-col gap-3 mt-4">
-              
-              <!-- Check Event Full Capacity -->
               <div v-if="isEventFull" class="text-center p-3 bg-red-50 text-red-600 rounded-xl border border-red-200 text-sm font-bold shadow-sm">
                 All seats are fully taken for this event
               </div>
@@ -326,50 +305,39 @@ const mapEmbedUrl = computed(() => {
 
             <!-- Post-Registration View -->
             <div v-if="userTicket && userTicket.registration.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
-              
-              <button @click="viewTicket"
-                class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+              <button @click="viewTicket" class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 View ticket
               </button>
 
-              <button v-if="hasFeedback" @click="navigateToSubmitForm('FEEDBACK')" 
-                class="w-full bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+              <button v-if="hasFeedback" @click="navigateToSubmitForm('FEEDBACK')" class="w-full bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 text-[#7F77DD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                 </svg>
                 Give Feedback
               </button>
 
-              <button @click="confirmCancelRegistration"
-                class="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-sm transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                Cancel Registration
+              <button @click="confirmCancelRegistration" 
+                :disabled="isEventStarted"
+                :class="isEventStarted ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-500 border-gray-300' : 'bg-red-50 hover:bg-red-100 text-red-600 border-red-200'"
+                class="w-full border shadow-sm transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                {{ isEventStarted ? 'Event Started (Cannot Cancel)' : 'Cancel Registration' }}
               </button>
-
             </div>
           </div>
 
           <div v-if="isOrganizer" class="bg-[#FFFFFF] p-4 rounded-xl border border-[#CECBF6] shadow-sm space-y-3">
             <h3 class="text-base font-bold text-[#26215C] mb-2">Event Forms</h3>
-            
             <div class="flex flex-col gap-3">
-              <button 
-                @click="router.push(`/events/${event.id || 'new'}/forms/REGISTRATION?source=preview`)" 
-                class="w-full bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
-              >
+              <button @click="router.push(`/events/${event.id || 'new'}/forms/REGISTRATION?source=preview`)" class="w-full bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 {{ hasRegistration ? 'Registration Form' : 'Create Registration Form' }}
               </button>
-
-              <button 
-                @click="router.push(`/events/${event.id || 'new'}/forms/FEEDBACK?source=preview`)" 
-                class="w-full bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
-              >
+              <button @click="router.push(`/events/${event.id || 'new'}/forms/FEEDBACK?source=preview`)" class="w-full bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 {{ hasFeedback ? 'Feedback Form' : 'Create Feedback Form' }}
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ const emit = defineEmits(["confirm", "cancel"]);
         </button>
         <button
           @click="emit('confirm')"
-          :class="confirmTheme === 'red' ? 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF]' : 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF]'"
+          :class="confirmTheme === 'red' ? 'bg-[#E3342F] hover:bg-[#CC1F1A] text-[#FFFFFF]' : 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF]'"
           class="px-4 py-2.5 font-bold text-[11px] uppercase tracking-wider rounded-xl shadow-sm transition-colors cursor-pointer">
           {{ confirmText }}
         </button>
