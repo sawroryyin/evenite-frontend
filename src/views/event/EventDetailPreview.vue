@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { RegistrationService } from '../../services/RegistrationService'
 import ConfirmModal from '../../components/ConfirmModal.vue'
@@ -27,15 +27,19 @@ const fetchUserTicket = async () => {
     isLoadingTicket.value = true;
     userTicket.value = await RegistrationService.getTicketByEvent(props.event.id);
   } catch (e) {
+    console.error("No ticket found or error fetching ticket:", e);
     userTicket.value = null; 
   } finally {
     isLoadingTicket.value = false;
   }
 }
 
-onMounted(() => {
-  fetchUserTicket();
-})
+// FIX: Watch the event ID to guarantee the fetch runs when the ID is ready
+watch(() => props.event?.id, (newId) => {
+  if (newId) {
+    fetchUserTicket();
+  }
+}, { immediate: true })
 
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
@@ -277,17 +281,20 @@ const mapEmbedUrl = computed(() => {
 
           <!-- Feature 4: Participant Actions Section -->
           <div v-if="(hasRegistration || hasFeedback || userTicket) && !isOrganizer && !isLoadingTicket" class="bg-[#EEEDFE]/50 p-6 rounded-xl border border-[#CECBF6] shadow-sm space-y-4">
+            
             <div class="text-center">
               <h3 class="text-lg font-black text-[#26215C] tracking-tight">
-                {{ userTicket && userTicket.registration.status === 'CONFIRMED' ? 'You are registered!' : 'Join the Experience' }}
+                <!-- FIX: Added optional chaining to prevent undefined crashes -->
+                {{ userTicket?.registration?.status === 'CONFIRMED' ? 'You are registered!' : 'Join the Experience' }}
               </h3>
               <p class="text-xs text-[#26215C]/70 mt-1">
-                {{ userTicket && userTicket.registration.status === 'CONFIRMED' ? 'We look forward to seeing you.' : "Don't miss out on this event!" }}
+                {{ userTicket?.registration?.status === 'CONFIRMED' ? 'We look forward to seeing you.' : "Don't miss out on this event!" }}
               </p>
             </div>
 
             <!-- Pre-Registration View -->
-            <div v-if="!userTicket || userTicket.registration.status === 'CANCELLED'" class="flex flex-col gap-3 mt-4">
+            <!-- FIX: Added optional chaining -->
+            <div v-if="!userTicket || userTicket?.registration?.status === 'CANCELLED'" class="flex flex-col gap-3 mt-4">
               <div v-if="isEventFull" class="text-center p-3 bg-red-50 text-red-600 rounded-xl border border-red-200 text-sm font-bold shadow-sm">
                 All seats are fully taken for this event
               </div>
@@ -304,7 +311,8 @@ const mapEmbedUrl = computed(() => {
             </div>
 
             <!-- Post-Registration View -->
-            <div v-if="userTicket && userTicket.registration.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
+            <!-- FIX: Added optional chaining -->
+            <div v-if="userTicket?.registration?.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
               <button @click="viewTicket" class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 View ticket
               </button>

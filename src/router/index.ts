@@ -24,8 +24,8 @@ import FormSubmitView from '../views/form/FormSubmitView.vue'
 
 // --- Feature 4 New Views ---
 import RegistrationFormView from '../views/registration/RegistrationFormView.vue'
-// import MyTicketsView from '../views/ticket/MyTicketsView.vue'
-// import TicketDetailView from '../views/ticket/TicketDetailView.vue'
+import MyTicketsView from '../views/ticket/TicketListView.vue'
+import TicketDetailView from '../views/ticket/TicketDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,8 +61,8 @@ const router = createRouter({
 
     // --- Feature 4 Routes ---
     { path: '/events/:id/register', name: 'event-register', component: RegistrationFormView, meta: { requiresAuth: true } },
-    // { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
-    // { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } }
+    { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
+    { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } }
   ]
 })
 

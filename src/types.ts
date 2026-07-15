@@ -197,3 +197,20 @@ export interface ReturnTicketDetailDto {
   registration: ReturnTicketDetailRegistrationDto;
   event: ReturnTicketDetailEventDto;
 }
+
+export interface ReturnParticipantTicketListEventDto {
+  id: string;
+  title: BilingualField;
+  bannerUrl: string;
+  startAt: Date | string | null;
+  endAt: Date | string | null;
+  status: string;
+}
+
+export interface ReturnParticipantTicketListDto {
+  id: string;  
+  status: TicketStatus;
+  issuedAt: Date | string;
+  registrationStatus: RegistrationStatus;
+  event: ReturnParticipantTicketListEventDto;
+}
