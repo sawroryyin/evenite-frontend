@@ -37,7 +37,7 @@ watch(selectedFilter, fetchTickets);
 </script>
 
 <template>
-  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
+  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#F4F4FA] min-h-screen font-['Lato'] px-4">
 
     <div class="flex justify-between items-center mb-5 relative z-10">
       <div>
@@ -79,7 +79,7 @@ watch(selectedFilter, fetchTickets);
       <div class="w-10 h-10 bg-[#EEEDFE] rounded-full flex items-center justify-center mx-auto mb-2.5">
         <svg class="w-5 h-5 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M9 5H7a2 2 0 00-2 2v3a2 2 0 010 4v3a2 2 0 002 2h2m6-14h2a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-2M9 5v14M9 9h.01M9 15h.01"></path>
+          d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 010 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 010-4V7a2 2 0 00-2-2H5z"></path>
         </svg>
       </div>
       <p class="text-[11px] font-bold text-[#26215C]/70">You don't have any tickets yet.</p>

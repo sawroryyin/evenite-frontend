@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { RegistrationService } from '../../services/RegistrationService'
 import ConfirmModal from '../../components/ConfirmModal.vue'
+import { UserService } from '../../services/UserService'
 
 const router = useRouter()
 
@@ -23,11 +24,26 @@ const confirmState = ref({ show: false, title: '', description: '', confirmText:
 
 const fetchUserTicket = async () => {
   if (props.isOrganizer || !props.event?.id) return;
+  
   try {
     isLoadingTicket.value = true;
-    userTicket.value = await RegistrationService.getTicketByEvent(props.event.id);
-  } catch (e) {
-    console.error("No ticket found or error fetching ticket:", e);
+    
+    // 1. Condition Check: Fetch all registered events for this user
+    const registeredEvents = await UserService.getCurrentUserRegisteredEvents();
+    
+    // 2. See if the current event's ID exists in their registered events list
+    const isRegistered = registeredEvents.some((evt: any) => evt.id === props.event.id);
+
+    // 3. Only fetch the ticket if we know they are registered!
+    if (isRegistered) {
+      userTicket.value = await RegistrationService.getTicketByEvent(props.event.id);
+    } else {
+      // If not registered, gracefully set to null. No API call made, no 404 error!
+      userTicket.value = null; 
+    }
+    
+  } catch (e: any) {
+    console.error("Error checking registration or fetching ticket:", e);
     userTicket.value = null; 
   } finally {
     isLoadingTicket.value = false;

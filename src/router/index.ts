@@ -23,7 +23,6 @@ import FormResponseView from '../views/form/FormResponseView.vue'
 import FormSubmitView from '../views/form/FormSubmitView.vue'
 
 // --- Feature 4 New Views ---
-import RegistrationFormView from '../views/registration/RegistrationFormView.vue'
 import MyTicketsView from '../views/ticket/TicketListView.vue'
 import TicketDetailView from '../views/ticket/TicketDetailView.vue'
 
@@ -60,7 +59,11 @@ const router = createRouter({
     { path: '/events/:id/forms/:formType/submit', name: 'form-submit', component: FormSubmitView, meta: { requiresAuth: true } },
 
     // --- Feature 4 Routes ---
-    { path: '/events/:id/register', name: 'event-register', component: RegistrationFormView, meta: { requiresAuth: true } },
+    { 
+      path: '/events/:id/register', 
+      name: 'event-register', 
+      redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` 
+    },
     { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
     { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } }
   ]

@@ -30,29 +30,73 @@ const statusColors = computed(() => {
 <template>
   <div 
     @click="router.push(`/events/${ticket.event.id}/tickets/${ticket.id}`)"
-    class="flex flex-col bg-[#FFFFFF] rounded-2xl overflow-hidden shadow-sm border border-[#CECBF6] hover:shadow-md hover:border-[#534AB7] transition-all cursor-pointer group"
+    class="relative cursor-pointer group"
   >
-    <div class="h-32 w-full relative bg-[#EEEDFE]/50 border-b border-[#CECBF6]">
-      <img v-if="ticket.event.bannerUrl" :src="ticket.event.bannerUrl" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-      <span 
-        class="absolute top-3 right-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded border shadow-sm"
-        :class="statusColors"
-      >
-        {{ ticket.status }}
-      </span>
-    </div>
-    
-    <div class="p-4 flex flex-col gap-1.5 flex-1 justify-between">
-      <div>
-        <h3 class="text-sm font-bold text-[#26215C] line-clamp-2 leading-tight">
-          {{ ticket.event.title.en || ticket.event.title.th }}
-        </h3>
-        <p class="text-xs text-[#26215C]/60 mt-1 flex items-center gap-1">
-          <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          {{ formattedDate }}
-        </p>
+    <!-- notch circles: sit on top of the card, punched out where the divider line is -->
+    <div class="notch notch-top absolute top-0 left-24 sm:left-28 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-[#CECBF6] z-10"></div>
+    <div class="notch notch-bottom absolute bottom-0 left-24 sm:left-28 -translate-x-1/2 translate-y-1/2 w-4 h-4 rounded-full border border-[#CECBF6] z-10"></div>
+
+    <div class="flex bg-[#F9F9FF] rounded-2xl overflow-hidden shadow-sm border border-[#CECBF6] group-hover:shadow-md group-hover:border-[#534AB7] transition-all">
+      <div class="w-24 sm:w-28 aspect-2/3 shrink-0 relative bg-[#EEEDFE]/50">
+        <img 
+          v-if="ticket.event.bannerUrl" 
+          :src="ticket.event.bannerUrl" 
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+        />
+        <div v-else class="w-full h-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-[#534AB7]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
       </div>
-      <p class="text-[10px] font-bold text-[#534AB7] mt-3">View Full Ticket &rarr;</p>
+
+      <div class="relative flex-1 min-w-0">
+        <!-- perforated divider between image and details -->
+        <div class="ticket-divider absolute left-0 top-0 bottom-0"></div>
+
+        <div class="p-4 pl-5 flex flex-col gap-1.5 h-full justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="text-sm font-bold text-[#26215C] line-clamp-2 leading-tight">
+                {{ ticket.event.title.en || ticket.event.title.th }}
+              </h3>
+              <span 
+                class="shrink-0 px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded border shadow-sm whitespace-nowrap"
+                :class="statusColors"
+              >
+                {{ ticket.status }}
+              </span>
+            </div>
+            <p class="text-xs text-[#26215C]/60 mt-1.5 flex items-center gap-1">
+              <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              {{ formattedDate }}
+            </p>
+          </div>
+          <p class="text-[10px] font-bold text-[#534AB7] mt-3">View Full Ticket &rarr;</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Notches match the page background so they visually "punch" a bite out of the card edge.
+   Update this color if the ticket list page background ever changes from white. */
+.notch {
+  background-color: #FFFFFF;
+  border: none;
+}
+
+/* Dashed perforation line separating the image from the ticket details,
+   aligned with the notch positions above/below it */
+.ticket-divider {
+  width: 1px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #CECBF6 0,
+    #CECBF6 4px,
+    transparent 4px,
+    transparent 9px
+  );
+}
+</style>
