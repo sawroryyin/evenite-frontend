@@ -17,7 +17,8 @@ const navItems = [
 
 const filteredNavItems = computed(() => {
   if (authStore.currentRole === 'ORGANIZER') {
-    return navItems.filter(item => item.name !== 'home')
+    // Filter out 'home' and 'my-tickets' for the organizer role
+    return navItems.filter(item => item.name !== 'home' && item.name !== 'my-tickets')
   }
   return navItems
 })

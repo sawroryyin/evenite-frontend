@@ -41,13 +41,20 @@ const formattedTimeOnly = computed(() => {
   });
 });
 
-const returnToEvent = () => {
-  // If there is a history to go back to (i.e., they came from Event Details)
+// For the top "BACK" button
+const goBack = () => {
   if (window.history.state?.back) {
     router.back();
   } 
-  // Fallback: If they opened the ticket directly from an external email link
+  // Fallback if they opened the ticket directly via a link
   else if (ticket.value) {
+    router.push('/events'); 
+  }
+};
+
+// For the bottom "Go to Event Details" button
+const goToEventDetails = () => {
+  if (ticket.value) {
     router.push(`/event/${ticket.value.event.id}`);
   }
 };
@@ -58,8 +65,8 @@ const returnToEvent = () => {
     <LoadingOverlay v-if="isLoading" />
 
     <div class="space-y-4 mb-6">
-      <!-- Replaced router.back() with the new goBack function -->
-      <button @click="returnToEvent" class="text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
+      <!-- Update: Bind to goBack -->
+      <button @click="goBack" class="text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
@@ -144,8 +151,9 @@ const returnToEvent = () => {
 
       </div>
 
+      <!-- Update: Bind to goToEventDetails -->
       <button 
-        @click="returnToEvent"
+        @click="goToEventDetails"
         class="w-full bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] border border-[#CECBF6] py-3.5 rounded-xl font-bold text-sm transition-all"
       >
         Go to Event Details
