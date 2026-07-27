@@ -21,8 +21,6 @@ import VerifyEmailView from '../views/auth/VerifyEmailView.vue'
 import FormDetailView from '../views/form/FormDetailView.vue'
 import FormResponseView from '../views/form/FormResponseView.vue'
 import FormSubmitView from '../views/form/FormSubmitView.vue'
-
-// --- Feature 4 New Views ---
 import MyTicketsView from '../views/ticket/TicketListView.vue'
 import TicketDetailView from '../views/ticket/TicketDetailView.vue'
 
@@ -53,20 +51,17 @@ const router = createRouter({
     { path: '/profile/published', name: 'published-events', component: PublishedEventsView, meta: { requiresAuth: true } },
     { path: '/role-select', name: 'role-select', component: RoleSelectView, meta: { requiresAuth: true } },
 
-    // Forms Builder & Responses
     { path: '/events/:id/forms/:formType', name: 'form-detail', component: FormDetailView, meta: { requiresAuth: true } },
     { path: '/events/:id/forms/:formType/responses', name: 'form-responses', component: FormResponseView, meta: { requiresAuth: true }},
     { path: '/events/:id/forms/:formType/submit', name: 'form-submit', component: FormSubmitView, meta: { requiresAuth: true } },
 
-    // --- Feature 4 Routes ---
-    { 
-      path: '/events/:id/register', 
-      name: 'event-register', 
-      redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` 
-    },
+    { path: '/events/:id/register', name: 'event-register', redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` },
     { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
-    { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } }
-  ]
+    { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } },
+  ],
+  scrollBehavior() {
+    return { top: 0 };
+  }
 })
 
 router.beforeEach((to) => {

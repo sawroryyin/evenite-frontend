@@ -11,7 +11,10 @@ const emit = defineEmits(["confirm", "cancel"]);
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-[#26215C]/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 transition-opacity">
+  <div 
+    class="fixed inset-0 bg-[#26215C]/30 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 transition-opacity"
+    @click.self="cancelText ? emit('cancel') : null"
+  >
     <div class="bg-[#FFFFFF] p-6 rounded-2xl shadow-sm border border-[#CECBF6] max-w-sm w-full animate-fade-in font-['Lato']">
       <h3 class="text-[18px] font-['Nunito'] font-black text-[#26215C] mb-2">{{ title }}</h3>
       <p class="text-[13px] text-[#26215C]/70 mb-6 leading-relaxed">
