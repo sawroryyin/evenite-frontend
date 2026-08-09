@@ -20,7 +20,9 @@ import RegisterView from '../views/auth/RegisterView.vue'
 import VerifyEmailView from '../views/auth/VerifyEmailView.vue'
 import FormDetailView from '../views/form/FormDetailView.vue'
 import FormResponseView from '../views/form/FormResponseView.vue'
-import FormSubmitView from '../views/form/FormSubmitView.vue'  
+import FormSubmitView from '../views/form/FormSubmitView.vue'
+import MyTicketsView from '../views/ticket/TicketListView.vue'
+import TicketDetailView from '../views/ticket/TicketDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,8 +55,13 @@ const router = createRouter({
     { path: '/events/:id/forms/:formType/responses', name: 'form-responses', component: FormResponseView, meta: { requiresAuth: true }},
     { path: '/events/:id/forms/:formType/submit', name: 'form-submit', component: FormSubmitView, meta: { requiresAuth: true } },
 
-    { path: '/events/:id/forms/:formType/responses', name: 'FormResponses', component: FormResponseView }
-  ]
+    { path: '/events/:id/register', name: 'event-register', redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` },
+    { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
+    { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } },
+  ],
+  scrollBehavior() {
+    return { top: 0 };
+  }
 })
 
 router.beforeEach((to) => {

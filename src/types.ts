@@ -11,7 +11,7 @@ export interface AgendaItem {
 export interface GeneratedEventDto {
   title: BilingualField;
   description: BilingualField;
-  category: string[]; // Updated to array based on SRS-033
+  category: string[]; 
   location: BilingualField;
   mapLink?: string;
   isOnline: boolean;
@@ -133,3 +133,84 @@ export const ALLOWED_EVENT_PREFERENCES = [
 ] as const;
 
 export const LANG_PREFS = ['en', 'th'] as const;
+
+// --- FEATURE 4 NEW TYPES ADDED BELOW ---
+
+export const TicketStatus = {
+  ACTIVE: 'ACTIVE',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+} as const;
+export type TicketStatus = typeof TicketStatus[keyof typeof TicketStatus];
+
+export const RegistrationStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type RegistrationStatus = typeof RegistrationStatus[keyof typeof RegistrationStatus];
+
+export interface CreateFormFieldAnswerDto {
+  formFieldId: string;
+  value: string | number | string[] | null;
+}
+
+export interface ParticipantSnapshotDto {
+  firstName: string | null;
+  lastName: string | null;
+  nickname: string | null;
+  studentId: string | null;
+  major: string | null;
+}
+
+export interface ReturnTicketDetailOrganizerDto {
+  name: string;
+  imageUrl: string;
+}
+
+export interface ReturnTicketDetailEventDto {
+  id: string;
+  title: BilingualField;
+  bannerUrl: string;
+  startAt: Date | string | null;
+  endAt: Date | string | null;
+  location: BilingualField;
+  mapLink: string;
+  status: string;
+  seatLimit: number | null;
+  seatsTaken: number;
+  organizer: ReturnTicketDetailOrganizerDto;
+}
+
+export interface ReturnTicketDetailRegistrationDto {
+  id: string;
+  status: RegistrationStatus;
+  createdAt: Date | string;
+}
+
+export interface ReturnTicketDetailDto {
+  id: string; 
+  qrToken: string;
+  status: TicketStatus;
+  issuedAt: Date | string;
+  participantSnapshot: ParticipantSnapshotDto;
+  registration: ReturnTicketDetailRegistrationDto;
+  event: ReturnTicketDetailEventDto;
+}
+
+export interface ReturnParticipantTicketListEventDto {
+  id: string;
+  title: BilingualField;
+  bannerUrl: string;
+  startAt: Date | string | null;
+  endAt: Date | string | null;
+  status: string;
+}
+
+export interface ReturnParticipantTicketListDto {
+  id: string;  
+  status: TicketStatus;
+  issuedAt: Date | string;
+  registrationStatus: RegistrationStatus;
+  event: ReturnParticipantTicketListEventDto;
+}

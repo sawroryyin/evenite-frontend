@@ -191,7 +191,7 @@ const switchRole = async () => {
     const roleName = targetRole === 'ORGANIZER' ? 'Organizer' : 'Participant'
     triggerAlert(
       'Profile Not Found', 
-      `You haven't created an ${roleName} profile yet. Please create one to switch.`, 
+      `You haven't created an ${roleName} profile yet. Would you like to create one now to switch?`, 
       'MISSING_PROFILE'
     )
     return
@@ -225,6 +225,11 @@ const switchRole = async () => {
 const logout = () => {
   authStore.logout()
 }
+
+const onAlertCancel = () => {
+  showAlert.value = false
+  alertAction.value = 'NONE'
+}
 </script>
 
 <template>
@@ -234,8 +239,10 @@ const logout = () => {
       v-if="showAlert" 
       :title="alertTitle" 
       :description="alertDescription" 
-      confirmText="OK" 
+      confirmText="OK"
+      :cancelText="alertAction === 'MISSING_PROFILE' ? 'Cancel' : ''" 
       @confirm="onAlertConfirm" 
+      @cancel="onAlertCancel" 
     />
     
     <LoadingOverview 

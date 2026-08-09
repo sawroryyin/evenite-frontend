@@ -273,7 +273,6 @@ const saveAsDraft = async () => {
       }
       store.clearDraftForms(); 
 
-      // FIX: Fetch the newly created forms so EventDetailPreview receives them!
       availableForms.value = await FormService.getFormsByEventId(response.id);
 
       router.replace({ params: { id: response.id } }).catch(() => {});
@@ -310,7 +309,6 @@ const confirmPublish = async () => {
       }
       store.clearDraftForms(); 
 
-      // FIX: Fetch the newly created forms so EventDetailPreview receives them!
       availableForms.value = await FormService.getFormsByEventId(response.id);
 
       router.replace({ params: { id: response.id } }).catch(() => {});
@@ -334,21 +332,23 @@ const confirmPublish = async () => {
 
 const handleBackClick = () => {
   if (viewMode.value === 'preview') {
-    if (isInitialNewEvent) {
-      router.push('/event') 
+    const previousRoute = window.history.state?.back as string | undefined;
+
+    if (isInitialNewEvent || (previousRoute && previousRoute.includes('/tickets'))) {
+      router.push('/event'); 
     } else {
-      router.back()
+      router.back();
     }
-    return
+    return;
   }
   
   if (JSON.stringify(form.value) !== originalStateStr.value) {
-    showLeaveModal.value = true
+    showLeaveModal.value = true;
   } else {
     if (eventStatus.value) {
-      viewMode.value = 'preview'
+      viewMode.value = 'preview';
     } else {
-      router.back()
+      router.back();
     }
   }
 }
