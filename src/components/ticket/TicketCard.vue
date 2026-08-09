@@ -83,7 +83,7 @@ const statusColors = computed(() => {
 /* Notches match the page background so they visually "punch" a bite out of the card edge.
    Update this color if the ticket list page background ever changes from white. */
 .notch {
-  background-color: #FFFFFF;
+  background-color: #F4F4FA;
   border: none;
 }
 

@@ -72,6 +72,13 @@ const isEventStarted = computed(() => {
   return new Date(props.event.startAt) <= new Date();
 });
 
+// NEW: Check if the event has officially ended
+const isEventOver = computed(() => {
+  if (!props.event.startAt && !props.event.endAt) return false;
+  const endTime = props.event.endAt ? new Date(props.event.endAt) : new Date(props.event.startAt);
+  return endTime <= new Date();
+});
+
 const navigateToSubmitForm = (type: string) => {
   if (type === 'REGISTRATION') {
     router.push(`/events/${props.event.id}/register`)
@@ -300,7 +307,6 @@ const mapEmbedUrl = computed(() => {
             
             <div class="text-center">
               <h3 class="text-lg font-black text-[#26215C] tracking-tight">
-                <!-- FIX: Added optional chaining to prevent undefined crashes -->
                 {{ userTicket?.registration?.status === 'CONFIRMED' ? 'You are registered!' : 'Join the Experience' }}
               </h3>
               <p class="text-xs text-[#26215C]/70 mt-1">
@@ -308,43 +314,47 @@ const mapEmbedUrl = computed(() => {
               </p>
             </div>
 
-            <!-- Pre-Registration View -->
-            <!-- FIX: Added optional chaining -->
+            <!-- Pre-Registration View (Unregistered Users) -->
             <div v-if="!userTicket || userTicket?.registration?.status === 'CANCELLED'" class="flex flex-col gap-3 mt-4">
-              <div v-if="isEventFull" class="text-center p-3 bg-red-50 text-red-600 rounded-xl border border-red-200 text-sm font-bold shadow-sm">
-                All seats are fully taken for this event
-              </div>
+              
+              <!-- Clean Info Text (No button styling) -->
+              <p v-if="isEventOver || isEventFull || isEventStarted" class="text-center text-[#26215C]/80 text-sm font-semibold py-2">
+                {{ isEventOver ? 'This event is already over.' : (isEventStarted ? 'This event has already started.' : 'All seats are fully taken for this event.') }}
+              </p>
 
-              <button v-if="hasRegistration" @click="navigateToSubmitForm('REGISTRATION')" 
-                :disabled="isEventFull"
-                :class="isEventFull ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5'"
-                class="w-full transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                <svg v-if="!isEventFull" class="w-5 h-5 text-[#EEEDFE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button v-if="hasRegistration && !isEventFull && !isEventStarted && !isEventOver" @click="navigateToSubmitForm('REGISTRATION')" 
+                class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 text-[#EEEDFE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
                 </svg>
                 Register Now
               </button>
             </div>
 
-            <!-- Post-Registration View -->
-            <!-- FIX: Added optional chaining -->
+            <!-- Post-Registration View (Registered Users) -->
             <div v-if="userTicket?.registration?.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
+              
+              <!-- Clean Info Text for registered users when event is over or started -->
+              <p v-if="isEventOver || isEventStarted" class="text-center text-[#26215C]/80 text-sm font-semibold py-2 px-1">
+                {{ isEventOver ? 'This event is already over.' : 'This event has already started. Cancellation is no longer available.' }}
+              </p>
+
+              <!-- View Ticket Button (Always visible for registered users) -->
               <button @click="viewTicket" class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 View ticket
               </button>
 
-              <button v-if="hasFeedback" @click="navigateToSubmitForm('FEEDBACK')" class="w-full bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+              <button v-if="hasFeedback && isEventOver" @click="navigateToSubmitForm('FEEDBACK')" class="w-full bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 text-[#7F77DD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                 </svg>
                 Give Feedback
               </button>
 
-              <button @click="confirmCancelRegistration" 
-                :disabled="isEventStarted"
-                :class="isEventStarted ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-500 border-gray-300' : 'bg-red-50 hover:bg-red-100 text-red-600 border-red-200'"
-                class="w-full border shadow-sm transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                {{ isEventStarted ? 'Event Started (Cannot Cancel)' : 'Cancel Registration' }}
+              <!-- Cancel Button (Hidden if event started or over) -->
+              <button v-if="!isEventStarted && !isEventOver" @click="confirmCancelRegistration" 
+                class="w-full bg-red-50 hover:bg-red-100 text-red-600 border-red-200 border shadow-sm transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                Cancel Registration
               </button>
             </div>
           </div>

@@ -58,6 +58,16 @@ const goToEventDetails = () => {
     router.push(`/event/${ticket.value.event.id}`);
   }
 };
+
+const formattedLocation = computed(() => {
+  const locEn = ticket.value?.event.location?.en;
+  const locTh = ticket.value?.event.location?.th;
+  
+  if (locEn) return locEn;
+  if (locTh) return locTh;
+  
+  return 'Online';
+});
 </script>
 
 <template>
@@ -76,51 +86,68 @@ const goToEventDetails = () => {
 
     <!-- digital ticket -->
     <div v-if="!isLoading && ticket" class="space-y-6">
-      <!-- WRAPPER ADDED HERE: Handles the relative positioning for the circles -->
-      <div class="relative w-full">
+      
+      <!-- 
+        WRAPPER UPDATE: Changed to a flex column to stack the sections natively. 
+        Removed the single `overflow-hidden` so notches can bleed off the edges.
+      -->
+      <div class="relative w-full flex flex-col shadow-lg rounded-2xl">
 
-        <div class="rounded-2xl overflow-hidden flex flex-col shadow-lg border border-[#CECBF6]">
-
-          <!-- Event Details Section -->
-          <div class="p-6 pb-6 bg-[#534AB7] border-b-2 border-[#CECBF6] border-dashed">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-3xl font-bold text-[#FFFFFF] leading-tight mb-2">
-                {{ ticket.event.title.en || ticket.event.title.th }}
-              </h2>
-              <span 
-                class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded border mb-2 inline-block"
-                :class="ticket.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
-              >
-                {{ ticket.status }}
-              </span>
-            </div>
-            
-            <div class="flex items-center gap-18 mb-1 text-m text-[#FFFFFF] pb-1">
-              <!-- Date -->
-              <p class="flex items-center gap-1">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>{{ formattedDateOnly }}
-              </p>
-              <!-- Time -->
-              <p class="flex items-center gap-1">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>{{ formattedTimeOnly }}
-              </p>
-            </div>
-            
-            <!-- Location -->
-            <p class="text-m text-[#FFFFFF] flex items-center gap-1">
+        <!-- Top: Event Details Section -->
+        <div class="p-6 pb-6 bg-[#534AB7] rounded-t-2xl border border-[#CECBF6] border-b-0">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-3xl font-bold text-[#FFFFFF] leading-tight mb-2">
+              {{ ticket.event.title.en || ticket.event.title.th }}
+            </h2>
+            <span 
+              class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded border mb-2 inline-block shrink-0 ml-4"
+              :class="ticket.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
+            >
+              {{ ticket.status }}
+            </span>
+          </div>
+          
+          <div class="flex items-center gap-18 mb-1 text-m text-[#FFFFFF] pb-1">
+            <!-- Date -->
+            <p class="flex items-center gap-1">
               <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-              </svg>{{ ticket.event.location.en || ticket.event.location.th }}
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>{{ formattedDateOnly }}
+            </p>
+            <!-- Time -->
+            <p class="flex items-center gap-1">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>{{ formattedTimeOnly }}
             </p>
           </div>
+          
+          <!-- Location -->
+          <p class="text-m text-[#FFFFFF] flex items-start gap-1.5">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            <span class="leading-tight">{{ formattedLocation }}</span>
+          </p>
+        </div>
 
+        <!-- Middle: Dynamic Divider & Notches -->
+        <!-- This container sits perfectly between top and bottom, adjusting automatically -->
+        <div class="relative w-full h-0 z-10">
+          <!-- Dashed line -->
+          <div class="absolute left-0 right-0 top-0 border-t-2 border-[#CECBF6] border-dashed"></div>
+          
+          <!-- Left and Right Notches (positioned perfectly on the line via -top-3) -->
+          <div class="absolute -left-3 -top-3 w-6 h-6 bg-[#FFFFFF] rounded-full"></div>
+          <div class="absolute -right-3 -top-3 w-6 h-6 bg-[#FFFFFF] rounded-full"></div>
+        </div>
+
+        <!-- Bottom: QR Code & Participant Snapshot -->
+        <div class="bg-[#F4EbFF] rounded-b-2xl border border-[#CECBF6] border-t-0 overflow-hidden">
+          
           <!-- QR Code Section -->
-          <div class="pt-12 px-6 pb-12 flex flex-col items-center justify-center bg-[#F4EbFF]">
+          <div class="pt-12 px-6 pb-12 flex flex-col items-center justify-center">
             <p class="text-m font-bold text-[#26215C]/50 uppercase tracking-widest mb-4">Present at check-in</p>
             
             <div :class="{'opacity-30': ticket.status !== 'ACTIVE'}">
@@ -129,7 +156,7 @@ const goToEventDetails = () => {
           </div>
 
           <!-- Participant Snapshot Section -->
-          <div class="p-6 bg-[#F4EbFF]">
+          <div class="p-6">
             <h4 class="text-m font-bold text-[#26215C] uppercase tracking-widest mb-4">Participant Details</h4>
             <div class="grid grid-cols-2 gap-2 text-sm">
               <div>
@@ -145,16 +172,12 @@ const goToEventDetails = () => {
 
         </div>
 
-        <!-- Scalloped edges MOVED OUTSIDE the overflow-hidden container -->
-        <div class="absolute -left-4 top-41 w-6 h-6 bg-[#FFFFFF] rounded-full z-10"></div>
-        <div class="absolute -right-4 top-41 w-6 h-6 bg-[#FFFFFF] rounded-full z-10"></div>
-
       </div>
 
-      <!-- Update: Bind to goToEventDetails -->
+      <!-- Bottom Button -->
       <button 
         @click="goToEventDetails"
-        class="w-full bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] border border-[#CECBF6] py-3.5 rounded-xl font-bold text-sm transition-all"
+        class="w-full mt-6 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] border border-[#CECBF6] py-3.5 rounded-xl font-bold text-sm transition-all"
       >
         Go to Event Details
       </button>

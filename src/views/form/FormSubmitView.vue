@@ -20,6 +20,7 @@ const isLoading = ref(true);
 const isSubmitting = ref(false);
 
 const answers = ref<Record<string, any>>({});
+const initialAnswersStr = ref<string>('');
 const participantProfile = ref<Record<string, any>>({});
 
 const alertState = ref({
@@ -42,9 +43,13 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     const eventData = await EventService.getEventById(eventId);
-    if (eventData.status !== 'PUBLISHED') {
-      showAlert('Event Unavailable', 'This form is not accepting responses yet because the event is not published.', 'red');
-      setTimeout(() => router.push(`/events/${eventId}`), 2000);
+    
+    // FIX 1: Allow forms to be accessed if the event is PUBLISHED, ONGOING, or CONCLUDED
+    if (!['PUBLISHED', 'ONGOING', 'CONCLUDED'].includes(eventData.status)) {
+      showAlert('Event Unavailable', 'This form is not accepting responses at this time.', 'red');
+      
+      // FIX 2: Correct the route path from /events/ to /event/
+      setTimeout(() => router.push(`/event/${eventId}`), 2000);
       return;
     }
     
@@ -67,10 +72,13 @@ onMounted(async () => {
           answers.value[key] = field.type === 'CHECKBOX' ? [] : null;
         }
       });
+      initialAnswersStr.value = JSON.stringify(answers.value);
     }
   } catch (error) {
     showAlert('Error', 'Form not found or unavailable.', 'red');
-    setTimeout(() => router.push(`/events/${eventId}`), 2000);
+    
+    // FIX 3: Correct the route path here as well
+    setTimeout(() => router.push(`/event/${eventId}`), 2000);
   } finally {
     isLoading.value = false;
   }
@@ -160,6 +168,15 @@ const processSubmission = async () => {
 };
 
 const handleCancel = () => {
+  const currentAnswersStr = JSON.stringify(answers.value);
+
+  // If the current form state exactly matches the initial load state, just go back
+  if (currentAnswersStr === initialAnswersStr.value) {
+    router.back();
+    return;
+  }
+
+  // Otherwise, there are unsaved changes, so prompt the user
   showConfirm(
     'Cancel',
     'Are you sure you want to cancel? Any unsaved data will be lost.',
