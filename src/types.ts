@@ -214,3 +214,80 @@ export interface ReturnParticipantTicketListDto {
   registrationStatus: RegistrationStatus;
   event: ReturnParticipantTicketListEventDto;
 }
+
+export type Role = 'ORGANIZER' | 'PARTICIPANT';
+export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'CONCLUDED' | 'CANCELLED';
+
+export interface BilingualField {
+  en: string;
+  th: string;
+}
+
+export type DiscussionErrorCode = 
+  | 'ROOM_NOT_FOUND'
+  | 'ROOM_ACCESS_DENIED'
+  | 'ROOM_READ_ONLY'
+  | 'MESSAGE_CONTENT_INVALID'
+  | 'ANNOUNCEMENT_NOT_ALLOWED'
+  | 'REGISTRATION_NOT_FOUND'
+  | 'UNAUTHORIZED'
+  | 'UNKNOWN_ERROR';
+
+export interface MessageSender {
+  role: Role;
+  name: string;
+  imageUrl: string;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  isAnnouncement: boolean;
+  sender: MessageSender;
+  // Note: Dates sent over REST/WebSockets are serialized as ISO strings
+  createdAt: string; 
+}
+
+export interface MessagePage {
+  messages: Message[];
+  hasMoreOlder: boolean;
+  hasMoreNewer: boolean;
+  oldestCursor: string | null;
+  newestCursor: string | null;
+}
+
+export interface DiscussionRoomEvent {
+  id: string;
+  title: BilingualField;
+  bannerUrl: string;
+  status: EventStatus;
+}
+
+export interface DiscussionRoom {
+  roomId: string;
+  event: DiscussionRoomEvent;
+  lastMessage: Message | null;
+  unreadCount: number;
+  isReadOnly: boolean;
+}
+
+export interface CreateMessagePayload {
+  content: string;
+  isAnnouncement?: boolean;
+}
+
+export interface GetMessagesQuery {
+  cursor?: string;
+  direction?: 'before' | 'after';
+  limit?: number;
+}
+
+export interface GetRoomsQuery {
+  filter?: 'active' | 'archived';
+}
+
+export interface SocketErrorPayload {
+  event?: string;
+  code: DiscussionErrorCode;
+  message: string;
+}

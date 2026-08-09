@@ -5,7 +5,7 @@ import { FormService } from '../../services/FormService';
 import { RegistrationService } from '../../services/RegistrationService';
 import { EventService } from '../../services/EventService';
 import api from '../../services/api';
-import { FormType, type Form, type CreateFormFieldAnswerDto } from '../../types';
+import { FormType, type Form, type CreateFormFieldAnswerDto, type EventData } from '../../types';
 import ConfirmModal from '../../components/ConfirmModal.vue';
 import LoadingOverlay from '../../components/LoadingOverlay.vue';
 
@@ -42,13 +42,11 @@ const confirmState = ref({
 onMounted(async () => {
   try {
     isLoading.value = true;
-    const eventData = await EventService.getEventById(eventId);
+    const eventData: EventData = await EventService.getEventById(eventId);
     
-    // FIX 1: Allow forms to be accessed if the event is PUBLISHED, ONGOING, or CONCLUDED
-    if (!['PUBLISHED', 'ONGOING', 'CONCLUDED'].includes(eventData.status)) {
+    if (!['PUBLISHED', 'ONGOING', 'CONCLUDED'].includes(eventData.status as string)) {
       showAlert('Event Unavailable', 'This form is not accepting responses at this time.', 'red');
       
-      // FIX 2: Correct the route path from /events/ to /event/
       setTimeout(() => router.push(`/event/${eventId}`), 2000);
       return;
     }
@@ -77,7 +75,6 @@ onMounted(async () => {
   } catch (error) {
     showAlert('Error', 'Form not found or unavailable.', 'red');
     
-    // FIX 3: Correct the route path here as well
     setTimeout(() => router.push(`/event/${eventId}`), 2000);
   } finally {
     isLoading.value = false;
@@ -124,7 +121,6 @@ const processSubmission = async () => {
   isSubmitting.value = true;
 
   try {
-    // Correctly format the payload to prevent 400 Bad Request errors
     const formattedAnswers: CreateFormFieldAnswerDto[] = form.value.fields.map((field, index) => {
       const key = field.id || index.toString();
       const rawValue = answers.value[key];
@@ -150,7 +146,6 @@ const processSubmission = async () => {
       const ticketDetails = await RegistrationService.registerForEvent(eventId, formattedAnswers);
       showAlert('Registration Successful', 'Your digital ticket has been generated.', 'blue');
       
-      // FIX: Use router.replace() instead of push() to erase the form from history
       setTimeout(() => router.replace(`/events/${eventId}/tickets/${ticketDetails.id}`), 1500);
     } else {
       await FormService.submitResponse(eventId, formType, { answers: formattedAnswers });
@@ -163,20 +158,18 @@ const processSubmission = async () => {
     const errorMsg = error.response?.data?.message || 'An error occurred while processing your submission. Please try again.';
     showAlert('Submission Failed', errorMsg, 'red');
   } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false;``
   }
 };
 
 const handleCancel = () => {
   const currentAnswersStr = JSON.stringify(answers.value);
 
-  // If the current form state exactly matches the initial load state, just go back
   if (currentAnswersStr === initialAnswersStr.value) {
     router.back();
     return;
   }
 
-  // Otherwise, there are unsaved changes, so prompt the user
   showConfirm(
     'Cancel',
     'Are you sure you want to cancel? Any unsaved data will be lost.',
@@ -229,7 +222,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </span>
           </div>
           
-          <!-- Text, Number, Date Inputs -->
           <input 
             v-if="['TEXT', 'NUMBER', 'DATE'].includes(field.type)" 
             :type="field.type.toLowerCase()" 
@@ -238,14 +230,12 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             placeholder="Your answer..." 
           />
           
-          <!-- Textarea Input -->
           <textarea 
             v-if="field.type === 'TEXTAREA'" 
             v-model="answers[field.id || index]"
             class="w-full p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm h-24 resize-none focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] text-[#26215C] transition-all" 
             placeholder="Your answer..."></textarea>
           
-          <!-- Choice (Radio) -->
           <div v-if="field.type === 'CHOICE'" class="space-y-2.5">
             <label v-for="opt in field.options" :key="opt" class="flex items-center gap-3 cursor-pointer group">
               <div class="relative flex items-center">
@@ -263,7 +253,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </label>
           </div>
           
-          <!-- Checkbox -->
           <div v-if="field.type === 'CHECKBOX'" class="space-y-2.5">
             <label v-for="opt in field.options" :key="opt" class="flex items-center gap-3 cursor-pointer group">
               <div class="relative flex items-center">
@@ -279,7 +268,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </label>
           </div>
 
-          <!-- Rating -->
           <div v-if="field.type === 'RATING'" class="flex flex-wrap gap-2 mt-2">
             <label v-for="n in (field.maxRating || 5)" :key="n" class="cursor-pointer group">
               <input 
@@ -315,7 +303,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
       </div>
     </template>
 
-    <!-- Modals -->
     <ConfirmModal 
       v-if="alertState.show"
       :title="alertState.title"

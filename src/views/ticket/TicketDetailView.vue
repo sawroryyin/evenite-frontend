@@ -41,18 +41,15 @@ const formattedTimeOnly = computed(() => {
   });
 });
 
-// For the top "BACK" button
 const goBack = () => {
   if (window.history.state?.back) {
     router.back();
   } 
-  // Fallback if they opened the ticket directly via a link
   else if (ticket.value) {
     router.push('/events'); 
   }
 };
 
-// For the bottom "Go to Event Details" button
 const goToEventDetails = () => {
   if (ticket.value) {
     router.push(`/event/${ticket.value.event.id}`);
@@ -86,11 +83,6 @@ const formattedLocation = computed(() => {
 
     <!-- digital ticket -->
     <div v-if="!isLoading && ticket" class="space-y-6">
-      
-      <!-- 
-        WRAPPER UPDATE: Changed to a flex column to stack the sections natively. 
-        Removed the single `overflow-hidden` so notches can bleed off the edges.
-      -->
       <div class="relative w-full flex flex-col shadow-lg rounded-2xl">
 
         <!-- Top: Event Details Section -->
@@ -132,8 +124,6 @@ const formattedLocation = computed(() => {
           </p>
         </div>
 
-        <!-- Middle: Dynamic Divider & Notches -->
-        <!-- This container sits perfectly between top and bottom, adjusting automatically -->
         <div class="relative w-full h-0 z-10">
           <!-- Dashed line -->
           <div class="absolute left-0 right-0 top-0 border-t-2 border-[#CECBF6] border-dashed"></div>
@@ -173,8 +163,6 @@ const formattedLocation = computed(() => {
         </div>
 
       </div>
-
-      <!-- Bottom Button -->
       <button 
         @click="goToEventDetails"
         class="w-full mt-6 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] border border-[#CECBF6] py-3.5 rounded-xl font-bold text-sm transition-all"
