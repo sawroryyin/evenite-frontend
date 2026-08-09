@@ -11,7 +11,7 @@ import ProfileView from '../views/profile/ProfileView.vue'
 import ProfileCreateView from '../views/profile/ProfileCreateView.vue'
 import EventDetailView from '../views/event/EventDetailView.vue'
 import EventListView from '../views/event/EventListView.vue'
-import DiscussionView from '../views/DiscussionView.vue'
+import DiscussionView from '../views/discussion/DiscussionView.vue'
 import NotificationView from '../views/NotificationView.vue'
 import SearchView from '../views/SearchView.vue'
 import RoleSelectView from '../views/auth/RoleSelectView.vue'
@@ -58,6 +58,8 @@ const router = createRouter({
     { path: '/events/:id/register', name: 'event-register', redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` },
     { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
     { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } },
+    { path: '/discussion', name: 'DiscussionList', component: () => import('../views/discussion/DiscussionView.vue') },
+    { path: '/discussion/:roomId', name: 'DiscussionDetail', component: () => import('../views/discussion/DiscussionDetailView.vue') }
   ],
   scrollBehavior() {
     return { top: 0 };

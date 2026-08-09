@@ -1,60 +1,91 @@
+// src/services/DiscussionSocketService.ts
 import { io, Socket } from 'socket.io-client';
+import api from './api';
 import type { Message, CreateMessagePayload, SocketErrorPayload } from '../types';
 
 class DiscussionSocketService {
   private socket: Socket | null = null;
+  private currentRoomId: string | null = null;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private failedAttempts = 0;
 
-  /**
-   * Initializes the socket connection to the /discussion namespace.
-   * 
-   * @param token - The user's JWT access token.
-   */
   connect(token: string) {
-    // Prevent multiple connections
-    if (this.socket?.connected) {
-      return;
-    }
+    if (this.socket?.connected) return;
 
-    // Replace VITE_API_BASE_URL with your actual env variable for the backend URL.
-    // Ensure it does not end with a trailing slash before appending '/discussion'.
-    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
     
     this.socket = io(`${baseUrl}/discussion`, {
-      auth: {
-        token: token, // This maps perfectly to your backend's extractTokenFromHandshake
-      },
-      // Optional: Forces WebSockets immediately instead of long-polling first
-      transports: ['websocket'], 
+      auth: { token },
+      transports: ['websocket'],
     });
 
+    this.setupCoreListeners();
+    this.startProactiveRefresh();
+  }
+
+  private setupCoreListeners() {
+    if (!this.socket) return;
+
+    // Re-join the active room automatically upon reconnecting
     this.socket.on('connect', () => {
-      console.log('Connected to Discussion Socket:', this.socket?.id);
+      this.failedAttempts = 0;
+      if (this.currentRoomId) {
+        this.joinRoom(this.currentRoomId);
+      }
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('Disconnected from Discussion Socket:', reason);
+    // Stop infinite retry loops on bad tokens
+    this.socket.on('connect_error', (err) => {
+      this.failedAttempts++;
+      if (this.failedAttempts >= 3) {
+        console.error('Socket authentication failed repeatedly. Stopping reconnect.');
+        this.disconnect(); // Hard stop
+      }
     });
   }
 
-  /**
-   * Disconnects the socket. Call this when the user logs out.
-   */
+  // Proactively refresh the token every 14 minutes (before the 15m expiry)
+  private startProactiveRefresh() {
+    this.stopProactiveRefresh();
+    this.refreshTimer = setInterval(async () => {
+      try {
+        // Assuming your api.ts has a route or interceptor that handles /auth/refresh
+        const response = await api.post('/auth/refresh'); 
+        const newToken = response.data.accessToken;
+        
+        if (this.socket && newToken) {
+          this.socket.auth = { token: newToken };
+          this.socket.disconnect().connect(); // Force reconnect with new token
+        }
+      } catch (error) {
+        console.error('Proactive token refresh failed', error);
+      }
+    }, 14 * 60 * 1000);
+  }
+
+  private stopProactiveRefresh() {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
   disconnect() {
+    this.stopProactiveRefresh();
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
+    this.currentRoomId = null;
   }
 
-  // ==========================================
-  // WRAPPER METHODS (EMITTERS)
-  // ==========================================
-
   joinRoom(roomId: string) {
+    this.currentRoomId = roomId;
     this.socket?.emit('room:join', { roomId });
   }
 
   leaveRoom(roomId: string) {
+    if (this.currentRoomId === roomId) this.currentRoomId = null;
     this.socket?.emit('room:leave', { roomId });
   }
 
@@ -62,31 +93,20 @@ class DiscussionSocketService {
     this.socket?.emit('message:send', { roomId, dto });
   }
 
-  // ==========================================
-  // LISTENER REGISTRATION METHODS
-  // ==========================================
-
+  // --- Listeners ---
   onRoomJoined(callback: (data: { roomId: string }) => void) {
     this.socket?.on('room:joined', callback);
   }
-
   onMessageNew(callback: (message: Message) => void) {
     this.socket?.on('message:new', callback);
   }
-
   onRoomKicked(callback: (data: { roomId: string }) => void) {
     this.socket?.on('room:kicked', callback);
   }
-
   onError(callback: (error: SocketErrorPayload) => void) {
     this.socket?.on('error', callback);
   }
 
-  /**
-   * Removes all event listeners. 
-   * Crucial to call this when your chat component unmounts to prevent memory leaks 
-   * and duplicate event triggering.
-   */
   removeAllListeners() {
     this.socket?.off('room:joined');
     this.socket?.off('message:new');
@@ -95,5 +115,4 @@ class DiscussionSocketService {
   }
 }
 
-// Export a single instance to be used across the application
 export const discussionSocketService = new DiscussionSocketService();
