@@ -243,9 +243,13 @@ export interface Message {
   id: string;
   content: string;
   isAnnouncement: boolean;
-  sender: MessageSender;
-  // Note: Dates sent over REST/WebSockets are serialized as ISO strings
-  createdAt: string; 
+  sender: {
+    role: string;
+    name: string;
+    imageUrl: string;
+  };
+  createdAt: string;
+  isDivider?: boolean;
 }
 
 export interface MessagePage {

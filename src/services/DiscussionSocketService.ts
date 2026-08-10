@@ -34,7 +34,7 @@ class DiscussionSocketService {
     });
 
     // Stop infinite retry loops on bad tokens
-    this.socket.on('connect_error', (err) => {
+    this.socket.on('connect_error', () => {
       this.failedAttempts++;
       if (this.failedAttempts >= 3) {
         console.error('Socket authentication failed repeatedly. Stopping reconnect.');

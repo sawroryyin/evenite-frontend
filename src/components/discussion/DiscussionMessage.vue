@@ -1,4 +1,3 @@
-<!-- src/components/discussion/DiscussionMessage.vue -->
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Message } from '../../types';
@@ -26,9 +25,15 @@ const bubbleClass = computed(() => {
 </script>
 
 <template>
-  <div class="flex w-full items-end" :class="isMine ? 'justify-end' : 'justify-start'">
-    
-    <!-- Profile Icon for others (or empty spacer if hideHeader is true) -->
+  <div v-if="message.isDivider" :id="message.id" class="flex w-full items-center justify-center my-4 py-1">
+    <div class="h-px bg-[#534AB7]/30 flex-1"></div>
+    <span class="px-3 text-[10px] font-bold text-[#534AB7] tracking-widest uppercase bg-[#F4F4FA]">
+      {{ message.content }}
+    </span>
+    <div class="h-px bg-[#534AB7]/30 flex-1"></div>
+  </div>
+
+  <div v-else class="flex w-full items-end" :class="isMine ? 'justify-end' : 'justify-start'">
     <div v-if="!isMine" class="w-7 mr-2 shrink-0">
       <img 
         v-if="!hideHeader"
@@ -39,8 +44,6 @@ const bubbleClass = computed(() => {
     </div>
     
     <div class="flex flex-col max-w-[78%]" :class="isMine ? 'items-end' : 'items-start'">
-      
-      <!-- Name & Time (Only shown if NOT continuous message within 5 mins) -->
       <div 
         v-if="!hideHeader" 
         class="flex items-baseline mb-1 gap-1.5 px-1" 
@@ -53,7 +56,6 @@ const bubbleClass = computed(() => {
         <span class="text-[9px] font-medium text-[#26215C]/40">{{ formatTime(message.createdAt) }}</span>
       </div>
       
-      <!-- Message Bubble -->
       <div 
         class="px-3.5 py-2 rounded-2xl text-[13px] leading-relaxed" 
         :class="[
@@ -67,9 +69,8 @@ const bubbleClass = computed(() => {
           <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>
           Announcement
         </div>
-        <p class="whitespace-pre-wrap break-words">{{ message.content }}</p>
+        <p class="whitespace-pre-wrap wrap-break-word">{{ message.content }}</p>
       </div>
     </div>
-
   </div>
 </template>

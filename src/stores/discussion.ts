@@ -20,16 +20,14 @@ export const useDiscussionStore = defineStore('discussion', () => {
   const isLoadingRooms = ref<boolean>(false);
   const isLoadingMessages = ref<boolean>(false);
   const isFetchingOlder = ref<boolean>(false);
-  const isJoined = ref<boolean>(false); // Tracks if socket joined the room successfully
+  const isJoined = ref<boolean>(false);
 
   const activeRoom = computed(() => rooms.value.find(room => room.roomId === activeRoomId.value));
 
-  // Pinned announcements (derived from current messages state)
   const pinnedAnnouncements = computed(() => {
     return messages.value.filter(m => m.isAnnouncement);
   });
 
-  // Helper to deduplicate and insert messages
   const injectMessages = (newMsgs: Message[], position: 'start' | 'end' | 'replace' = 'replace') => {
     if (position === 'replace') {
       messages.value = newMsgs;
@@ -50,20 +48,45 @@ export const useDiscussionStore = defineStore('discussion', () => {
     if (activeRoomId.value === roomId) return;
     cleanup();
 
+    // If rooms array is empty (e.g., user hard-refreshed the browser), 
+    // fetch the rooms list so our `activeRoom` computed property can find the event data.
+    if (rooms.value.length === 0) {
+      await fetchRooms();
+    }
     activeRoomId.value = roomId;
     isLoadingMessages.value = true;
 
     try {
+      // Capture unread count before fetching and marking as read
+      const roomIndex = rooms.value.findIndex(r => r.roomId === roomId);
+      const unreadCount = roomIndex !== -1 ? rooms.value[roomIndex].unreadCount : 0;
+
       let page = await DiscussionService.getMessages(roomId, {});
 
-      // If backend resumed from last-read and found nothing, but gave us the oldestCursor (the read anchor),
-      // we immediately fetch 'before' that cursor to populate the history on screen.
-      if (page.messages.length === 0 && page.oldestCursor) {
-        page = await DiscussionService.getMessages(roomId, {
+      // Fill history if the backend returned a small slice of recent messages
+      if (page.messages.length < 25 && page.oldestCursor) {
+        const fetchLimit = 25 - page.messages.length;
+        const olderPage = await DiscussionService.getMessages(roomId, {
           cursor: page.oldestCursor,
           direction: 'before',
-          limit: 25
+          limit: fetchLimit
         });
+        page.messages = [...olderPage.messages, ...page.messages];
+        page.oldestCursor = olderPage.oldestCursor || page.oldestCursor;
+        page.hasMoreOlder = olderPage.hasMoreOlder;
+      }
+
+      // INJECT NEW MESSAGE DIVIDER
+      if (unreadCount > 0 && page.messages.length >= unreadCount) {
+        const dividerIndex = page.messages.length - unreadCount;
+        page.messages.splice(dividerIndex, 0, {
+          id: 'unread-divider',
+          isDivider: true,
+          content: 'New Messages',
+          createdAt: new Date().toISOString(),
+          isAnnouncement: false,
+          sender: { name: 'System', role: 'ORGANIZER' as any, imageUrl: '' }
+        } as any);
       }
 
       injectMessages(page.messages, 'replace');
@@ -74,10 +97,8 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
       await DiscussionService.markRoomAsRead(roomId);
       
-      const roomIndex = rooms.value.findIndex(r => r.roomId === roomId);
       if (roomIndex !== -1) rooms.value[roomIndex].unreadCount = 0;
 
-      // 2. Setup socket
       if (authStore.accessToken) {
         discussionSocketService.connect(authStore.accessToken);
         discussionSocketService.joinRoom(roomId);
@@ -122,10 +143,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
     });
 
     discussionSocketService.onMessageNew((newMessage: Message) => {
-      // Do not splice inline if there is a known gap
       if (hasMoreNewer.value) {
-        // Ideally, show a "New messages below" prompt to the user, or trigger a fetch.
-        // For now, we skip injecting to avoid creating a confusing history gap.
         return; 
       }
 
@@ -148,7 +166,6 @@ export const useDiscussionStore = defineStore('discussion', () => {
     });
 
     discussionSocketService.onError((error) => {
-      // Branch on code as requested
       switch (error.code) {
         case 'ANNOUNCEMENT_NOT_ALLOWED':
           alert('Only organizers can send announcements.');
@@ -178,8 +195,6 @@ export const useDiscussionStore = defineStore('discussion', () => {
   const fetchRooms = async (query?: GetRoomsQuery) => {
     isLoadingRooms.value = true;
     try {
-      // Check the user's current role from your authStore
-      // (Adjust 'currentRole' or 'role' depending on your exact authStore state property)
       if (authStore.currentRole === 'ORGANIZER') {
         rooms.value = await DiscussionService.getCreatedRooms(query);
       } else {

@@ -1,4 +1,3 @@
-<!-- src/components/discussion/DiscussionChatArea.vue -->
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
 import { useDiscussionStore } from '../../stores/discussion';
@@ -9,25 +8,19 @@ import DiscussionInput from './DiscussionInput.vue';
 const store = useDiscussionStore();
 const authStore = useAuthStore();
 const messageContainer = ref<HTMLElement | null>(null);
+const showJumpToBottom = ref(false);
 
-// FIX: Forgiving fuzzy-match logic to guarantee your messages align to the right.
 const isMyMessage = (messageName: string) => {
   if (!messageName || !authStore.parsedToken) return false;
   
-  // Convert backend message name to lowercase for safe comparison
   const msgName = messageName.toLowerCase().trim();
-  
-  // Gather all possible names from the JWT token and convert them to lowercase
   const possibleNames = [
     authStore.parsedToken.name,
     authStore.parsedToken.nickname,
     authStore.parsedToken.firstName,
     authStore.parsedToken.lastName
-  ]
-    .filter(Boolean)
-    .map(n => String(n).toLowerCase().trim());
+  ].filter(Boolean).map(n => String(n).toLowerCase().trim());
   
-  // If the backend name matches or is included in your token names, it returns true (Right side)
   return possibleNames.some(name => 
     msgName === name || msgName.includes(name) || name.includes(msgName)
   );
@@ -39,11 +32,13 @@ const isOrganizer = computed(() => {
 
 const processedMessages = computed(() => {
   return store.messages.map((msg, index) => {
+    if (msg.isDivider) return { ...msg, hideHeader: false };
     if (index === 0) return { ...msg, hideHeader: false };
 
     const prevMsg = store.messages[index - 1];
+    if (prevMsg.isDivider) return { ...msg, hideHeader: false };
+
     const isSameSender = msg.sender.name === prevMsg.sender.name && msg.sender.role === prevMsg.sender.role;
-    
     const currentMsgTime = new Date(msg.createdAt).getTime();
     const prevMsgTime = new Date(prevMsg.createdAt).getTime();
     const isWithin5Mins = (currentMsgTime - prevMsgTime) < 5 * 60 * 1000;
@@ -54,21 +49,49 @@ const processedMessages = computed(() => {
   });
 });
 
-const scrollToBottom = () => {
+const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
   if (messageContainer.value) {
-    messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+    messageContainer.value.scrollTo({
+      top: messageContainer.value.scrollHeight,
+      behavior
+    });
+    showJumpToBottom.value = false;
   }
 };
 
+const scrollToDividerOrBottom = async () => {
+  await nextTick();
+  const divider = document.getElementById('unread-divider');
+  if (divider && messageContainer.value) {
+    divider.scrollIntoView({ behavior: 'auto', block: 'center' });
+  } else {
+    scrollToBottom('auto');
+  }
+};
+
+// Initial scroll logic after messages finish loading
+watch(() => store.isLoadingMessages, async (isLoading) => {
+  if (!isLoading && store.messages.length > 0) {
+    await scrollToDividerOrBottom();
+  }
+});
+
+// Watch for new messages arriving live
 watch(() => store.messages.length, async (newLen, oldLen) => {
-  if (newLen > oldLen && !store.isFetchingOlder) {
+  if (newLen > oldLen && !store.isFetchingOlder && !store.isLoadingMessages) {
     await nextTick();
-    scrollToBottom();
+    // Only auto-scroll if the user is already near the bottom
+    if (!showJumpToBottom.value) {
+      scrollToBottom('smooth');
+    }
   }
 });
 
 const handleScroll = async (e: Event) => {
   const target = e.target as HTMLElement;
+  
+  showJumpToBottom.value = target.scrollHeight - target.scrollTop - target.clientHeight > 150;
+
   if (target.scrollTop === 0 && store.hasMoreOlder && !store.isFetchingOlder) {
     const previousHeight = target.scrollHeight;
     await store.loadOlderMessages();
@@ -79,13 +102,13 @@ const handleScroll = async (e: Event) => {
 
 const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }) => {
   store.sendMessage(payload.content, payload.isAnnouncement);
+  scrollToBottom('smooth');
 };
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-[#F4F4FA]">
+  <div class="flex flex-col h-full bg-[#F4F4FA] relative">
     
-    <!-- Messages Scroll Area -->
     <div 
       ref="messageContainer"
       @scroll="handleScroll"
@@ -113,12 +136,32 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
         :key="msg.id"
         :message="msg"
         :hide-header="msg.hideHeader"
-        :is-mine="isMyMessage(msg.sender.name)"
+        :is-mine="isMyMessage(msg.sender?.name || '')"
       />
     </div>
 
-    <!-- Fixed Input Space anchored at the bottom -->
-    <div class="shrink-0 bg-[#FFFFFF] border-t border-[#CECBF6] shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+    <div class="absolute bottom-28 left-0 w-full flex justify-center pointer-events-none z-10">
+      <transition 
+        enter-active-class="transition duration-200 ease-out" 
+        enter-from-class="opacity-0 translate-y-2" 
+        enter-to-class="opacity-100 translate-y-0" 
+        leave-active-class="transition duration-150 ease-in" 
+        leave-from-class="opacity-100 translate-y-0" 
+        leave-to-class="opacity-0 translate-y-2"
+      >
+        <button 
+          v-if="showJumpToBottom"
+          @click="scrollToBottom('smooth')"
+          class="pointer-events-auto bg-[#534AB7] text-[#FFFFFF] w-10 h-10 rounded-full shadow-md border border-[#3C3489] flex items-center justify-center hover:bg-[#3C3489]"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+          </svg>
+        </button>
+      </transition>
+    </div>
+
+    <div class="shrink-0 bg-[#FFFFFF] border-t border-[#CECBF6] shadow-[0_-4px_12px_rgba(0,0,0,0.08)] relative z-20">
       <DiscussionInput 
         v-if="store.activeRoom"
         :disabled="store.activeRoom.isReadOnly"
