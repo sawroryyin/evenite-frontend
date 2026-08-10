@@ -1,4 +1,3 @@
-<!-- src/views/discussion/DiscussionDetailView.vue -->
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -30,14 +29,8 @@ const goBack = () => {
 </script>
 
 <template>
-  <!-- 
-    FIX: Removed 'fixed inset-0'. 
-    Using 'h-[calc(100dvh-4rem)]' to fill the screen while leaving room for your Evenite global header.
-  -->
   <div class="max-w-3xl mx-auto bg-[#F4F4FA] flex flex-col h-[calc(100dvh-4rem)] font-['Lato'] relative">
-    
-    <!-- FIX: 'sticky top-0' keeps this bar at the top of the chat area, below the main header -->
-    <header class="shrink-0 sticky top-0 bg-[#FFFFFF] border-b border-[#CECBF6] px-4 py-4 shadow-sm flex items-center z-20">
+        <header class="shrink-0 sticky top-0 bg-[#FFFFFF] border-b border-[#CECBF6] px-4 py-4 shadow-sm flex items-center z-20">
       <button @click="goBack" class="mr-3 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -57,7 +50,6 @@ const goBack = () => {
       </div>
     </header>
 
-    <!-- Chat Area automatically takes the remaining space -->
     <DiscussionChatArea class="flex-1 min-h-0" />
     
   </div>

@@ -1,25 +1,33 @@
 import api from './api';
 import type { 
   DiscussionRoom, 
-  MessagePage, 
   GetMessagesQuery, 
-  GetRoomsQuery 
+  GetRoomsQuery,
+  MessagePageDto
 } from '../types';
 
 export const DiscussionService = {
   /**
-   * Fetches the list of discussion rooms for the currently authenticated user.
+   * Fetches discussion rooms for Organizers (events they created)
    */
-  async getRoomList(params?: GetRoomsQuery): Promise<DiscussionRoom[]> {
-    const response = await api.get<DiscussionRoom[]>('/discussion-rooms', { params });
+  async getCreatedRooms(params?: GetRoomsQuery): Promise<DiscussionRoom[]> {
+    const response = await api.get<DiscussionRoom[]>('/discussion-rooms/created-rooms', { params });
     return response.data;
   },
 
   /**
-   * Fetches a paginated list of messages for a specific discussion room.
+   * Fetches discussion rooms for Participants (events they joined)
    */
-  async getMessages(roomId: string, params: GetMessagesQuery): Promise<MessagePage> {
-    const response = await api.get<MessagePage>(`/discussion-rooms/${roomId}/messages`, { params });
+  async getJoinedRooms(params?: GetRoomsQuery): Promise<DiscussionRoom[]> {
+    const response = await api.get<DiscussionRoom[]>('/discussion-rooms/joined-rooms', { params });
+    return response.data;
+  },
+
+  /**
+   * Fetches a paginated list of messages for a specific discussion room using cursor pagination.
+   */
+  async getMessages(roomId: string, params: GetMessagesQuery): Promise<MessagePageDto> {
+    const response = await api.get<MessagePageDto>(`/discussion-rooms/${roomId}/messages`, { params });
     return response.data;
   },
 

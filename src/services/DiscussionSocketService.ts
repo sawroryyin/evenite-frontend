@@ -1,4 +1,3 @@
-// src/services/DiscussionSocketService.ts
 import { io, Socket } from 'socket.io-client';
 import api from './api';
 import type { Message, CreateMessagePayload, SocketErrorPayload } from '../types';

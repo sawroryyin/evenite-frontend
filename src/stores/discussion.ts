@@ -1,4 +1,3 @@
-// src/stores/discussion.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { DiscussionService } from '../services/DiscussionService';
@@ -55,10 +54,8 @@ export const useDiscussionStore = defineStore('discussion', () => {
     isLoadingMessages.value = true;
 
     try {
-      // 1. Fetch initial state
       let page = await DiscussionService.getMessages(roomId, {});
 
-      // FRONTEND FIX FOR BLANK SCREEN:
       // If backend resumed from last-read and found nothing, but gave us the oldestCursor (the read anchor),
       // we immediately fetch 'before' that cursor to populate the history on screen.
       if (page.messages.length === 0 && page.oldestCursor) {
@@ -178,11 +175,16 @@ export const useDiscussionStore = defineStore('discussion', () => {
     isJoined.value = false;
   };
 
-  // Add this properly defined action back into your store
   const fetchRooms = async (query?: GetRoomsQuery) => {
     isLoadingRooms.value = true;
     try {
-      rooms.value = await DiscussionService.getRoomList(query);
+      // Check the user's current role from your authStore
+      // (Adjust 'currentRole' or 'role' depending on your exact authStore state property)
+      if (authStore.currentRole === 'ORGANIZER') {
+        rooms.value = await DiscussionService.getCreatedRooms(query);
+      } else {
+        rooms.value = await DiscussionService.getJoinedRooms(query);
+      }
     } catch (error) {
       console.error('Failed to fetch discussion rooms:', error);
     } finally {

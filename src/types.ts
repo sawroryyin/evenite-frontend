@@ -291,3 +291,23 @@ export interface SocketErrorPayload {
   code: DiscussionErrorCode;
   message: string;
 }
+
+export interface MessageDto {
+  id: string;
+  content: string;
+  isAnnouncement: boolean;
+  sender: {
+    role: Role;
+    name: string;
+    imageUrl: string;
+  };
+  createdAt: string;
+}
+
+export interface MessagePageDto {
+  messages: MessageDto[];
+  hasMoreOlder: boolean;
+  hasMoreNewer: boolean;
+  oldestCursor: string | null;
+  newestCursor: string | null;
+}
