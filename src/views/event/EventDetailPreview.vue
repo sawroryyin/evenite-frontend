@@ -83,6 +83,15 @@ const viewTicket = () => {
   }
 }
 
+const goToChat = () => {
+  if (props.event?.roomId) {
+    // Adjust this route if your router uses a different path or named route
+    router.push(`/discussion/${props.event.roomId}`); 
+  } else {
+    showAlert('Error', 'Discussion room is not available yet.', 'red');
+  }
+}
+
 const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
   alertState.value = { show: true, title, description, theme };
 }
@@ -322,9 +331,22 @@ const mapEmbedUrl = computed(() => {
                 {{ isEventOver ? 'This event is already over.' : 'This event has already started. Cancellation is no longer available.' }}
               </p>
 
-              <button @click="viewTicket" class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                View ticket
-              </button>
+              <div class="flex gap-2 w-full">
+                <button @click="viewTicket" class="flex-1 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                  View ticket
+                </button>
+
+                <!-- New Chat Icon Button -->
+                <button 
+                  @click="goToChat" 
+                  title="Event Discussion Room"
+                  class="w-14 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
+                >
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                </button>
+              </div>
 
               <button v-if="hasFeedback && isEventOver" @click="navigateToSubmitForm('FEEDBACK')" class="w-full bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 text-[#7F77DD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

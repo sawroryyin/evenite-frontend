@@ -10,20 +10,14 @@ const authStore = useAuthStore();
 const messageContainer = ref<HTMLElement | null>(null);
 const showJumpToBottom = ref(false);
 
-const isMyMessage = (messageName: string) => {
-  if (!messageName || !authStore.parsedToken) return false;
+const isMyMessage = (sender: any) => {
+  if (!sender || !authStore.parsedToken) return false;
   
-  const msgName = messageName.toLowerCase().trim();
-  const possibleNames = [
-    authStore.parsedToken.name,
-    authStore.parsedToken.nickname,
-    authStore.parsedToken.firstName,
-    authStore.parsedToken.lastName
-  ].filter(Boolean).map(n => String(n).toLowerCase().trim());
-  
-  return possibleNames.some(name => 
-    msgName === name || msgName.includes(name) || name.includes(msgName)
-  );
+  // Now we have a guaranteed unique ID from the backend to check against!
+  const myParticipantId = authStore.parsedToken.participantProfileId;
+  const myOrganizerId = authStore.parsedToken.organizerProfileId;
+
+  return sender.id === myParticipantId || sender.id === myOrganizerId;
 };
 
 const isOrganizer = computed(() => {
@@ -141,7 +135,7 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
         :key="msg.id"
         :message="msg"
         :hide-header="msg.hideHeader"
-        :is-mine="isMyMessage(msg.sender?.name || '')"
+        :is-mine="isMyMessage(msg.sender)" 
       />
     </div>
 
