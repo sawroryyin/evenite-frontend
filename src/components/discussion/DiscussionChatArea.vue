@@ -98,6 +98,11 @@ const handleScroll = async (e: Event) => {
     await nextTick();
     target.scrollTop = target.scrollHeight - previousHeight;
   }
+
+  const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
+  if (isNearBottom && store.hasMoreNewer && !store.isFetchingNewer) {
+    await store.loadNewerMessages();
+  }
 };
 
 const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }) => {

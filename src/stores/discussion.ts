@@ -20,6 +20,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
   const isLoadingRooms = ref<boolean>(false);
   const isLoadingMessages = ref<boolean>(false);
   const isFetchingOlder = ref<boolean>(false);
+  const isFetchingNewer = ref<boolean>(false);
   const isJoined = ref<boolean>(false);
 
   const activeRoom = computed(() => rooms.value.find(room => room.roomId === activeRoomId.value));
@@ -62,6 +63,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
       const unreadCount = roomIndex !== -1 ? rooms.value[roomIndex].unreadCount : 0;
 
       let page = await DiscussionService.getMessages(roomId, {});
+      let fillerCount = 0;
 
       // Fill history if the backend returned a small slice of recent messages
       if (page.messages.length < 25 && page.oldestCursor) {
@@ -71,14 +73,17 @@ export const useDiscussionStore = defineStore('discussion', () => {
           direction: 'before',
           limit: fetchLimit
         });
+        fillerCount = olderPage.messages.length;
         page.messages = [...olderPage.messages, ...page.messages];
         page.oldestCursor = olderPage.oldestCursor || page.oldestCursor;
         page.hasMoreOlder = olderPage.hasMoreOlder;
       }
 
       // INJECT NEW MESSAGE DIVIDER
-      if (unreadCount > 0 && page.messages.length >= unreadCount) {
-        const dividerIndex = page.messages.length - unreadCount;
+      // the backend's resume page always puts the last-read message first (before any filler we prepended),
+      // so the divider always belongs right after: fillerCount older messages + 1 anchor message
+      if (page.messages.length > 0 && unreadCount > 0) {
+        const dividerIndex = fillerCount + 1;
         page.messages.splice(dividerIndex, 0, {
           id: 'unread-divider',
           isDivider: true,
@@ -130,6 +135,26 @@ export const useDiscussionStore = defineStore('discussion', () => {
     }
   };
 
+  const loadNewerMessages = async () => {
+    if (!activeRoomId.value || !hasMoreNewer.value || isFetchingNewer.value)
+      return;
+
+    isFetchingNewer.value = true;
+    try {
+      const page = await DiscussionService.getMessages(activeRoomId.value, {
+        cursor: newestCursor.value || undefined,
+        direction: "after",
+        limit: 25,
+      });
+
+      injectMessages(page.messages, "end");
+      newestCursor.value = page.newestCursor;
+      hasMoreNewer.value = page.hasMoreNewer;
+    } finally {
+      isFetchingNewer.value = false;
+    }
+  };
+
   const sendMessage = (content: string, isAnnouncement: boolean = false) => {
     if (!activeRoomId.value || !isJoined.value) return;
     discussionSocketService.sendMessage(activeRoomId.value, { content, isAnnouncement });
@@ -142,12 +167,12 @@ export const useDiscussionStore = defineStore('discussion', () => {
       isJoined.value = true;
     });
 
-    discussionSocketService.onMessageNew((newMessage: Message) => {
+    discussionSocketService.onMessageNew(async (newMessage: Message) => {
       if (hasMoreNewer.value) {
-        return; 
+        await loadNewerMessages();
+      }else{
+        injectMessages([newMessage], 'end');
       }
-
-      injectMessages([newMessage], 'end');
       
       const roomIndex = rooms.value.findIndex(r => r.roomId === activeRoomId.value);
       if (roomIndex !== -1) rooms.value[roomIndex].lastMessage = newMessage;
@@ -209,8 +234,8 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
   return {
     rooms, activeRoomId, messages, pinnedAnnouncements,
-    hasMoreOlder, hasMoreNewer, isLoadingRooms, isLoadingMessages, isFetchingOlder, activeRoom, isJoined,
+    hasMoreOlder, hasMoreNewer, isLoadingRooms, isLoadingMessages, isFetchingOlder, isFetchingNewer, activeRoom, isJoined,
     fetchRooms, 
-    setActiveRoom, loadOlderMessages, sendMessage, cleanup
+    setActiveRoom, loadOlderMessages, loadNewerMessages, sendMessage, cleanup
   };
 });
