@@ -73,10 +73,22 @@ watch(() => store.isLoadingMessages, async (isLoading) => {
 // Watch for new messages arriving live
 watch(() => store.messages.length, async (newLen, oldLen) => {
   if (newLen > oldLen && !store.isFetchingOlder && !store.isLoadingMessages) {
+    
+    let isNearBottom = true; 
+    if (messageContainer.value) {
+      const { scrollHeight, scrollTop, clientHeight } = messageContainer.value;
+      // Check if user is within 150px of the bottom BEFORE the new message is added
+      isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+    }
+
+    // Wait for Vue to render the new message into the DOM
     await nextTick();
-    // Only auto-scroll if the user is already near the bottom
-    if (!showJumpToBottom.value) {
+
+    // Apply scroll or update UI based on where they actually were
+    if (isNearBottom) {
       scrollToBottom('smooth');
+    } else {
+      showJumpToBottom.value = true;
     }
   }
 });

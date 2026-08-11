@@ -49,8 +49,6 @@ export const useDiscussionStore = defineStore('discussion', () => {
     if (activeRoomId.value === roomId) return;
     cleanup();
 
-    // If rooms array is empty (e.g., user hard-refreshed the browser), 
-    // fetch the rooms list so our `activeRoom` computed property can find the event data.
     if (rooms.value.length === 0) {
       await fetchRooms();
     }
@@ -58,15 +56,24 @@ export const useDiscussionStore = defineStore('discussion', () => {
     isLoadingMessages.value = true;
 
     try {
-      // Capture unread count before fetching and marking as read
       const roomIndex = rooms.value.findIndex(r => r.roomId === roomId);
       const unreadCount = roomIndex !== -1 ? rooms.value[roomIndex].unreadCount : 0;
 
       let page = await DiscussionService.getMessages(roomId, {});
       let fillerCount = 0;
 
-      // Fill history if the backend returned a small slice of recent messages
-      if (page.messages.length < 25 && page.oldestCursor) {
+      if (unreadCount > 0 && page.oldestCursor) {
+        const olderPage = await DiscussionService.getMessages(roomId, {
+          cursor: page.oldestCursor,
+          direction: 'before',
+          limit: 15 
+        });
+        fillerCount = olderPage.messages.length;
+        page.messages = [...olderPage.messages, ...page.messages];
+        page.oldestCursor = olderPage.oldestCursor || page.oldestCursor;
+        page.hasMoreOlder = olderPage.hasMoreOlder;
+      } 
+      else if (page.messages.length < 25 && page.oldestCursor) {
         const fetchLimit = 25 - page.messages.length;
         const olderPage = await DiscussionService.getMessages(roomId, {
           cursor: page.oldestCursor,
@@ -79,11 +86,9 @@ export const useDiscussionStore = defineStore('discussion', () => {
         page.hasMoreOlder = olderPage.hasMoreOlder;
       }
 
-      // INJECT NEW MESSAGE DIVIDER
-      // the backend's resume page always puts the last-read message first (before any filler we prepended),
-      // so the divider always belongs right after: fillerCount older messages + 1 anchor message
       if (page.messages.length > 0 && unreadCount > 0) {
         const dividerIndex = fillerCount + 1;
+        
         page.messages.splice(dividerIndex, 0, {
           id: 'unread-divider',
           isDivider: true,
