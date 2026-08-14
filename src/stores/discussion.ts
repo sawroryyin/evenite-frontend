@@ -11,6 +11,9 @@ export const useDiscussionStore = defineStore('discussion', () => {
   const rooms = ref<DiscussionRoom[]>([]);
   const activeRoomId = ref<string | null>(null);
   const messages = ref<Message[]>([]);
+
+  const latestAnnouncements = ref<Message[]>([]);
+  const isLoadingAnnouncements = ref<boolean>(false);
   
   const oldestCursor = ref<string | null>(null);
   const newestCursor = ref<string | null>(null);
@@ -25,9 +28,19 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
   const activeRoom = computed(() => rooms.value.find(room => room.roomId === activeRoomId.value));
 
-  const pinnedAnnouncements = computed(() => {
-    return messages.value.filter(m => m.isAnnouncement);
-  });
+  const fetchLatestAnnouncements = async () => {
+    if (!activeRoomId.value) return;
+    
+    isLoadingAnnouncements.value = true;
+    try {
+      const page = await DiscussionService.getAnnouncements(activeRoomId.value, { limit: 5 });
+      latestAnnouncements.value = page.messages;
+    } catch (error) {
+      console.error('Failed to fetch announcements:', error);
+    } finally {
+      isLoadingAnnouncements.value = false;
+    }
+  };
 
   const injectMessages = (newMsgs: Message[], position: 'start' | 'end' | 'replace' = 'replace') => {
     if (position === 'replace') {
@@ -238,9 +251,10 @@ export const useDiscussionStore = defineStore('discussion', () => {
   };
 
   return {
-    rooms, activeRoomId, messages, pinnedAnnouncements,
+    rooms, activeRoomId, messages, 
+    latestAnnouncements, isLoadingAnnouncements, // Expose new state
     hasMoreOlder, hasMoreNewer, isLoadingRooms, isLoadingMessages, isFetchingOlder, isFetchingNewer, activeRoom, isJoined,
-    fetchRooms, 
+    fetchRooms, fetchLatestAnnouncements, // Expose new action
     setActiveRoom, loadOlderMessages, loadNewerMessages, sendMessage, cleanup
   };
 });

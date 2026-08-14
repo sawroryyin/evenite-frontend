@@ -32,6 +32,14 @@ export const DiscussionService = {
   },
 
   /**
+   * Fetches the latest announcements for a specific discussion room.
+   */
+  async getAnnouncements(roomId: string, params: GetMessagesQuery): Promise<MessagePageDto> {
+    const response = await api.get<MessagePageDto>(`/discussion-rooms/${roomId}/announcements`, { params });
+    return response.data;
+  },
+
+  /**
    * Marks a specific discussion room as read for the current user.
    */
   async markRoomAsRead(roomId: string): Promise<{ roomId: string; lastReadAt: string }> {

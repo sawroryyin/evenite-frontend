@@ -10,6 +10,17 @@ const authStore = useAuthStore();
 const messageContainer = ref<HTMLElement | null>(null);
 const showJumpToBottom = ref(false);
 
+const showAnnouncementsPopup = ref(false);
+
+const toggleAnnouncements = async () => {
+  showAnnouncementsPopup.value = !showAnnouncementsPopup.value;
+  // Only fetch when opening. It will not auto-update while viewing, 
+  // but will fetch fresh data if closed and reopened.
+  if (showAnnouncementsPopup.value) {
+    await store.fetchLatestAnnouncements();
+  }
+};
+
 const isMyMessage = (sender: any) => {
   if (!sender || !authStore.parsedToken) return false;
   
@@ -119,6 +130,70 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
 
 <template>
   <div class="flex flex-col h-full bg-[#F4F4FA] relative">
+
+    <!-- NEW: Floating Announcement Button and Pop-up -->
+    <div class="absolute top-4 right-4 z-30 flex flex-col items-end">
+      
+      <!-- Floating Icon -->
+      <button 
+        @click="toggleAnnouncements"
+        class="bg-[#FFFFFF] text-[#534AB7] w-10 h-10 rounded-full shadow-md border border-[#CECBF6] flex items-center justify-center hover:bg-[#EEEDFE] transition-colors"
+        title="View Announcements"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+        </svg>
+      </button>
+
+      <!-- Scrollable Pop-up Box -->
+      <transition 
+        enter-active-class="transition duration-200 ease-out" 
+        enter-from-class="opacity-0 scale-95 translate-y-2" 
+        enter-to-class="opacity-100 scale-100 translate-y-0" 
+        leave-active-class="transition duration-150 ease-in" 
+        leave-from-class="opacity-100 scale-100 translate-y-0" 
+        leave-to-class="opacity-0 scale-95 translate-y-2"
+      >
+        <div 
+          v-if="showAnnouncementsPopup"
+          class="mt-2 w-72 max-h-80 bg-[#FFFFFF] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-[#CECBF6] flex flex-col overflow-hidden"
+        >
+          <!-- Pop-up Header -->
+          <div class="bg-[#534AB7] text-[#FFFFFF] px-4 py-2.5 flex justify-between items-center shrink-0">
+            <span class="text-[12px] font-bold uppercase tracking-wider">Latest Announcements</span>
+            <button @click="showAnnouncementsPopup = false" class="text-[#FFFFFF]/70 hover:text-[#FFFFFF] transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <!-- Pop-up Scrollable Content -->
+          <div class="flex-1 overflow-y-auto p-3 space-y-2.5">
+            <div v-if="store.isLoadingAnnouncements" class="flex justify-center py-4">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[#534AB7]"></div>
+            </div>
+
+            <div v-else-if="store.latestAnnouncements.length === 0" class="text-center py-4 text-[11px] font-bold text-[#26215C]/50">
+              No announcements yet
+            </div>
+
+            <div 
+              v-else 
+              v-for="ann in store.latestAnnouncements" 
+              :key="ann.id" 
+              class="bg-[#F4F4FA] p-3 rounded-lg border border-[#CECBF6]"
+            >
+              <div class="flex justify-between items-baseline mb-1.5">
+                <span class="text-[11px] font-bold text-[#26215C] truncate pr-2">{{ ann.sender.name }}</span>
+                <span class="text-[9px] font-medium text-[#26215C]/50 shrink-0">
+                  {{ new Date(ann.createdAt).toLocaleDateString() }}
+                </span>
+              </div>
+              <p class="text-[12px] text-[#26215C] whitespace-pre-wrap leading-relaxed">{{ ann.content }}</p>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </div>
     
     <div 
       ref="messageContainer"
