@@ -138,16 +138,11 @@ const fetchHomeFeed = async () => {
         .slice(0, 5)
     }
 
-    const nextWeek = new Date()
-    nextWeek.setDate(now.getDate() + 7)
-
-    upcomingEvents.value = upcomingPublicEvents.filter(event => {
-      const startDate = new Date(event.startAt!)
-      return startDate <= nextWeek 
-    })
-
-    upcomingEvents.value.sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
-
+// Sort all future public events chronologically, then slice the first 10
+    upcomingEvents.value = [...upcomingPublicEvents]
+      .sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
+      .slice(0, 10)
+      
   } catch (error) {
     console.error('Failed to load events:', error)
     errorMessage.value = 'Could not load events. Please try again later.'
