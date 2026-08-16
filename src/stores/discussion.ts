@@ -14,6 +14,9 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
   const latestAnnouncements = ref<Message[]>([]);
   const isLoadingAnnouncements = ref<boolean>(false);
+  const announcementsOldestCursor = ref<string | null>(null);
+  const hasMoreAnnouncements = ref<boolean>(false);
+  const isFetchingOlderAnnouncements = ref<boolean>(false);
   
   const oldestCursor = ref<string | null>(null);
   const newestCursor = ref<string | null>(null);
@@ -33,12 +36,38 @@ export const useDiscussionStore = defineStore('discussion', () => {
     
     isLoadingAnnouncements.value = true;
     try {
-      const page = await DiscussionService.getAnnouncements(activeRoomId.value, { limit: 5 });
+      const page = await DiscussionService.getAnnouncements(activeRoomId.value, { limit: 15 });
       latestAnnouncements.value = page.messages;
+      announcementsOldestCursor.value = page.oldestCursor;
+      hasMoreAnnouncements.value = page.hasMoreOlder;
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
     } finally {
       isLoadingAnnouncements.value = false;
+    }
+  };
+
+  const loadOlderAnnouncements = async () => {
+    if (!activeRoomId.value || !hasMoreAnnouncements.value || isFetchingOlderAnnouncements.value) return;
+
+    isFetchingOlderAnnouncements.value = true;
+    try {
+      const page = await DiscussionService.getAnnouncements(activeRoomId.value, {
+        cursor: announcementsOldestCursor.value || undefined,
+        direction: 'before',
+        limit: 15,
+      });
+
+      const existingIds = new Set(latestAnnouncements.value.map(m => m.id));
+      const uniqueMsgs = page.messages.filter(m => !existingIds.has(m.id));
+      
+      latestAnnouncements.value = [...uniqueMsgs, ...latestAnnouncements.value];
+      announcementsOldestCursor.value = page.oldestCursor;
+      hasMoreAnnouncements.value = page.hasMoreOlder;
+    } catch (error) {
+      console.error('Failed to load older announcements:', error);
+    } finally {
+      isFetchingOlderAnnouncements.value = false;
     }
   };
 
@@ -188,7 +217,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
     discussionSocketService.onMessageNew(async (newMessage: Message) => {
       if (hasMoreNewer.value) {
         await loadNewerMessages();
-      }else{
+      } else {
         injectMessages([newMessage], 'end');
       }
       
@@ -232,6 +261,10 @@ export const useDiscussionStore = defineStore('discussion', () => {
     discussionSocketService.removeAllListeners();
     activeRoomId.value = null;
     messages.value = [];
+    latestAnnouncements.value = [];
+    announcementsOldestCursor.value = null;
+    hasMoreAnnouncements.value = false;
+    isFetchingOlderAnnouncements.value = false;
     isJoined.value = false;
   };
 
@@ -251,10 +284,29 @@ export const useDiscussionStore = defineStore('discussion', () => {
   };
 
   return {
-    rooms, activeRoomId, messages, 
-    latestAnnouncements, isLoadingAnnouncements, // Expose new state
-    hasMoreOlder, hasMoreNewer, isLoadingRooms, isLoadingMessages, isFetchingOlder, isFetchingNewer, activeRoom, isJoined,
-    fetchRooms, fetchLatestAnnouncements, // Expose new action
-    setActiveRoom, loadOlderMessages, loadNewerMessages, sendMessage, cleanup
+    rooms, 
+    activeRoomId, 
+    messages, 
+    latestAnnouncements, 
+    isLoadingAnnouncements, 
+    announcementsOldestCursor, 
+    hasMoreAnnouncements, 
+    isFetchingOlderAnnouncements,
+    hasMoreOlder, 
+    hasMoreNewer, 
+    isLoadingRooms, 
+    isLoadingMessages, 
+    isFetchingOlder, 
+    isFetchingNewer, 
+    activeRoom, 
+    isJoined,
+    fetchRooms, 
+    fetchLatestAnnouncements, 
+    loadOlderAnnouncements,
+    setActiveRoom, 
+    loadOlderMessages, 
+    loadNewerMessages, 
+    sendMessage, 
+    cleanup
   };
 });

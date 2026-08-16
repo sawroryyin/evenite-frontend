@@ -11,20 +11,38 @@ const messageContainer = ref<HTMLElement | null>(null);
 const showJumpToBottom = ref(false);
 
 const showAnnouncementsPopup = ref(false);
+const announcementContainer = ref<HTMLElement | null>(null);
 
+// Update your toggleAnnouncements function
 const toggleAnnouncements = async () => {
   showAnnouncementsPopup.value = !showAnnouncementsPopup.value;
-  // Only fetch when opening. It will not auto-update while viewing, 
-  // but will fetch fresh data if closed and reopened.
   if (showAnnouncementsPopup.value) {
     await store.fetchLatestAnnouncements();
+    
+    // NEW: Wait for the DOM to render the messages, then scroll to the bottom
+    await nextTick();
+    if (announcementContainer.value) {
+      announcementContainer.value.scrollTop = announcementContainer.value.scrollHeight;
+    }
+  }
+};
+
+const handleAnnouncementScroll = async (e: Event) => {
+  const target = e.target as HTMLElement;
+  
+  if (target.scrollTop === 0 && store.hasMoreAnnouncements && !store.isFetchingOlderAnnouncements) {
+    const previousHeight = target.scrollHeight;
+    
+    await store.loadOlderAnnouncements();
+    await nextTick();
+    
+    target.scrollTop = target.scrollHeight - previousHeight;
   }
 };
 
 const isMyMessage = (sender: any) => {
   if (!sender || !authStore.parsedToken) return false;
   
-  // Now we have a guaranteed unique ID from the backend to check against!
   const myParticipantId = authStore.parsedToken.participantProfileId;
   const myOrganizerId = authStore.parsedToken.organizerProfileId;
 
@@ -32,7 +50,7 @@ const isMyMessage = (sender: any) => {
 };
 
 const isOrganizer = computed(() => {
-   return authStore.currentRole === 'ORGANIZER';
+  return authStore.currentRole === 'ORGANIZER';
 });
 
 const processedMessages = computed(() => {
@@ -74,28 +92,22 @@ const scrollToDividerOrBottom = async () => {
   }
 };
 
-// Initial scroll logic after messages finish loading
 watch(() => store.isLoadingMessages, async (isLoading) => {
   if (!isLoading && store.messages.length > 0) {
     await scrollToDividerOrBottom();
   }
 });
 
-// Watch for new messages arriving live
 watch(() => store.messages.length, async (newLen, oldLen) => {
   if (newLen > oldLen && !store.isFetchingOlder && !store.isLoadingMessages) {
-    
     let isNearBottom = true; 
     if (messageContainer.value) {
       const { scrollHeight, scrollTop, clientHeight } = messageContainer.value;
-      // Check if user is within 150px of the bottom BEFORE the new message is added
       isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
     }
 
-    // Wait for Vue to render the new message into the DOM
     await nextTick();
 
-    // Apply scroll or update UI based on where they actually were
     if (isNearBottom) {
       scrollToBottom('smooth');
     } else {
@@ -131,13 +143,11 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
 <template>
   <div class="flex flex-col h-full bg-[#F4F4FA] relative">
 
-    <!-- NEW: Floating Announcement Button and Pop-up -->
+    <!-- Floating Announcement Button and Pop-up -->
     <div class="absolute top-4 right-4 z-30 flex flex-col items-end">
-      
-      <!-- Floating Icon -->
       <button 
         @click="toggleAnnouncements"
-        class="bg-[#FFFFFF] text-[#534AB7] w-10 h-10 rounded-full shadow-md border border-[#CECBF6] flex items-center justify-center hover:bg-[#EEEDFE] transition-colors"
+        class="bg-[#FFFFFF] text-[#534AB7] w-10 h-10 rounded-full shadow-md border border-[#CECBF6] flex items-center justify-center hover:bg-[#EEEDFE] transition-colors cursor-pointer"
         title="View Announcements"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +155,6 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
         </svg>
       </button>
 
-      <!-- Scrollable Pop-up Box -->
       <transition 
         enter-active-class="transition duration-200 ease-out" 
         enter-from-class="opacity-0 scale-95 translate-y-2" 
@@ -158,16 +167,19 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
           v-if="showAnnouncementsPopup"
           class="mt-2 w-72 max-h-80 bg-[#FFFFFF] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-[#CECBF6] flex flex-col overflow-hidden"
         >
-          <!-- Pop-up Header -->
           <div class="bg-[#534AB7] text-[#FFFFFF] px-4 py-2.5 flex justify-between items-center shrink-0">
             <span class="text-[12px] font-bold uppercase tracking-wider">Latest Announcements</span>
-            <button @click="showAnnouncementsPopup = false" class="text-[#FFFFFF]/70 hover:text-[#FFFFFF] transition-colors">
+            <button @click="showAnnouncementsPopup = false" class="text-[#FFFFFF]/70 hover:text-[#FFFFFF] transition-colors cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
 
-          <!-- Pop-up Scrollable Content -->
-          <div class="flex-1 overflow-y-auto p-3 space-y-2.5">
+          <!-- UPDATED: Added ref="announcementContainer" -->
+          <div 
+            ref="announcementContainer"
+            class="flex-1 overflow-y-auto p-3 space-y-2.5"
+            @scroll="handleAnnouncementScroll"
+          >
             <div v-if="store.isLoadingAnnouncements" class="flex justify-center py-4">
               <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[#534AB7]"></div>
             </div>
@@ -176,20 +188,26 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
               No announcements yet
             </div>
 
-            <div 
-              v-else 
-              v-for="ann in store.latestAnnouncements" 
-              :key="ann.id" 
-              class="bg-[#F4F4FA] p-3 rounded-lg border border-[#CECBF6]"
-            >
-              <div class="flex justify-between items-baseline mb-1.5">
-                <span class="text-[11px] font-bold text-[#26215C] truncate pr-2">{{ ann.sender.name }}</span>
-                <span class="text-[9px] font-medium text-[#26215C]/50 shrink-0">
-                  {{ new Date(ann.createdAt).toLocaleDateString() }}
-                </span>
+            <template v-else>
+              <div v-if="store.isFetchingOlderAnnouncements" class="flex justify-center py-2">
+                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#534AB7]"></div>
               </div>
-              <p class="text-[12px] text-[#26215C] whitespace-pre-wrap leading-relaxed">{{ ann.content }}</p>
-            </div>
+
+              <div 
+                v-for="ann in store.latestAnnouncements" 
+                :key="ann.id" 
+                class="bg-[#F4F4FA] p-3 rounded-lg border border-[#CECBF6]"
+              >
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <span class="text-[11px] font-bold text-[#26215C] truncate pr-2">{{ ann.sender.name }}</span>
+                  <!-- UPDATED: Show Date and Time cleanly -->
+                  <span class="text-[9px] font-medium text-[#26215C]/50 shrink-0">
+                    {{ new Date(ann.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) }}
+                  </span>
+                </div>
+                <p class="text-[12px] text-[#26215C] whitespace-pre-wrap leading-relaxed">{{ ann.content }}</p>
+              </div>
+            </template>
           </div>
         </div>
       </transition>
@@ -219,7 +237,7 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
 
       <DiscussionMessage 
         v-for="msg in processedMessages" 
-        :key="msg.id"
+        :key="msg.id" 
         :message="msg"
         :hide-header="msg.hideHeader"
         :is-mine="isMyMessage(msg.sender)" 
@@ -238,7 +256,7 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
         <button 
           v-if="showJumpToBottom"
           @click="scrollToBottom('smooth')"
-          class="pointer-events-auto bg-[#534AB7] text-[#FFFFFF] w-10 h-10 rounded-full shadow-md border border-[#3C3489] flex items-center justify-center hover:bg-[#3C3489]"
+          class="pointer-events-auto bg-[#534AB7] text-[#FFFFFF] w-10 h-10 rounded-full shadow-md border border-[#3C3489] flex items-center justify-center hover:bg-[#3C3489] cursor-pointer"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
