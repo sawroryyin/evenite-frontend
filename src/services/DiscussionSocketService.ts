@@ -102,6 +102,14 @@ class DiscussionSocketService {
   onRoomKicked(callback: (data: { roomId: string }) => void) {
     this.socket?.on('room:kicked', callback);
   }
+  // New: Listen for live chat list updates (new messages pushed to all devices)
+  onChatListUpdate(callback: (data: { roomId: string; lastMessage: Message; lastSerialNumber: number }) => void) {
+    this.socket?.on('chatList:update', callback);
+  }
+  // New: Listen for cross-tab read status clears
+  onChatListRead(callback: (data: { roomId: string; lastReadSerialNumber: number }) => void) {
+    this.socket?.on('chatList:read', callback);
+  }
   onError(callback: (error: SocketErrorPayload) => void) {
     this.socket?.on('error', callback);
   }
@@ -110,6 +118,8 @@ class DiscussionSocketService {
     this.socket?.off('room:joined');
     this.socket?.off('message:new');
     this.socket?.off('room:kicked');
+    this.socket?.off('chatList:update');
+    this.socket?.off('chatList:read');
     this.socket?.off('error');
   }
 }

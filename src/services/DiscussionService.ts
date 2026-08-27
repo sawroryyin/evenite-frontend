@@ -3,47 +3,46 @@ import type {
   DiscussionRoom, 
   GetMessagesQuery, 
   GetRoomsQuery,
-  MessagePageDto
+  MessagePageDto,
+  Message
 } from '../types';
 
+// Front-end sanitizer to fix lingering non-hex UUIDs (g->7, h->8) from cached browser state
+const sanitizeId = (id: string): string => {
+  if (!id) return id;
+  return id.replace(/^g/, '7').replace(/^h/, '8');
+};
+
 export const DiscussionService = {
-  /**
-   * Fetches discussion rooms for Organizers (events they created)
-   */
   async getCreatedRooms(params?: GetRoomsQuery): Promise<DiscussionRoom[]> {
     const response = await api.get<DiscussionRoom[]>('/discussion-rooms/created-rooms', { params });
-    return response.data;
+    return response.data.map(room => ({ ...room, roomId: sanitizeId(room.roomId) }));
   },
 
-  /**
-   * Fetches discussion rooms for Participants (events they joined)
-   */
   async getJoinedRooms(params?: GetRoomsQuery): Promise<DiscussionRoom[]> {
     const response = await api.get<DiscussionRoom[]>('/discussion-rooms/joined-rooms', { params });
-    return response.data;
+    return response.data.map(room => ({ ...room, roomId: sanitizeId(room.roomId) }));
   },
 
-  /**
-   * Fetches a paginated list of messages for a specific discussion room using cursor pagination.
-   */
   async getMessages(roomId: string, params: GetMessagesQuery): Promise<MessagePageDto> {
-    const response = await api.get<MessagePageDto>(`/discussion-rooms/${roomId}/messages`, { params });
+    const safeId = sanitizeId(roomId);
+    const response = await api.get<MessagePageDto>(`/discussion-rooms/${safeId}/messages`, { params });
+    if (response.data.messages) {
+      response.data.messages = response.data.messages.map(m => ({ ...m, id: sanitizeId(m.id) }));
+    }
     return response.data;
   },
 
-  /**
-   * Fetches the latest announcements for a specific discussion room.
-   */
-  async getAnnouncements(roomId: string, params: GetMessagesQuery): Promise<MessagePageDto> {
-    const response = await api.get<MessagePageDto>(`/discussion-rooms/${roomId}/announcements`, { params });
-    return response.data;
+  async getAnnouncements(roomId: string): Promise<Message[]> {
+    const safeId = sanitizeId(roomId);
+    const response = await api.get<Message[]>(`/discussion-rooms/${safeId}/announcements`);
+    return response.data.map(m => ({ ...m, id: sanitizeId(m.id) }));
   },
 
-  /**
-   * Marks a specific discussion room as read for the current user.
-   */
-  async markRoomAsRead(roomId: string): Promise<{ roomId: string; lastReadAt: string }> {
-    const response = await api.patch<{ roomId: string; lastReadAt: string }>(`/discussion-rooms/${roomId}/read`);
+  async markRoomAsRead(roomId: string, lastReadMessageId?: string): Promise<{ roomId: string; lastReadMessageId: string | null; lastReadSerialNumber: number }> {
+    const safeRoomId = sanitizeId(roomId);
+    const safeMsgId = lastReadMessageId ? sanitizeId(lastReadMessageId) : undefined;
+    const response = await api.patch<{ roomId: string; lastReadMessageId: string | null; lastReadSerialNumber: number }>(`/discussion-rooms/${safeRoomId}/read`, { lastReadMessageId: safeMsgId });
     return response.data;
   }
 };

@@ -13,30 +13,15 @@ const showJumpToBottom = ref(false);
 const showAnnouncementsPopup = ref(false);
 const announcementContainer = ref<HTMLElement | null>(null);
 
-// Update your toggleAnnouncements function
 const toggleAnnouncements = async () => {
   showAnnouncementsPopup.value = !showAnnouncementsPopup.value;
   if (showAnnouncementsPopup.value) {
     await store.fetchLatestAnnouncements();
     
-    // NEW: Wait for the DOM to render the messages, then scroll to the bottom
     await nextTick();
     if (announcementContainer.value) {
       announcementContainer.value.scrollTop = announcementContainer.value.scrollHeight;
     }
-  }
-};
-
-const handleAnnouncementScroll = async (e: Event) => {
-  const target = e.target as HTMLElement;
-  
-  if (target.scrollTop === 0 && store.hasMoreAnnouncements && !store.isFetchingOlderAnnouncements) {
-    const previousHeight = target.scrollHeight;
-    
-    await store.loadOlderAnnouncements();
-    await nextTick();
-    
-    target.scrollTop = target.scrollHeight - previousHeight;
   }
 };
 
@@ -92,9 +77,39 @@ const scrollToDividerOrBottom = async () => {
   }
 };
 
+const updateReadStatusOnScroll = (container: HTMLElement) => {
+  const wrappers = container.querySelectorAll('.message-wrapper');
+  const containerRect = container.getBoundingClientRect();
+
+  let highestVisibleSerial = -1;
+  let highestVisibleMsgId: string | null = null;
+
+  for (let i = wrappers.length - 1; i >= 0; i--) {
+    const el = wrappers[i];
+    const rect = el.getBoundingClientRect();
+
+    if (rect.top < containerRect.bottom && rect.bottom > containerRect.top) {
+      const msgId = el.getAttribute('data-message-id');
+      const serial = Number(el.getAttribute('data-serial-number'));
+
+      if (msgId && msgId !== 'unread-divider' && serial > highestVisibleSerial) {
+        highestVisibleSerial = serial;
+        highestVisibleMsgId = msgId;
+      }
+    }
+  }
+
+  if (highestVisibleMsgId) {
+    store.markAsReadAsDisplayed(highestVisibleMsgId, highestVisibleSerial);
+  }
+};
+
 watch(() => store.isLoadingMessages, async (isLoading) => {
   if (!isLoading && store.messages.length > 0) {
     await scrollToDividerOrBottom();
+    if (messageContainer.value) {
+      updateReadStatusOnScroll(messageContainer.value);
+    }
   }
 });
 
@@ -132,6 +147,8 @@ const handleScroll = async (e: Event) => {
   if (isNearBottom && store.hasMoreNewer && !store.isFetchingNewer) {
     await store.loadNewerMessages();
   }
+
+  updateReadStatusOnScroll(target);
 };
 
 const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }) => {
@@ -142,8 +159,6 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
 
 <template>
   <div class="flex flex-col h-full bg-[#F4F4FA] relative">
-
-    <!-- Floating Announcement Button and Pop-up -->
     <div class="absolute top-4 right-4 z-30 flex flex-col items-end">
       <button 
         @click="toggleAnnouncements"
@@ -174,11 +189,9 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
             </button>
           </div>
 
-          <!-- UPDATED: Added ref="announcementContainer" -->
           <div 
             ref="announcementContainer"
             class="flex-1 overflow-y-auto p-3 space-y-2.5"
-            @scroll="handleAnnouncementScroll"
           >
             <div v-if="store.isLoadingAnnouncements" class="flex justify-center py-4">
               <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[#534AB7]"></div>
@@ -189,10 +202,6 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
             </div>
 
             <template v-else>
-              <div v-if="store.isFetchingOlderAnnouncements" class="flex justify-center py-2">
-                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#534AB7]"></div>
-              </div>
-
               <div 
                 v-for="ann in store.latestAnnouncements" 
                 :key="ann.id" 
@@ -200,7 +209,6 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
               >
                 <div class="flex justify-between items-baseline mb-1.5">
                   <span class="text-[11px] font-bold text-[#26215C] truncate pr-2">{{ ann.sender.name }}</span>
-                  <!-- UPDATED: Show Date and Time cleanly -->
                   <span class="text-[9px] font-medium text-[#26215C]/50 shrink-0">
                     {{ new Date(ann.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) }}
                   </span>
@@ -235,13 +243,19 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
         <p class="text-[12px] font-bold">No messages yet</p>
       </div>
 
-      <DiscussionMessage 
+      <div 
         v-for="msg in processedMessages" 
         :key="msg.id" 
-        :message="msg"
-        :hide-header="msg.hideHeader"
-        :is-mine="isMyMessage(msg.sender)" 
-      />
+        :data-message-id="msg.id"
+        :data-serial-number="msg.serialNumber"
+        class="message-wrapper"
+      >
+        <DiscussionMessage 
+          :message="msg"
+          :hide-header="msg.hideHeader"
+          :is-mine="isMyMessage(msg.sender)" 
+        />
+      </div>
     </div>
 
     <div class="absolute bottom-28 left-0 w-full flex justify-center pointer-events-none z-10">

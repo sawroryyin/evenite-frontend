@@ -3,20 +3,30 @@ import { ref, computed } from 'vue';
 import { DiscussionService } from '../services/DiscussionService';
 import { discussionSocketService } from '../services/DiscussionSocketService';
 import { useAuthStore } from './auth';
-import type { DiscussionRoom, Message, GetRoomsQuery } from '../types';
+
+import type { 
+  DiscussionRoom as BaseDiscussionRoom, 
+  Message as BaseMessage, 
+  GetRoomsQuery 
+} from '../types';
+
+export type UiMessage = BaseMessage & {
+  serialNumber?: number; // Maintained for chronological accuracy guarantees
+};
+
+export type UiDiscussionRoom = BaseDiscussionRoom & {
+  lastReadSerialNumber?: number;
+};
 
 export const useDiscussionStore = defineStore('discussion', () => {
   const authStore = useAuthStore();
 
-  const rooms = ref<DiscussionRoom[]>([]);
+  const rooms = ref<UiDiscussionRoom[]>([]);
   const activeRoomId = ref<string | null>(null);
-  const messages = ref<Message[]>([]);
+  const messages = ref<UiMessage[]>([]);
 
-  const latestAnnouncements = ref<Message[]>([]);
+  const latestAnnouncements = ref<UiMessage[]>([]);
   const isLoadingAnnouncements = ref<boolean>(false);
-  const announcementsOldestCursor = ref<string | null>(null);
-  const hasMoreAnnouncements = ref<boolean>(false);
-  const isFetchingOlderAnnouncements = ref<boolean>(false);
   
   const oldestCursor = ref<string | null>(null);
   const newestCursor = ref<string | null>(null);
@@ -36,10 +46,10 @@ export const useDiscussionStore = defineStore('discussion', () => {
     
     isLoadingAnnouncements.value = true;
     try {
-      const page = await DiscussionService.getAnnouncements(activeRoomId.value, { limit: 15 });
-      latestAnnouncements.value = page.messages;
-      announcementsOldestCursor.value = page.oldestCursor;
-      hasMoreAnnouncements.value = page.hasMoreOlder;
+      const results = await DiscussionService.getAnnouncements(activeRoomId.value);
+      latestAnnouncements.value = (results as UiMessage[]).sort((a, b) => 
+        (b.serialNumber || 0) - (a.serialNumber || 0)
+      );
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
     } finally {
@@ -47,44 +57,21 @@ export const useDiscussionStore = defineStore('discussion', () => {
     }
   };
 
-  const loadOlderAnnouncements = async () => {
-    if (!activeRoomId.value || !hasMoreAnnouncements.value || isFetchingOlderAnnouncements.value) return;
-
-    isFetchingOlderAnnouncements.value = true;
-    try {
-      const page = await DiscussionService.getAnnouncements(activeRoomId.value, {
-        cursor: announcementsOldestCursor.value || undefined,
-        direction: 'before',
-        limit: 15,
-      });
-
-      const existingIds = new Set(latestAnnouncements.value.map(m => m.id));
-      const uniqueMsgs = page.messages.filter(m => !existingIds.has(m.id));
-      
-      latestAnnouncements.value = [...uniqueMsgs, ...latestAnnouncements.value];
-      announcementsOldestCursor.value = page.oldestCursor;
-      hasMoreAnnouncements.value = page.hasMoreOlder;
-    } catch (error) {
-      console.error('Failed to load older announcements:', error);
-    } finally {
-      isFetchingOlderAnnouncements.value = false;
-    }
-  };
-
-  const injectMessages = (newMsgs: Message[], position: 'start' | 'end' | 'replace' = 'replace') => {
+  const injectMessages = (newMsgs: UiMessage[], position: 'start' | 'end' | 'replace' = 'replace') => {
+    let updated: UiMessage[] = [];
     if (position === 'replace') {
-      messages.value = newMsgs;
-      return;
-    }
-    
-    const existingIds = new Set(messages.value.map(m => m.id));
-    const uniqueMsgs = newMsgs.filter(m => !existingIds.has(m.id));
-    
-    if (position === 'start') {
-      messages.value = [...uniqueMsgs, ...messages.value];
+      updated = newMsgs;
     } else {
-      messages.value = [...messages.value, ...uniqueMsgs];
+      const existingIds = new Set(messages.value.map(m => m.id));
+      const uniqueMsgs = newMsgs.filter(m => !existingIds.has(m.id));
+      
+      if (position === 'start') {
+        updated = [...uniqueMsgs, ...messages.value];
+      } else {
+        updated = [...messages.value, ...uniqueMsgs];
+      }
     }
+    messages.value = updated.sort((a, b) => (a.serialNumber || 0) - (b.serialNumber || 0));
   };
 
   const setActiveRoom = async (roomId: string) => {
@@ -102,7 +89,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
       const unreadCount = roomIndex !== -1 ? rooms.value[roomIndex].unreadCount : 0;
 
       let page = await DiscussionService.getMessages(roomId, {});
-      let fillerCount = 0;
+      let fetchedMessages: UiMessage[] = page.messages as UiMessage[];
 
       if (unreadCount > 0 && page.oldestCursor) {
         const olderPage = await DiscussionService.getMessages(roomId, {
@@ -110,56 +97,80 @@ export const useDiscussionStore = defineStore('discussion', () => {
           direction: 'before',
           limit: 15 
         });
-        fillerCount = olderPage.messages.length;
-        page.messages = [...olderPage.messages, ...page.messages];
+        fetchedMessages = [...(olderPage.messages as UiMessage[]), ...fetchedMessages];
         page.oldestCursor = olderPage.oldestCursor || page.oldestCursor;
         page.hasMoreOlder = olderPage.hasMoreOlder;
       } 
-      else if (page.messages.length < 25 && page.oldestCursor) {
-        const fetchLimit = 25 - page.messages.length;
+      else if (fetchedMessages.length < 25 && page.oldestCursor) {
+        const fetchLimit = 25 - fetchedMessages.length;
         const olderPage = await DiscussionService.getMessages(roomId, {
           cursor: page.oldestCursor,
           direction: 'before',
           limit: fetchLimit
         });
-        fillerCount = olderPage.messages.length;
-        page.messages = [...olderPage.messages, ...page.messages];
+        fetchedMessages = [...(olderPage.messages as UiMessage[]), ...fetchedMessages];
         page.oldestCursor = olderPage.oldestCursor || page.oldestCursor;
         page.hasMoreOlder = olderPage.hasMoreOlder;
       }
 
-      if (page.messages.length > 0 && unreadCount > 0) {
-        const dividerIndex = fillerCount + 1;
+      fetchedMessages.sort((a, b) => (a.serialNumber || 0) - (b.serialNumber || 0));
+
+      if (fetchedMessages.length > 0 && unreadCount > 0) {
+        const dividerIndex = Math.max(0, fetchedMessages.length - unreadCount);
+        const baseSerial = fetchedMessages[dividerIndex]?.serialNumber || 0;
         
-        page.messages.splice(dividerIndex, 0, {
+        fetchedMessages.splice(dividerIndex, 0, {
           id: 'unread-divider',
           isDivider: true,
           content: 'New Messages',
-          createdAt: new Date().toISOString(),
+          createdAt: fetchedMessages[dividerIndex]?.createdAt || new Date().toISOString(),
+          serialNumber: baseSerial - 0.1, 
           isAnnouncement: false,
-          sender: { name: 'System', role: 'ORGANIZER' as any, imageUrl: '' }
-        } as any);
+          sender: { name: 'System', role: 'ORGANIZER', imageUrl: '' }
+        } as unknown as UiMessage);
       }
 
-      injectMessages(page.messages, 'replace');
+      injectMessages(fetchedMessages, 'replace');
       oldestCursor.value = page.oldestCursor;
       newestCursor.value = page.newestCursor;
       hasMoreOlder.value = page.hasMoreOlder;
       hasMoreNewer.value = page.hasMoreNewer;
 
-      await DiscussionService.markRoomAsRead(roomId);
-      
-      if (roomIndex !== -1) rooms.value[roomIndex].unreadCount = 0;
-
       if (authStore.accessToken) {
         discussionSocketService.connect(authStore.accessToken);
-        discussionSocketService.joinRoom(roomId);
         setupSocketListeners();
+        discussionSocketService.joinRoom(roomId);
       }
     } catch (error) {
       console.error('Failed to set active room:', error);
     } finally {
       isLoadingMessages.value = false;
+    }
+  };
+
+  let readStatusDebounce: ReturnType<typeof setTimeout>;
+  const markAsReadAsDisplayed = (messageId: string, serialNumber: number) => {
+    if (!activeRoomId.value) return;
+    const room = rooms.value.find(r => r.roomId === activeRoomId.value);
+    
+    if (room && serialNumber > (room.lastReadSerialNumber || 0)) {
+      room.lastReadSerialNumber = serialNumber;
+      room.unreadCount = Math.max(0, room.unreadCount - 1);
+
+      clearTimeout(readStatusDebounce);
+      readStatusDebounce = setTimeout(async () => {
+        if (activeRoomId.value) {
+          try {
+            const readStatus = await DiscussionService.markRoomAsRead(activeRoomId.value, messageId);
+            if (room) {
+              room.lastReadSerialNumber = readStatus.lastReadSerialNumber;
+              room.unreadCount = 0;
+            }
+          } catch (e) {
+            console.error('Failed to mark read', e);
+          }
+        }
+      }, 1000); 
     }
   };
 
@@ -173,8 +184,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
         direction: 'before',
         limit: 25
       });
-
-      injectMessages(page.messages, 'start');
+      injectMessages(page.messages as UiMessage[], 'start');
       oldestCursor.value = page.oldestCursor;
       hasMoreOlder.value = page.hasMoreOlder;
     } finally {
@@ -193,8 +203,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
         direction: "after",
         limit: 25,
       });
-
-      injectMessages(page.messages, "end");
+      injectMessages(page.messages as UiMessage[], "end");
       newestCursor.value = page.newestCursor;
       hasMoreNewer.value = page.hasMoreNewer;
     } finally {
@@ -214,18 +223,31 @@ export const useDiscussionStore = defineStore('discussion', () => {
       isJoined.value = true;
     });
 
-    discussionSocketService.onMessageNew(async (newMessage: Message) => {
+    discussionSocketService.onMessageNew(async (newMessage: BaseMessage) => {
+      const uiMessage = newMessage as UiMessage;
       if (hasMoreNewer.value) {
         await loadNewerMessages();
       } else {
-        injectMessages([newMessage], 'end');
+        injectMessages([uiMessage], 'end');
       }
       
       const roomIndex = rooms.value.findIndex(r => r.roomId === activeRoomId.value);
-      if (roomIndex !== -1) rooms.value[roomIndex].lastMessage = newMessage;
+      if (roomIndex !== -1) rooms.value[roomIndex].lastMessage = uiMessage;
+    });
 
-      if (activeRoomId.value) {
-        DiscussionService.markRoomAsRead(activeRoomId.value).catch(() => {});
+    discussionSocketService.onChatListUpdate((payload) => {
+      const room = rooms.value.find(r => r.roomId === payload.roomId);
+      if (room) {
+        room.lastMessage = payload.lastMessage as UiMessage;
+        room.unreadCount = Math.max(0, payload.lastSerialNumber - (room.lastReadSerialNumber || 0));
+      }
+    });
+
+    discussionSocketService.onChatListRead((payload) => {
+      const room = rooms.value.find(r => r.roomId === payload.roomId);
+      if (room) {
+        room.lastReadSerialNumber = payload.lastReadSerialNumber;
+        room.unreadCount = 0;
       }
     });
 
@@ -262,19 +284,19 @@ export const useDiscussionStore = defineStore('discussion', () => {
     activeRoomId.value = null;
     messages.value = [];
     latestAnnouncements.value = [];
-    announcementsOldestCursor.value = null;
-    hasMoreAnnouncements.value = false;
-    isFetchingOlderAnnouncements.value = false;
     isJoined.value = false;
+    clearTimeout(readStatusDebounce);
   };
 
   const fetchRooms = async (query?: GetRoomsQuery) => {
     isLoadingRooms.value = true;
     try {
       if (authStore.currentRole === 'ORGANIZER') {
-        rooms.value = await DiscussionService.getCreatedRooms(query);
+        const result = await DiscussionService.getCreatedRooms(query);
+        rooms.value = result as UiDiscussionRoom[];
       } else {
-        rooms.value = await DiscussionService.getJoinedRooms(query);
+        const result = await DiscussionService.getJoinedRooms(query);
+        rooms.value = result as UiDiscussionRoom[];
       }
     } catch (error) {
       console.error('Failed to fetch discussion rooms:', error);
@@ -289,9 +311,6 @@ export const useDiscussionStore = defineStore('discussion', () => {
     messages, 
     latestAnnouncements, 
     isLoadingAnnouncements, 
-    announcementsOldestCursor, 
-    hasMoreAnnouncements, 
-    isFetchingOlderAnnouncements,
     hasMoreOlder, 
     hasMoreNewer, 
     isLoadingRooms, 
@@ -302,11 +321,11 @@ export const useDiscussionStore = defineStore('discussion', () => {
     isJoined,
     fetchRooms, 
     fetchLatestAnnouncements, 
-    loadOlderAnnouncements,
     setActiveRoom, 
     loadOlderMessages, 
     loadNewerMessages, 
     sendMessage, 
-    cleanup
+    cleanup,
+    markAsReadAsDisplayed
   };
 });

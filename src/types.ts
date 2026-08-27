@@ -218,11 +218,6 @@ export interface ReturnParticipantTicketListDto {
 export type Role = 'ORGANIZER' | 'PARTICIPANT';
 export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'CONCLUDED' | 'CANCELLED';
 
-export interface BilingualField {
-  en: string;
-  th: string;
-}
-
 export type DiscussionErrorCode = 
   | 'ROOM_NOT_FOUND'
   | 'ROOM_ACCESS_DENIED'
