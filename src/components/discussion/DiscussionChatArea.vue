@@ -72,6 +72,10 @@ const scrollToDividerOrBottom = async () => {
   const divider = document.getElementById('unread-divider');
   if (divider && messageContainer.value) {
     divider.scrollIntoView({ behavior: 'auto', block: 'center' });
+    // Ensure hidden newer messages are fetched
+    if (store.hasMoreNewer && !store.isFetchingNewer) {
+      await store.loadNewerMessages();
+    }
   } else {
     scrollToBottom('auto');
   }
@@ -125,6 +129,12 @@ watch(() => store.messages.length, async (newLen, oldLen) => {
 
     if (isNearBottom) {
       scrollToBottom('smooth');
+
+      setTimeout(() => {
+        if (messageContainer.value) {
+          updateReadStatusOnScroll(messageContainer.value);
+        }
+      }, 400); // 400ms allows the smooth scroll to finish
     } else {
       showJumpToBottom.value = true;
     }

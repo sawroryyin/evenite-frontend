@@ -26,7 +26,8 @@ export const DiscussionService = {
 
   async getMessages(roomId: string, params: GetMessagesQuery): Promise<MessagePageDto> {
     const safeId = sanitizeId(roomId);
-    const response = await api.get<MessagePageDto>(`/discussion-rooms/${safeId}/messages`, { params });
+    const cacheBuster = { ...params, _t: Date.now() };
+    const response = await api.get<MessagePageDto>(`/discussion-rooms/${safeId}/messages`, { params: cacheBuster });
     if (response.data.messages) {
       response.data.messages = response.data.messages.map(m => ({ ...m, id: sanitizeId(m.id) }));
     }

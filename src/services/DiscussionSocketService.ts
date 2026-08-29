@@ -1,3 +1,4 @@
+// DiscussionSocketService.ts
 import { io, Socket } from 'socket.io-client';
 import api from './api';
 import type { Message, CreateMessagePayload, SocketErrorPayload } from '../types';
@@ -25,7 +26,6 @@ class DiscussionSocketService {
   private setupCoreListeners() {
     if (!this.socket) return;
 
-    // Re-join the active room automatically upon reconnecting
     this.socket.on('connect', () => {
       this.failedAttempts = 0;
       if (this.currentRoomId) {
@@ -33,28 +33,25 @@ class DiscussionSocketService {
       }
     });
 
-    // Stop infinite retry loops on bad tokens
     this.socket.on('connect_error', () => {
       this.failedAttempts++;
       if (this.failedAttempts >= 3) {
         console.error('Socket authentication failed repeatedly. Stopping reconnect.');
-        this.disconnect(); // Hard stop
+        this.disconnect();
       }
     });
   }
 
-  // Proactively refresh the token every 14 minutes (before the 15m expiry)
   private startProactiveRefresh() {
     this.stopProactiveRefresh();
     this.refreshTimer = setInterval(async () => {
       try {
-        // Assuming your api.ts has a route or interceptor that handles /auth/refresh
         const response = await api.post('/auth/refresh'); 
         const newToken = response.data.accessToken;
         
         if (this.socket && newToken) {
           this.socket.auth = { token: newToken };
-          this.socket.disconnect().connect(); // Force reconnect with new token
+          this.socket.disconnect().connect();
         }
       } catch (error) {
         console.error('Proactive token refresh failed', error);
@@ -92,6 +89,10 @@ class DiscussionSocketService {
     this.socket?.emit('message:send', { roomId, dto });
   }
 
+  sendAnnouncement(roomId: string, dto: { content: string }) {
+    this.socket?.emit('announcement:send', { roomId, dto });
+  }
+
   // --- Listeners ---
   onRoomJoined(callback: (data: { roomId: string }) => void) {
     this.socket?.on('room:joined', callback);
@@ -102,11 +103,9 @@ class DiscussionSocketService {
   onRoomKicked(callback: (data: { roomId: string }) => void) {
     this.socket?.on('room:kicked', callback);
   }
-  // New: Listen for live chat list updates (new messages pushed to all devices)
   onChatListUpdate(callback: (data: { roomId: string; lastMessage: Message; lastSerialNumber: number }) => void) {
     this.socket?.on('chatList:update', callback);
   }
-  // New: Listen for cross-tab read status clears
   onChatListRead(callback: (data: { roomId: string; lastReadSerialNumber: number }) => void) {
     this.socket?.on('chatList:read', callback);
   }

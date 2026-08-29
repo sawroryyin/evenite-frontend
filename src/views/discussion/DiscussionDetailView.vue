@@ -35,7 +35,7 @@ const goBack = () => {
       
       <div class="flex-1 min-w-0 flex items-center">
         <h2 class="text-lg font-['Nunito'] font-black text-[#26215C] truncate">
-          {{ store.activeRoom?.event.title.en || 'Loading...' }}
+          {{ store.activeRoom?.event.title?.en || 'Loading...' }}
         </h2>
         <span 
           v-if="store.activeRoom?.isReadOnly" 
@@ -45,14 +45,13 @@ const goBack = () => {
         </span>
       </div>
 
-      <!-- New "Go to event" Button -->
+      <!-- "Go to event" Button -->
       <button 
         v-if="store.activeRoom?.event?.id"
         @click="router.push(`/event/${store.activeRoom.event.id}`)"
         class="ml-3 shrink-0 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer uppercase tracking-wider"
       >
         <span>Event Info</span>
-        <!-- Optional Info Icon -->
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>

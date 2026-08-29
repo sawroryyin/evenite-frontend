@@ -11,7 +11,7 @@ import type {
 } from '../types';
 
 export type UiMessage = BaseMessage & {
-  serialNumber?: number; // Maintained for chronological accuracy guarantees
+  serialNumber?: number;
 };
 
 export type UiDiscussionRoom = BaseDiscussionRoom & {
@@ -41,9 +41,32 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
   const activeRoom = computed(() => rooms.value.find(room => room.roomId === activeRoomId.value));
 
+  // Initialize global connection and listeners for the chat list (independent of active room)
+  const initGlobalSocket = () => {
+    if (!authStore.accessToken) return;
+    discussionSocketService.connect(authStore.accessToken);
+
+    // Register global chat list payload listeners so updates arrive dynamically on login/switch
+    discussionSocketService.onChatListUpdate((payload) => {
+      const room = rooms.value.find(r => r.roomId === payload.roomId);
+      if (room) {
+        room.lastMessage = payload.lastMessage as UiMessage;
+        // Client-side unread calculation via serial numbers
+        room.unreadCount = Math.max(0, payload.lastSerialNumber - (room.lastReadSerialNumber || 0));
+      }
+    });
+
+    discussionSocketService.onChatListRead((payload) => {
+      const room = rooms.value.find(r => r.roomId === payload.roomId);
+      if (room) {
+        room.lastReadSerialNumber = payload.lastReadSerialNumber;
+        room.unreadCount = 0;
+      }
+    });
+  };
+
   const fetchLatestAnnouncements = async () => {
     if (!activeRoomId.value) return;
-    
     isLoadingAnnouncements.value = true;
     try {
       const results = await DiscussionService.getAnnouncements(activeRoomId.value);
@@ -76,8 +99,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
   const setActiveRoom = async (roomId: string) => {
     if (activeRoomId.value === roomId) return;
-    cleanup();
-
+    
     if (rooms.value.length === 0) {
       await fetchRooms();
     }
@@ -90,6 +112,13 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
       let page = await DiscussionService.getMessages(roomId, {});
       let fetchedMessages: UiMessage[] = page.messages as UiMessage[];
+
+      if (fetchedMessages.length === 0 && page.oldestCursor) {
+        const roomRecord = rooms.value.find(r => r.roomId === roomId);
+        if (roomRecord?.lastMessage && roomRecord.lastMessage.id === page.oldestCursor) {
+          fetchedMessages.push({ ...roomRecord.lastMessage } as UiMessage);
+        }
+      }
 
       if (unreadCount > 0 && page.oldestCursor) {
         const olderPage = await DiscussionService.getMessages(roomId, {
@@ -136,9 +165,14 @@ export const useDiscussionStore = defineStore('discussion', () => {
       hasMoreOlder.value = page.hasMoreOlder;
       hasMoreNewer.value = page.hasMoreNewer;
 
+      // Inside setActiveRoom, right after injectMessages(fetchedMessages, 'replace');
+      if (page.hasMoreNewer) {
+        await loadNewerMessages();
+      }
+
       if (authStore.accessToken) {
-        discussionSocketService.connect(authStore.accessToken);
-        setupSocketListeners();
+        initGlobalSocket();
+        setupRoomSocketListeners();
         discussionSocketService.joinRoom(roomId);
       }
     } catch (error) {
@@ -170,7 +204,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
             console.error('Failed to mark read', e);
           }
         }
-      }, 1000); 
+      }, 300); 
     }
   };
 
@@ -213,12 +247,14 @@ export const useDiscussionStore = defineStore('discussion', () => {
 
   const sendMessage = (content: string, isAnnouncement: boolean = false) => {
     if (!activeRoomId.value || !isJoined.value) return;
-    discussionSocketService.sendMessage(activeRoomId.value, { content, isAnnouncement });
+    if (isAnnouncement) {
+      discussionSocketService.sendAnnouncement(activeRoomId.value, { content });
+    } else {
+      discussionSocketService.sendMessage(activeRoomId.value, { content, isAnnouncement: false });
+    }
   };
 
-  const setupSocketListeners = () => {
-    discussionSocketService.removeAllListeners();
-
+  const setupRoomSocketListeners = () => {
     discussionSocketService.onRoomJoined(() => {
       isJoined.value = true;
     });
@@ -233,21 +269,12 @@ export const useDiscussionStore = defineStore('discussion', () => {
       
       const roomIndex = rooms.value.findIndex(r => r.roomId === activeRoomId.value);
       if (roomIndex !== -1) rooms.value[roomIndex].lastMessage = uiMessage;
-    });
 
-    discussionSocketService.onChatListUpdate((payload) => {
-      const room = rooms.value.find(r => r.roomId === payload.roomId);
-      if (room) {
-        room.lastMessage = payload.lastMessage as UiMessage;
-        room.unreadCount = Math.max(0, payload.lastSerialNumber - (room.lastReadSerialNumber || 0));
-      }
-    });
-
-    discussionSocketService.onChatListRead((payload) => {
-      const room = rooms.value.find(r => r.roomId === payload.roomId);
-      if (room) {
-        room.lastReadSerialNumber = payload.lastReadSerialNumber;
-        room.unreadCount = 0;
+      const sender = uiMessage.sender as any; 
+      const isMine = sender?.id === authStore.parsedToken?.participantProfileId || sender?.id === authStore.parsedToken?.organizerProfileId;
+      
+      if (isMine && uiMessage.serialNumber) {
+        markAsReadAsDisplayed(uiMessage.id, uiMessage.serialNumber);
       }
     });
 
@@ -280,7 +307,6 @@ export const useDiscussionStore = defineStore('discussion', () => {
     if (activeRoomId.value) {
       discussionSocketService.leaveRoom(activeRoomId.value);
     }
-    discussionSocketService.removeAllListeners();
     activeRoomId.value = null;
     messages.value = [];
     latestAnnouncements.value = [];
@@ -298,6 +324,8 @@ export const useDiscussionStore = defineStore('discussion', () => {
         const result = await DiscussionService.getJoinedRooms(query);
         rooms.value = result as UiDiscussionRoom[];
       }
+      // Initialize global socket listeners as soon as rooms load successfully on login/switch
+      initGlobalSocket();
     } catch (error) {
       console.error('Failed to fetch discussion rooms:', error);
     } finally {
@@ -326,6 +354,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
     loadNewerMessages, 
     sendMessage, 
     cleanup,
-    markAsReadAsDisplayed
+    markAsReadAsDisplayed,
+    initGlobalSocket
   };
 });

@@ -14,8 +14,9 @@ watch(activeTab, async (newTab) => {
   await store.fetchRooms({ filter: newTab });
 }, { immediate: true });
 
-onMounted(() => {
+onMounted(async () => {
   window.scrollTo({ top: 0, behavior: 'instant' });
+  store.initGlobalSocket();
 });
 
 const openChat = (roomId: string) => {
@@ -89,12 +90,12 @@ const formatTime = (isoString?: string) => {
           alt="Event banner"
         />
         <div v-else class="w-12 h-12 rounded-full bg-[#EEEDFE] flex items-center justify-center mr-4 border border-[#CECBF6]">
-          <span class="text-[#534AB7] font-bold text-lg">{{ room.event.title.en.charAt(0) }}</span>
+          <span class="text-[#534AB7] font-bold text-lg">{{ room.event.title?.en?.charAt(0) || 'E' }}</span>
         </div>
         
         <div class="flex-1 min-w-0">
           <div class="flex justify-between items-baseline mb-1">
-            <h3 class="text-[14px] font-bold text-[#26215C] truncate pr-2">{{ room.event.title.en }}</h3>
+            <h3 class="text-[14px] font-bold text-[#26215C] truncate pr-2">{{ room.event.title?.en || 'Unnamed Event' }}</h3>
             <span class="text-[10px] text-[#26215C]/50 font-medium whitespace-nowrap">
               {{ formatTime(room.lastMessage?.createdAt) }}
             </span>
