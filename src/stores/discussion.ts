@@ -71,7 +71,7 @@ export const useDiscussionStore = defineStore('discussion', () => {
     try {
       const results = await DiscussionService.getAnnouncements(activeRoomId.value);
       latestAnnouncements.value = (results as UiMessage[]).sort((a, b) => 
-        (b.serialNumber || 0) - (a.serialNumber || 0)
+        (a.serialNumber || 0) - (b.serialNumber || 0)
       );
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
@@ -121,15 +121,18 @@ export const useDiscussionStore = defineStore('discussion', () => {
       }
 
       if (unreadCount > 0 && page.oldestCursor) {
+        // Dynamically calculate limit to ensure all unread messages are fetched
+        const fetchLimit = Math.max(15, unreadCount); 
+        
         const olderPage = await DiscussionService.getMessages(roomId, {
           cursor: page.oldestCursor,
           direction: 'before',
-          limit: 15 
+          limit: fetchLimit 
         });
         fetchedMessages = [...(olderPage.messages as UiMessage[]), ...fetchedMessages];
         page.oldestCursor = olderPage.oldestCursor || page.oldestCursor;
         page.hasMoreOlder = olderPage.hasMoreOlder;
-      } 
+      }
       else if (fetchedMessages.length < 25 && page.oldestCursor) {
         const fetchLimit = 25 - fetchedMessages.length;
         const olderPage = await DiscussionService.getMessages(roomId, {
@@ -145,7 +148,16 @@ export const useDiscussionStore = defineStore('discussion', () => {
       fetchedMessages.sort((a, b) => (a.serialNumber || 0) - (b.serialNumber || 0));
 
       if (fetchedMessages.length > 0 && unreadCount > 0) {
-        const dividerIndex = Math.max(0, fetchedMessages.length - unreadCount);
+        const roomRecord = rooms.value.find(r => r.roomId === roomId);
+        const lastRead = roomRecord?.lastReadSerialNumber || 0;
+        
+        // Find the exact index of the first message that is strictly greater than the last read serial number
+        let dividerIndex = fetchedMessages.findIndex(m => (m.serialNumber || 0) > lastRead);
+        
+        if (dividerIndex === -1) {
+          dividerIndex = Math.max(0, fetchedMessages.length - unreadCount);
+        }
+
         const baseSerial = fetchedMessages[dividerIndex]?.serialNumber || 0;
         
         fetchedMessages.splice(dividerIndex, 0, {

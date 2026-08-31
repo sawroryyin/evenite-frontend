@@ -1,4 +1,3 @@
-<!-- src/components/discussion/DiscussionInput.vue -->
 <script setup lang="ts">
 import { ref } from 'vue';
 
