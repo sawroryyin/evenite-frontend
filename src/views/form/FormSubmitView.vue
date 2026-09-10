@@ -27,7 +27,8 @@ const alertState = ref({
   show: false,
   title: '',
   description: '',
-  theme: 'blue' as 'blue' | 'red'
+  theme: 'blue' as 'blue' | 'red',
+  onConfirm: undefined as (() => void) | undefined
 });
 
 const confirmState = ref({
@@ -47,7 +48,7 @@ onMounted(async () => {
     if (!['PUBLISHED', 'ONGOING', 'CONCLUDED'].includes(eventData.status as string)) {
       showAlert('Event Unavailable', 'This form is not accepting responses at this time.', 'red');
       
-      setTimeout(() => router.push(`/event/${eventId}`), 2000);
+      setTimeout(() => router.replace(`/event/${eventId}`), 2000);
       return;
     }
     
@@ -75,7 +76,7 @@ onMounted(async () => {
   } catch (error) {
     showAlert('Error', 'Form not found or unavailable.', 'red');
     
-    setTimeout(() => router.push(`/event/${eventId}`), 2000);
+    setTimeout(() => router.replace(`/event/${eventId}`), 2000);
   } finally {
     isLoading.value = false;
   }
@@ -146,7 +147,7 @@ const processSubmission = async () => {
       const ticketDetails = await RegistrationService.registerForEvent(eventId, formattedAnswers);
       showAlert('Registration Successful', 'Your digital ticket has been generated.', 'blue');
       
-      setTimeout(() => router.replace(`/events/${eventId}/tickets/${ticketDetails.id}`), 1500);
+      setTimeout(() => router.replace(`/events/${eventId}/tickets/${ticketDetails.id}`), 5000);
     } else {
       await FormService.submitResponse(eventId, formType, { answers: formattedAnswers });
       showAlert('Success', 'Form submitted successfully!', 'blue');
@@ -155,10 +156,21 @@ const processSubmission = async () => {
     
   } catch (error: any) {
     console.error("Submission error details:", error.response?.data || error);
+    
+    // Check if the backend is down (no response)
+    const isNetworkError = !error.response; 
     const errorMsg = error.response?.data?.message || 'An error occurred while processing your submission. Please try again.';
-    showAlert('Submission Failed', errorMsg, 'red');
+    
+    // Redirect on network errors OR seat capacity errors
+    if (isNetworkError || errorMsg.includes('All seats are fully taken') || errorMsg.includes('seat')) {
+      showAlert('Submission Failed', errorMsg, 'red', () => {
+        router.replace(`/event/${eventId}`); 
+      });
+    } else {
+      showAlert('Submission Failed', errorMsg, 'red');
+    }
   } finally {
-    isSubmitting.value = false;``
+    isSubmitting.value = false;
   }
 };
 
@@ -182,8 +194,17 @@ const handleCancel = () => {
   );
 };
 
-const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
-  alertState.value = { show: true, title, description, theme };
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue', onConfirm?: () => void) => {
+  alertState.value = { show: true, title, description, theme, onConfirm };
+};
+
+const handleAlertConfirm = () => {
+  alertState.value.show = false;
+  if (alertState.value.onConfirm) {
+    const callback = alertState.value.onConfirm;
+    alertState.value.onConfirm = undefined; // Clear before executing
+    callback();
+  }
 };
 
 const showConfirm = (title: string, description: string, confirmText: string, theme: 'blue' | 'red', action: () => void) => {
@@ -193,7 +214,10 @@ const showConfirm = (title: string, description: string, confirmText: string, th
 
 <template>
   <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
-    <LoadingOverlay v-if="isLoading || isSubmitting" />
+    <LoadingOverlay 
+      v-if="isLoading || isSubmitting" 
+      :message="isSubmitting ? 'Registering...' : 'Loading Form...'" 
+    />
     
     <template v-if="!isLoading && form">
       <button @click="handleCancel" class="mb-4 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
@@ -309,7 +333,7 @@ const showConfirm = (title: string, description: string, confirmText: string, th
       :description="alertState.description"
       :confirmTheme="alertState.theme"
       confirmText="OK"
-      @confirm="alertState.show = false"
+      @confirm="handleAlertConfirm"
     />
 
     <ConfirmModal 

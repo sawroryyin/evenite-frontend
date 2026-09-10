@@ -69,7 +69,7 @@ const formattedLocation = computed(() => {
 
 <template>
   <div class="pt-6 pb-24 max-w-lg mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-6">
-    <LoadingOverlay v-if="isLoading" />
+    <LoadingOverlay v-if="isLoading" message="Loading..." />
 
     <div class="space-y-4 mb-6">
       <!-- Update: Bind to goBack -->

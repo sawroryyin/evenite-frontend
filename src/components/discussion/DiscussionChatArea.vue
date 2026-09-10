@@ -4,6 +4,7 @@ import { useDiscussionStore } from '../../stores/discussion';
 import { useAuthStore } from '../../stores/auth';
 import DiscussionMessage from './DiscussionMessage.vue';
 import DiscussionInput from './DiscussionInput.vue';
+import ConfirmModal from '../ConfirmModal.vue';
 
 const store = useDiscussionStore();
 const authStore = useAuthStore();
@@ -162,8 +163,19 @@ const handleScroll = async (e: Event) => {
 };
 
 const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }) => {
+  if (payload.content.length > 2000) {
+    showAlert('Alert', 'Message cannot exceed 2000 characters', 'red');
+    return; // Stop execution, do not send to backend
+  }
+
   store.sendMessage(payload.content, payload.isAnnouncement);
   scrollToBottom('smooth');
+};
+
+const alertState = ref({ show: false, title: '', description: '', theme: 'red' as 'blue' | 'red' });
+
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'red') => {
+  alertState.value = { show: true, title, description, theme };
 };
 </script>
 
@@ -297,6 +309,14 @@ const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }
         @send="handleSendMessage"
       />
     </div>
-
+    <!-- Add this right above the final closing </div> of the template -->
+    <ConfirmModal 
+      v-if="alertState.show"
+      :title="alertState.title"
+      :description="alertState.description"
+      :confirmTheme="alertState.theme"
+      confirmText="Ok"
+      @confirm="alertState.show = false"
+    />
   </div>
 </template>
