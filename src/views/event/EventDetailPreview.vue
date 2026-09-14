@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { RegistrationService } from '../../services/RegistrationService'
 import ConfirmModal from '../../components/ConfirmModal.vue'

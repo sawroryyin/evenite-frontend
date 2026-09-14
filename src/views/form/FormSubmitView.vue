@@ -145,9 +145,12 @@ const processSubmission = async () => {
 
     if (formType === 'REGISTRATION') {
       const ticketDetails = await RegistrationService.registerForEvent(eventId, formattedAnswers);
-      showAlert('Registration Successful', 'Your digital ticket has been generated.', 'blue');
       
-      setTimeout(() => router.replace(`/events/${eventId}/tickets/${ticketDetails.id}`), 5000);
+      // Navigate immediately and pass a query flag to trigger the popup on the next page
+      router.replace({
+        path: `/events/${eventId}/tickets/${ticketDetails.id}`,
+        query: { newRegistration: 'true' }
+      });
     } else {
       await FormService.submitResponse(eventId, formType, { answers: formattedAnswers });
       showAlert('Success', 'Form submitted successfully!', 'blue');
@@ -157,11 +160,9 @@ const processSubmission = async () => {
   } catch (error: any) {
     console.error("Submission error details:", error.response?.data || error);
     
-    // Check if the backend is down (no response)
     const isNetworkError = !error.response; 
     const errorMsg = error.response?.data?.message || 'An error occurred while processing your submission. Please try again.';
     
-    // Redirect on network errors OR seat capacity errors
     if (isNetworkError || errorMsg.includes('All seats are fully taken') || errorMsg.includes('seat')) {
       showAlert('Submission Failed', errorMsg, 'red', () => {
         router.replace(`/event/${eventId}`); 
@@ -202,7 +203,7 @@ const handleAlertConfirm = () => {
   alertState.value.show = false;
   if (alertState.value.onConfirm) {
     const callback = alertState.value.onConfirm;
-    alertState.value.onConfirm = undefined; // Clear before executing
+    alertState.value.onConfirm = undefined;
     callback();
   }
 };

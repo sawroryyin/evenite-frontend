@@ -4,16 +4,22 @@ import { useRoute, useRouter } from 'vue-router';
 import api from '../../services/api';
 import TicketQRCode from '../../components/ticket/TicketQRCode.vue';
 import LoadingOverlay from '../../components/LoadingOverlay.vue';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 import type { ReturnTicketDetailDto } from '../../types';
 
 const route = useRoute();
 const router = useRouter();
-
+const showSuccessModal = ref(false);
 const ticketId = route.params.ticketId as string;
 const ticket = ref<ReturnTicketDetailDto | null>(null);
 const isLoading = ref(true);
 
 onMounted(async () => {
+  if (route.query.newRegistration) {
+    showSuccessModal.value = true;
+    router.replace({ query: undefined });
+  }
+
   try {
     isLoading.value = true;
     const response = await api.get(`/users/me/tickets/${ticketId}`);
@@ -171,5 +177,13 @@ const formattedLocation = computed(() => {
       </button>
 
     </div>
+    <ConfirmModal 
+      v-if="showSuccessModal"
+      title="Registration Successful"
+      description="Your digital ticket has been generated."
+      confirmTheme="blue"
+      confirmText="OK"
+      @confirm="showSuccessModal = false"
+    />
   </div>
 </template>

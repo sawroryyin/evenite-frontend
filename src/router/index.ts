@@ -61,8 +61,8 @@ const router = createRouter({
     { path: '/discussion', name: 'DiscussionList', component: () => import('../views/discussion/DiscussionView.vue') },
     { path: '/discussion/:roomId', name: 'DiscussionDetail', component: () => import('../views/discussion/DiscussionDetailView.vue') }
   ],
-  scrollBehavior() {
-    return { top: 0 };
+scrollBehavior() {
+    return { top: 0, left: 0, behavior: 'instant' };
   }
 })
 
