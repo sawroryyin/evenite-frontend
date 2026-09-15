@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { RegistrationService } from '../../services/RegistrationService'
 import ConfirmModal from '../../components/ConfirmModal.vue'
@@ -14,11 +14,9 @@ const props = defineProps<{
   isOrganizer?: boolean;
 }>()
 
-// Registration & Ticket State
 const userTicket = ref<any>(null)
 const isLoadingTicket = ref(false)
 
-// Modals State
 const alertState = ref({ show: false, title: '', description: '', theme: 'blue' as 'blue' | 'red' })
 const confirmState = ref({ show: false, title: '', description: '', confirmText: '', theme: 'blue' as 'blue' | 'red', onConfirm: () => {} })
 
@@ -28,17 +26,13 @@ const fetchUserTicket = async () => {
   try {
     isLoadingTicket.value = true;
     
-    // 1. Condition Check: Fetch all registered events for this user
     const registeredEvents = await UserService.getCurrentUserRegisteredEvents();
     
-    // 2. See if the current event's ID exists in their registered events list
     const isRegistered = registeredEvents.some((evt: any) => evt.id === props.event.id);
 
-    // 3. Only fetch the ticket if we know they are registered!
     if (isRegistered) {
       userTicket.value = await RegistrationService.getTicketByEvent(props.event.id);
     } else {
-      // If not registered, gracefully set to null. No API call made, no 404 error!
       userTicket.value = null; 
     }
     
@@ -50,7 +44,6 @@ const fetchUserTicket = async () => {
   }
 }
 
-// FIX: Watch the event ID to guarantee the fetch runs when the ID is ready
 watch(() => props.event?.id, (newId) => {
   if (newId) {
     fetchUserTicket();
@@ -60,19 +53,16 @@ watch(() => props.event?.id, (newId) => {
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
 
-// URS requirement: Check if the seat is available
 const isEventFull = computed(() => {
   if (props.event.seatLimit === null || props.event.seatLimit === undefined) return false;
   return props.event.seatsTaken >= props.event.seatLimit;
 });
 
-// URS requirement: Prevent cancellation if event has started
 const isEventStarted = computed(() => {
   if (!props.event.startAt) return false;
   return new Date(props.event.startAt) <= new Date();
 });
 
-// NEW: Check if the event has officially ended
 const isEventOver = computed(() => {
   if (!props.event.startAt && !props.event.endAt) return false;
   const endTime = props.event.endAt ? new Date(props.event.endAt) : new Date(props.event.startAt);
@@ -93,11 +83,19 @@ const viewTicket = () => {
   }
 }
 
+const goToChat = () => {
+  if (props.event?.roomId) {
+    // Adjust this route if your router uses a different path or named route
+    router.push(`/discussion/${props.event.roomId}`); 
+  } else {
+    showAlert('Error', 'Discussion room is not available yet.', 'red');
+  }
+}
+
 const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
   alertState.value = { show: true, title, description, theme };
 }
 
-// URS requirement: Cancel Registration Flow
 const confirmCancelRegistration = () => {
   if (isEventStarted.value) {
     return showAlert('Error', 'Cannot cancel registration because the event has already started.', 'red');
@@ -115,7 +113,6 @@ const confirmCancelRegistration = () => {
         await RegistrationService.cancelRegistration(props.event.id);
         showAlert('Success', 'Registration cancelled successfully.', 'blue');
         
-        // Refresh local UI states
         await fetchUserTicket(); 
         props.event.seatsTaken = Math.max(0, props.event.seatsTaken - 1);
       } catch (e: any) {
@@ -302,7 +299,6 @@ const mapEmbedUrl = computed(() => {
             </div>
           </div>
 
-          <!-- Feature 4: Participant Actions Section -->
           <div v-if="(hasRegistration || hasFeedback || userTicket) && !isOrganizer && !isLoadingTicket" class="bg-[#EEEDFE]/50 p-6 rounded-xl border border-[#CECBF6] shadow-sm space-y-4">
             
             <div class="text-center">
@@ -314,10 +310,8 @@ const mapEmbedUrl = computed(() => {
               </p>
             </div>
 
-            <!-- Pre-Registration View (Unregistered Users) -->
             <div v-if="!userTicket || userTicket?.registration?.status === 'CANCELLED'" class="flex flex-col gap-3 mt-4">
               
-              <!-- Clean Info Text (No button styling) -->
               <p v-if="isEventOver || isEventFull || isEventStarted" class="text-center text-[#26215C]/80 text-sm font-semibold py-2">
                 {{ isEventOver ? 'This event is already over.' : (isEventStarted ? 'This event has already started.' : 'All seats are fully taken for this event.') }}
               </p>
@@ -331,18 +325,28 @@ const mapEmbedUrl = computed(() => {
               </button>
             </div>
 
-            <!-- Post-Registration View (Registered Users) -->
             <div v-if="userTicket?.registration?.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
               
-              <!-- Clean Info Text for registered users when event is over or started -->
               <p v-if="isEventOver || isEventStarted" class="text-center text-[#26215C]/80 text-sm font-semibold py-2 px-1">
                 {{ isEventOver ? 'This event is already over.' : 'This event has already started. Cancellation is no longer available.' }}
               </p>
 
-              <!-- View Ticket Button (Always visible for registered users) -->
-              <button @click="viewTicket" class="w-full bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                View ticket
-              </button>
+              <div class="flex gap-2 w-full">
+                <button @click="viewTicket" class="flex-1 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                  View ticket
+                </button>
+
+                <!-- New Chat Icon Button -->
+                <button 
+                  @click="goToChat" 
+                  title="Event Discussion Room"
+                  class="w-14 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
+                >
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                </button>
+              </div>
 
               <button v-if="hasFeedback && isEventOver" @click="navigateToSubmitForm('FEEDBACK')" class="w-full bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] border border-[#CECBF6] shadow-sm hover:shadow transform hover:-translate-y-0.5 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 text-[#7F77DD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,7 +355,6 @@ const mapEmbedUrl = computed(() => {
                 Give Feedback
               </button>
 
-              <!-- Cancel Button (Hidden if event started or over) -->
               <button v-if="!isEventStarted && !isEventOver" @click="confirmCancelRegistration" 
                 class="w-full bg-red-50 hover:bg-red-100 text-red-600 border-red-200 border shadow-sm transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 Cancel Registration
@@ -376,7 +379,6 @@ const mapEmbedUrl = computed(() => {
       </div>
     </div>
 
-    <!-- Modals -->
     <ConfirmModal 
       v-if="alertState.show"
       :title="alertState.title"

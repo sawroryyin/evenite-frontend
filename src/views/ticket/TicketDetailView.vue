@@ -4,16 +4,22 @@ import { useRoute, useRouter } from 'vue-router';
 import api from '../../services/api';
 import TicketQRCode from '../../components/ticket/TicketQRCode.vue';
 import LoadingOverlay from '../../components/LoadingOverlay.vue';
+import ConfirmModal from '../../components/ConfirmModal.vue';
 import type { ReturnTicketDetailDto } from '../../types';
 
 const route = useRoute();
 const router = useRouter();
-
+const showSuccessModal = ref(false);
 const ticketId = route.params.ticketId as string;
 const ticket = ref<ReturnTicketDetailDto | null>(null);
 const isLoading = ref(true);
 
 onMounted(async () => {
+  if (route.query.newRegistration) {
+    showSuccessModal.value = true;
+    router.replace({ query: undefined });
+  }
+
   try {
     isLoading.value = true;
     const response = await api.get(`/users/me/tickets/${ticketId}`);
@@ -41,18 +47,15 @@ const formattedTimeOnly = computed(() => {
   });
 });
 
-// For the top "BACK" button
 const goBack = () => {
   if (window.history.state?.back) {
     router.back();
   } 
-  // Fallback if they opened the ticket directly via a link
   else if (ticket.value) {
     router.push('/events'); 
   }
 };
 
-// For the bottom "Go to Event Details" button
 const goToEventDetails = () => {
   if (ticket.value) {
     router.push(`/event/${ticket.value.event.id}`);
@@ -72,7 +75,7 @@ const formattedLocation = computed(() => {
 
 <template>
   <div class="pt-6 pb-24 max-w-lg mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-6">
-    <LoadingOverlay v-if="isLoading" />
+    <LoadingOverlay v-if="isLoading" message="Loading..." />
 
     <div class="space-y-4 mb-6">
       <!-- Update: Bind to goBack -->
@@ -86,11 +89,6 @@ const formattedLocation = computed(() => {
 
     <!-- digital ticket -->
     <div v-if="!isLoading && ticket" class="space-y-6">
-      
-      <!-- 
-        WRAPPER UPDATE: Changed to a flex column to stack the sections natively. 
-        Removed the single `overflow-hidden` so notches can bleed off the edges.
-      -->
       <div class="relative w-full flex flex-col shadow-lg rounded-2xl">
 
         <!-- Top: Event Details Section -->
@@ -132,8 +130,6 @@ const formattedLocation = computed(() => {
           </p>
         </div>
 
-        <!-- Middle: Dynamic Divider & Notches -->
-        <!-- This container sits perfectly between top and bottom, adjusting automatically -->
         <div class="relative w-full h-0 z-10">
           <!-- Dashed line -->
           <div class="absolute left-0 right-0 top-0 border-t-2 border-[#CECBF6] border-dashed"></div>
@@ -173,8 +169,6 @@ const formattedLocation = computed(() => {
         </div>
 
       </div>
-
-      <!-- Bottom Button -->
       <button 
         @click="goToEventDetails"
         class="w-full mt-6 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] border border-[#CECBF6] py-3.5 rounded-xl font-bold text-sm transition-all"
@@ -183,5 +177,13 @@ const formattedLocation = computed(() => {
       </button>
 
     </div>
+    <ConfirmModal 
+      v-if="showSuccessModal"
+      title="Registration Successful"
+      description="Your digital ticket has been generated."
+      confirmTheme="blue"
+      confirmText="OK"
+      @confirm="showSuccessModal = false"
+    />
   </div>
 </template>

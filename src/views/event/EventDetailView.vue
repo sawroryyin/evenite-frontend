@@ -332,13 +332,8 @@ const confirmPublish = async () => {
 
 const handleBackClick = () => {
   if (viewMode.value === 'preview') {
-    const previousRoute = window.history.state?.back as string | undefined;
 
-    if (isInitialNewEvent || (previousRoute && previousRoute.includes('/tickets'))) {
-      router.push('/event'); 
-    } else {
-      router.back();
-    }
+    router.push('/event'); 
     return;
   }
   
@@ -348,7 +343,7 @@ const handleBackClick = () => {
     if (eventStatus.value) {
       viewMode.value = 'preview';
     } else {
-      router.back();
+      router.push('/event');
     }
   }
 }

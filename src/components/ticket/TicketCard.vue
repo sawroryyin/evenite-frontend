@@ -32,7 +32,6 @@ const statusColors = computed(() => {
     @click="router.push(`/events/${ticket.event.id}/tickets/${ticket.id}`)"
     class="relative cursor-pointer group"
   >
-    <!-- notch circles: sit on top of the card, punched out where the divider line is -->
     <div class="notch notch-top absolute top-0 left-24 sm:left-28 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-[#CECBF6] z-10"></div>
     <div class="notch notch-bottom absolute bottom-0 left-24 sm:left-28 -translate-x-1/2 translate-y-1/2 w-4 h-4 rounded-full border border-[#CECBF6] z-10"></div>
 
@@ -51,7 +50,6 @@ const statusColors = computed(() => {
       </div>
 
       <div class="relative flex-1 min-w-0">
-        <!-- perforated divider between image and details -->
         <div class="ticket-divider absolute left-0 top-0 bottom-0"></div>
 
         <div class="p-4 pl-5 flex flex-col gap-1.5 h-full justify-between">
@@ -80,15 +78,11 @@ const statusColors = computed(() => {
 </template>
 
 <style scoped>
-/* Notches match the page background so they visually "punch" a bite out of the card edge.
-   Update this color if the ticket list page background ever changes from white. */
 .notch {
   background-color: #F4F4FA;
   border: none;
 }
 
-/* Dashed perforation line separating the image from the ticket details,
-   aligned with the notch positions above/below it */
 .ticket-divider {
   width: 1px;
   background-image: repeating-linear-gradient(

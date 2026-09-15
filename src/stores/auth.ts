@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { jwtDecode } from 'jwt-decode'
 
+// 1. Import the socket service
+import { discussionSocketService } from '../services/DiscussionSocketService'
+
 interface AuthState {
   accessToken: string | null
   refreshToken: string | null
@@ -37,12 +40,19 @@ export const useAuthStore = defineStore('auth', {
       this.refreshToken = refresh
       localStorage.setItem('access_token', access)
       localStorage.setItem('refresh_token', refresh)
+
+      // 2. Establish/reconnect the socket with the new user's token upon login
+      discussionSocketService.connect(access)
     },
     logout() {
       this.accessToken = null
       this.refreshToken = null
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
+
+      // 3. Sever the socket connection immediately upon logout
+      discussionSocketService.disconnect()
+
       window.location.href = '/login'
     }
   }

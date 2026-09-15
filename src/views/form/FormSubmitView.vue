@@ -5,7 +5,7 @@ import { FormService } from '../../services/FormService';
 import { RegistrationService } from '../../services/RegistrationService';
 import { EventService } from '../../services/EventService';
 import api from '../../services/api';
-import { FormType, type Form, type CreateFormFieldAnswerDto } from '../../types';
+import { FormType, type Form, type CreateFormFieldAnswerDto, type EventData } from '../../types';
 import ConfirmModal from '../../components/ConfirmModal.vue';
 import LoadingOverlay from '../../components/LoadingOverlay.vue';
 
@@ -27,7 +27,8 @@ const alertState = ref({
   show: false,
   title: '',
   description: '',
-  theme: 'blue' as 'blue' | 'red'
+  theme: 'blue' as 'blue' | 'red',
+  onConfirm: undefined as (() => void) | undefined
 });
 
 const confirmState = ref({
@@ -42,14 +43,12 @@ const confirmState = ref({
 onMounted(async () => {
   try {
     isLoading.value = true;
-    const eventData = await EventService.getEventById(eventId);
+    const eventData: EventData = await EventService.getEventById(eventId);
     
-    // FIX 1: Allow forms to be accessed if the event is PUBLISHED, ONGOING, or CONCLUDED
-    if (!['PUBLISHED', 'ONGOING', 'CONCLUDED'].includes(eventData.status)) {
+    if (!['PUBLISHED', 'ONGOING', 'CONCLUDED'].includes(eventData.status as string)) {
       showAlert('Event Unavailable', 'This form is not accepting responses at this time.', 'red');
       
-      // FIX 2: Correct the route path from /events/ to /event/
-      setTimeout(() => router.push(`/event/${eventId}`), 2000);
+      setTimeout(() => router.replace(`/event/${eventId}`), 2000);
       return;
     }
     
@@ -77,8 +76,7 @@ onMounted(async () => {
   } catch (error) {
     showAlert('Error', 'Form not found or unavailable.', 'red');
     
-    // FIX 3: Correct the route path here as well
-    setTimeout(() => router.push(`/event/${eventId}`), 2000);
+    setTimeout(() => router.replace(`/event/${eventId}`), 2000);
   } finally {
     isLoading.value = false;
   }
@@ -124,7 +122,6 @@ const processSubmission = async () => {
   isSubmitting.value = true;
 
   try {
-    // Correctly format the payload to prevent 400 Bad Request errors
     const formattedAnswers: CreateFormFieldAnswerDto[] = form.value.fields.map((field, index) => {
       const key = field.id || index.toString();
       const rawValue = answers.value[key];
@@ -148,10 +145,12 @@ const processSubmission = async () => {
 
     if (formType === 'REGISTRATION') {
       const ticketDetails = await RegistrationService.registerForEvent(eventId, formattedAnswers);
-      showAlert('Registration Successful', 'Your digital ticket has been generated.', 'blue');
       
-      // FIX: Use router.replace() instead of push() to erase the form from history
-      setTimeout(() => router.replace(`/events/${eventId}/tickets/${ticketDetails.id}`), 1500);
+      // Navigate immediately and pass a query flag to trigger the popup on the next page
+      router.replace({
+        path: `/events/${eventId}/tickets/${ticketDetails.id}`,
+        query: { newRegistration: 'true' }
+      });
     } else {
       await FormService.submitResponse(eventId, formType, { answers: formattedAnswers });
       showAlert('Success', 'Form submitted successfully!', 'blue');
@@ -160,8 +159,17 @@ const processSubmission = async () => {
     
   } catch (error: any) {
     console.error("Submission error details:", error.response?.data || error);
+    
+    const isNetworkError = !error.response; 
     const errorMsg = error.response?.data?.message || 'An error occurred while processing your submission. Please try again.';
-    showAlert('Submission Failed', errorMsg, 'red');
+    
+    if (isNetworkError || errorMsg.includes('All seats are fully taken') || errorMsg.includes('seat')) {
+      showAlert('Submission Failed', errorMsg, 'red', () => {
+        router.replace(`/event/${eventId}`); 
+      });
+    } else {
+      showAlert('Submission Failed', errorMsg, 'red');
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -170,13 +178,11 @@ const processSubmission = async () => {
 const handleCancel = () => {
   const currentAnswersStr = JSON.stringify(answers.value);
 
-  // If the current form state exactly matches the initial load state, just go back
   if (currentAnswersStr === initialAnswersStr.value) {
     router.back();
     return;
   }
 
-  // Otherwise, there are unsaved changes, so prompt the user
   showConfirm(
     'Cancel',
     'Are you sure you want to cancel? Any unsaved data will be lost.',
@@ -189,8 +195,17 @@ const handleCancel = () => {
   );
 };
 
-const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue') => {
-  alertState.value = { show: true, title, description, theme };
+const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'blue', onConfirm?: () => void) => {
+  alertState.value = { show: true, title, description, theme, onConfirm };
+};
+
+const handleAlertConfirm = () => {
+  alertState.value.show = false;
+  if (alertState.value.onConfirm) {
+    const callback = alertState.value.onConfirm;
+    alertState.value.onConfirm = undefined;
+    callback();
+  }
 };
 
 const showConfirm = (title: string, description: string, confirmText: string, theme: 'blue' | 'red', action: () => void) => {
@@ -200,7 +215,10 @@ const showConfirm = (title: string, description: string, confirmText: string, th
 
 <template>
   <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
-    <LoadingOverlay v-if="isLoading || isSubmitting" />
+    <LoadingOverlay 
+      v-if="isLoading || isSubmitting" 
+      :message="isSubmitting ? 'Registering...' : 'Loading Form...'" 
+    />
     
     <template v-if="!isLoading && form">
       <button @click="handleCancel" class="mb-4 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
@@ -229,7 +247,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </span>
           </div>
           
-          <!-- Text, Number, Date Inputs -->
           <input 
             v-if="['TEXT', 'NUMBER', 'DATE'].includes(field.type)" 
             :type="field.type.toLowerCase()" 
@@ -238,14 +255,12 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             placeholder="Your answer..." 
           />
           
-          <!-- Textarea Input -->
           <textarea 
             v-if="field.type === 'TEXTAREA'" 
             v-model="answers[field.id || index]"
             class="w-full p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm h-24 resize-none focus:outline-none focus:border-[#7F77DD] focus:ring-1 focus:ring-[#7F77DD] text-[#26215C] transition-all" 
             placeholder="Your answer..."></textarea>
           
-          <!-- Choice (Radio) -->
           <div v-if="field.type === 'CHOICE'" class="space-y-2.5">
             <label v-for="opt in field.options" :key="opt" class="flex items-center gap-3 cursor-pointer group">
               <div class="relative flex items-center">
@@ -263,7 +278,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </label>
           </div>
           
-          <!-- Checkbox -->
           <div v-if="field.type === 'CHECKBOX'" class="space-y-2.5">
             <label v-for="opt in field.options" :key="opt" class="flex items-center gap-3 cursor-pointer group">
               <div class="relative flex items-center">
@@ -279,7 +293,6 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             </label>
           </div>
 
-          <!-- Rating -->
           <div v-if="field.type === 'RATING'" class="flex flex-wrap gap-2 mt-2">
             <label v-for="n in (field.maxRating || 5)" :key="n" class="cursor-pointer group">
               <input 
@@ -315,14 +328,13 @@ const showConfirm = (title: string, description: string, confirmText: string, th
       </div>
     </template>
 
-    <!-- Modals -->
     <ConfirmModal 
       v-if="alertState.show"
       :title="alertState.title"
       :description="alertState.description"
       :confirmTheme="alertState.theme"
       confirmText="OK"
-      @confirm="alertState.show = false"
+      @confirm="handleAlertConfirm"
     />
 
     <ConfirmModal 

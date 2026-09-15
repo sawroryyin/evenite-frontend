@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useDiscussionStore } from '../stores/discussion'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const discussionStore = useDiscussionStore()
+
+// Fetch rooms globally when the navigation bar mounts so unread counts persist
+onMounted(() => {
+  if (discussionStore.rooms.length === 0) {
+    // Fetch active rooms by default to populate the unread counts
+    discussionStore.fetchRooms({ filter: 'active' });
+  }
+})
+
+const totalUnreadCount = computed(() => {
+  return discussionStore.rooms.reduce((total, room) => total + (room.unreadCount || 0), 0)
+})
 
 const navItems = [
   { name: 'home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -35,10 +49,18 @@ const filteredNavItems = computed(() => {
         class="flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors duration-200"
         :class="route.name === item.name ? 'text-[#534AB7]' : 'text-[#26215C]/30 hover:text-[#3C3489]'"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"></path>
-        </svg>
-        <span class="text-[9px] font-bold">{{ item.label }}</span>
+        <!-- Relative wrapper allows absolute positioning of the badge -->
+        <div class="relative flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"></path>
+          </svg>
+          
+          <!-- Minimal Red Dot Notification Badge -->
+          <span 
+            v-if="item.name === 'discussion' && totalUnreadCount > 0"
+            class="absolute top-0 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-[1.5px] border-white shadow-sm"
+          ></span>
+        </div>
       </button>
     </div>
   </nav>
