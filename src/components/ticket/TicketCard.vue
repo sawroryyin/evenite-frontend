@@ -19,9 +19,9 @@ const formattedDate = computed(() => {
 
 const statusColors = computed(() => {
   switch (props.ticket.status) {
-    case 'ACTIVE': return 'bg-green-100 text-green-700 border-green-200'; //
-    case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200'; //[cite: 3]
-    case 'EXPIRED': return 'bg-gray-100 text-gray-700 border-gray-200'; //[cite: 3]
+    case 'ACTIVE': return 'bg-green-100 text-green-700 border-green-200';
+    case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200';
+    case 'EXPIRED': return 'bg-gray-100 text-gray-700 border-gray-200';
     default: return 'bg-[#EEEDFE] text-[#534AB7] border-[#CECBF6]';
   }
 });
@@ -30,20 +30,21 @@ const statusColors = computed(() => {
 <template>
   <div 
     @click="router.push(`/events/${ticket.event.id}/tickets/${ticket.id}`)"
-    class="relative cursor-pointer group"
+    class="relative cursor-pointer group mb-4"
   >
-    <div class="notch notch-top absolute top-0 left-24 sm:left-28 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-[#CECBF6] z-10"></div>
-    <div class="notch notch-bottom absolute bottom-0 left-24 sm:left-28 -translate-x-1/2 translate-y-1/2 w-4 h-4 rounded-full border border-[#CECBF6] z-10"></div>
+    <!-- Mathematical positioning: w-28 is 112px. left-28 centers it at the start of the divider. -->
+    <div class="notch notch-top absolute top-0 left-28 sm:left-32 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border border-[#CECBF6] z-10"></div>
+    <div class="notch notch-bottom absolute bottom-0 left-28 sm:left-32 -translate-x-1/2 translate-y-1/2 w-5 h-5 rounded-full border border-[#CECBF6] z-10"></div>
 
-    <div class="flex bg-[#F9F9FF] rounded-2xl overflow-hidden shadow-sm border border-[#CECBF6] group-hover:shadow-md group-hover:border-[#534AB7] transition-all">
-      <div class="w-24 sm:w-28 aspect-2/3 shrink-0 relative bg-[#EEEDFE]/50">
+    <div class="flex bg-[#FFFFFF] rounded-2xl overflow-hidden shadow-sm border border-[#CECBF6] group-hover:shadow-md group-hover:border-[#534AB7] transition-all">
+      <div class="w-28 sm:w-32 aspect-2/3 shrink-0 relative bg-[#EEEDFE]/50">
         <img 
           v-if="ticket.event.bannerUrl" 
           :src="ticket.event.bannerUrl" 
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
         />
         <div v-else class="w-full h-full flex items-center justify-center">
-          <svg class="w-6 h-6 text-[#534AB7]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-8 h-8 text-[#534AB7]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
@@ -52,25 +53,25 @@ const statusColors = computed(() => {
       <div class="relative flex-1 min-w-0">
         <div class="ticket-divider absolute left-0 top-0 bottom-0"></div>
 
-        <div class="p-4 pl-5 flex flex-col gap-1.5 h-full justify-between">
+        <div class="p-4 pl-5 sm:p-5 sm:pl-6 flex flex-col gap-2 h-full justify-between">
           <div>
-            <div class="flex items-start justify-between gap-2">
-              <h3 class="text-sm font-bold text-[#26215C] line-clamp-2 leading-tight">
+            <div class="flex items-start justify-between gap-3">
+              <h3 class="text-base font-bold text-[#26215C] line-clamp-2 leading-tight">
                 {{ ticket.event.title.en || ticket.event.title.th }}
               </h3>
               <span 
-                class="shrink-0 px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded border shadow-sm whitespace-nowrap"
+                class="shrink-0 px-2.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-md border shadow-sm whitespace-nowrap"
                 :class="statusColors"
               >
                 {{ ticket.status }}
               </span>
             </div>
-            <p class="text-xs text-[#26215C]/60 mt-1.5 flex items-center gap-1">
-              <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <p class="text-sm text-[#26215C]/60 mt-2 flex items-center gap-1.5 font-medium">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               {{ formattedDate }}
             </p>
           </div>
-          <p class="text-[10px] font-bold text-[#534AB7] mt-3">View Full Ticket &rarr;</p>
+          <p class="text-xs font-bold text-[#534AB7] mt-3 tracking-wide">View Full Ticket &rarr;</p>
         </div>
       </div>
     </div>

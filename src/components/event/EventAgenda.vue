@@ -34,56 +34,49 @@ const removeAgendaItem = (index: number) => {
 </script>
 
 <template>
-  <section class="bg-[#FFFFFF] p-3 rounded-xl border border-[#CECBF6] shadow-sm font-['Lato']">
-    <div class="flex justify-between items-center mb-3">
-      <h2 class="text-sm font-bold text-[#26215C]">{{ t.agenda }}</h2>
+  <section class="bg-[#FFFFFF] p-5 md:p-6 rounded-2xl border border-[#CECBF6] shadow-sm font-['Lato']">
+    <div class="flex justify-between items-center mb-5">
+      <h2 class="text-xl font-['Nunito'] font-black text-[#26215C]">{{ t.agenda }}</h2>
       <button 
         type="button" 
         @click="addAgendaItem" 
-        class="text-[10px] bg-[#EEEDFE] text-[#3C3489] px-2.5 py-1 rounded-md font-bold 
-        hover:bg-[#CECBF6] transition-colors border border-[#CECBF6]"
+        class="text-sm bg-[#EEEDFE] text-[#534AB7] px-4 py-2 rounded-xl font-bold shadow-sm hover:bg-[#CECBF6] transition-colors border border-[#CECBF6] cursor-pointer"
       >
         {{ t.addItem }}
       </button>
     </div>
     
-    <div v-if="form.agenda.length === 0" class="text-[#26215C]/70 text-[11px] text-center py-4 
-    bg-[#EEEDFE]/30 border border-dashed border-[#CECBF6] rounded-lg font-medium">
+    <div v-if="form.agenda.length === 0" class="text-[#26215C]/70 text-sm font-semibold text-center py-8 bg-[#EEEDFE]/30 border border-dashed border-[#CECBF6] rounded-xl">
       {{ t.noAgenda }}
     </div>
     
-    <div v-if="form.agenda.length > 0" class="space-y-2">
+    <div v-if="form.agenda.length > 0" class="space-y-4">
       <div 
         v-for="(item, index) in form.agenda" 
         :key="index" 
-        class="flex gap-2 items-center bg-[#FFFFFF] border border-[#CECBF6] rounded-lg p-2 
-        transition-all hover:border-[#7F77DD]"
+        class="flex gap-3 items-center bg-[#FFFFFF] border border-[#CECBF6] rounded-xl p-3.5 transition-all hover:border-[#534AB7] shadow-sm"
       >
-        <span class="flex items-center justify-center w-6 h-6 shrink-0 bg-[#EEEDFE] 
-        text-[#3C3489] font-bold text-[10px] rounded-full">
+        <span class="flex items-center justify-center w-8 h-8 shrink-0 bg-[#EEEDFE] text-[#534AB7] font-black text-sm rounded-full">
           {{ index as number + 1 }}
         </span>
         
         <input 
           type="time" 
           v-model="item.time" 
-          class="w-20 sm:w-24 border border-[#CECBF6] p-1.5 rounded-md text-[11px] 
-          bg-[#FFFFFF] focus:ring-1 focus:ring-[#7F77DD] focus:border-transparent outline-none transition-all px-1 shrink-0 text-[#26215C]" 
+          class="w-28 sm:w-32 border border-[#CECBF6] p-3 rounded-xl text-base bg-[#F4F4FA] focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#534AB7] focus:border-transparent outline-none transition-all px-3 shrink-0 text-[#26215C] font-semibold" 
         />
           
         <div class="flex-1 min-w-0">
           <input 
             v-if="viewLang === 'en'" 
             v-model="item.activity.en" 
-            class="w-full border border-[#CECBF6] p-1.5 rounded-md text-[11px] 
-            bg-[#FFFFFF] focus:ring-1 focus:ring-[#7F77DD] focus:border-transparent outline-none transition-all truncate text-[#26215C]" 
+            class="w-full border border-[#CECBF6] p-3 rounded-xl text-base bg-[#F4F4FA] focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#534AB7] focus:border-transparent outline-none transition-all truncate text-[#26215C]" 
             placeholder="e.g. Ceremony" 
           />
           <input 
             v-if="viewLang === 'th'" 
             v-model="item.activity.th" 
-            class="w-full border border-[#CECBF6] p-1.5 rounded-md text-[11px] bg-[#FFFFFF] 
-            focus:ring-1 focus:ring-[#7F77DD] focus:border-transparent outline-none transition-all truncate text-[#26215C]" 
+            class="w-full border border-[#CECBF6] p-3 rounded-xl text-base bg-[#F4F4FA] focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#534AB7] focus:border-transparent outline-none transition-all truncate text-[#26215C]" 
             placeholder="e.g. พิธีเปิด" 
           />
         </div>
@@ -91,7 +84,7 @@ const removeAgendaItem = (index: number) => {
         <button 
           type="button" 
           @click="removeAgendaItem(index as number)" 
-          class="text-[#26215C]/50 hover:text-[#3C3489] text-lg font-bold leading-none p-1 shrink-0 transition-colors"
+          class="text-[#26215C]/50 hover:text-red-500 text-2xl font-bold leading-none p-2 shrink-0 transition-colors cursor-pointer"
         >
           ×
         </button>

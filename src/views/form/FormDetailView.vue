@@ -245,66 +245,66 @@ const formattedFormType = computed(() =>
 
 
 <template>
-  <div class="pt-4 pb-24 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
+  <div class="pt-6 pb-28 max-w-3xl mx-auto bg-[#F4F4FA] min-h-screen font-['Lato'] px-5 relative">
     
-    <button @click="goBack" class="mb-4 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
+    <button @click="goBack" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer py-1 pr-4">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
       </svg>
       BACK
     </button>
 
-    <div class="mb-5 border-b border-[#CECBF6] pb-3">
-      <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
+    <div class="mb-6 border-b border-[#CECBF6] pb-4">
+      <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
         {{ isEditMode ? `${formattedFormType} Form` : form.title || `${formattedFormType} Form` }}
       </h1>
-      <p v-if="!isEditMode && form.description" class="text-sm text-[#26215C]/70 mt-1">{{ form.description }}</p>
+      <p v-if="!isEditMode && form.description" class="text-sm font-semibold text-[#26215C]/70 mt-2">{{ form.description }}</p>
     </div>
 
-    <div v-if="isEditMode" class="space-y-4 animate-fade-in">
-      <div class="bg-[#FFFFFF] p-4 rounded-2xl shadow-sm border border-[#CECBF6] space-y-3">
-        <input v-model="form.title" placeholder="Form Title" class="w-full text-lg font-bold p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl focus:outline-none focus:border-[#7F77DD] focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
-        <textarea v-model="form.description" placeholder="Form Description" class="w-full p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm focus:outline-none focus:border-[#7F77DD] focus:bg-[#FFFFFF] text-[#26215C] transition-all h-24 resize-none"></textarea>
+    <div v-if="isEditMode" class="space-y-5 animate-fade-in">
+      <div class="bg-[#FFFFFF] p-5 rounded-2xl shadow-sm border border-[#CECBF6] space-y-4">
+        <input v-model="form.title" placeholder="Form Title" class="w-full text-lg font-bold p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
+        <textarea v-model="form.description" placeholder="Form Description" class="w-full p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent focus:bg-[#FFFFFF] text-[#26215C] transition-all h-24 resize-none"></textarea>
       </div>
 
-      <div class="space-y-3">
-        <div v-for="(field, index) in form.fields" :key="index" class="p-4 border border-[#CECBF6] rounded-2xl bg-[#FFFFFF] shadow-sm flex flex-col gap-3">
+      <div class="space-y-4">
+        <div v-for="(field, index) in form.fields" :key="index" class="p-5 border border-[#CECBF6] rounded-2xl bg-[#FFFFFF] shadow-sm flex flex-col gap-4">
           
-          <div class="flex flex-col gap-2">
+          <div class="flex flex-col gap-3">
              <div class="flex justify-between items-center">
-                <span class="text-[10px] font-bold text-[#3C3489] bg-[#EEEDFE] px-2 py-1 rounded-md uppercase tracking-wide border border-[#CECBF6]">{{ field.type }}</span>
+                <span class="text-[10px] font-black text-[#534AB7] bg-[#EEEDFE] px-2.5 py-1 rounded-lg uppercase tracking-widest border border-[#CECBF6] shadow-sm">{{ field.type }}</span>
                 
-                <div class="flex items-center bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg shadow-sm shrink-0">
-                  <button type="button" @click="moveField(index, -1)" :disabled="index === 0" class="p-1 text-[#26215C]/50 hover:text-[#7F77DD] disabled:opacity-30 disabled:hover:text-[#26215C]/50 transition-colors cursor-pointer">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
+                <div class="flex items-center bg-[#FFFFFF] border border-[#CECBF6] rounded-xl shadow-sm shrink-0">
+                  <button type="button" @click="moveField(index, -1)" :disabled="index === 0" class="p-2 text-[#26215C]/50 hover:text-[#534AB7] disabled:opacity-30 disabled:hover:text-[#26215C]/50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
                   </button>
-                  <div class="w-px h-4 bg-[#CECBF6]"></div>
-                  <button type="button" @click="moveField(index, 1)" :disabled="index === form.fields.length - 1" class="p-1 text-[#26215C]/50 hover:text-[#7F77DD] disabled:opacity-30 disabled:hover:text-[#26215C]/50 transition-colors cursor-pointer">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-px h-5 bg-[#CECBF6]"></div>
+                  <button type="button" @click="moveField(index, 1)" :disabled="index === form.fields.length - 1" class="p-2 text-[#26215C]/50 hover:text-[#534AB7] disabled:opacity-30 disabled:hover:text-[#26215C]/50 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 9l7 7 7-7"></path>
                     </svg>                  
                   </button>
                 </div>
              </div>
              
-             <input v-model="field.label" placeholder="Field Label" class="w-full p-2.5 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#7F77DD] text-[#26215C] transition-all shadow-inner" required />
+             <input v-model="field.label" placeholder="Field Label" class="w-full p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent focus:bg-[#FFFFFF] text-[#26215C] transition-all" required />
           </div>
 
-          <div v-if="field.type === 'CHOICE' || field.type === 'CHECKBOX'" class="pl-2 border-l-2 border-[#CECBF6] space-y-2 mt-2">
-            <div v-for="(_, optIndex) in field.options" :key="optIndex" class="flex items-center gap-2">
-              <div class="w-4 h-4 rounded-full border-2 border-[#CECBF6] shrink-0 bg-[#EEEDFE]/30" :class="field.type === 'CHECKBOX' ? 'rounded-sm' : ''"></div>
-              <input v-model="field.options[optIndex]" placeholder="Option text" class="flex-1 p-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-xs focus:outline-none focus:border-[#7F77DD] text-[#26215C]" />
+          <div v-if="field.type === 'CHOICE' || field.type === 'CHECKBOX'" class="pl-3 border-l-2 border-[#CECBF6] space-y-3 mt-1">
+            <div v-for="(_, optIndex) in field.options" :key="optIndex" class="flex items-center gap-3">
+              <div class="w-5 h-5 rounded-full border-2 border-[#CECBF6] shrink-0 bg-[#F4F4FA]" :class="field.type === 'CHECKBOX' ? 'rounded-md' : ''"></div>
+              <input v-model="field.options[optIndex]" placeholder="Option text" class="flex-1 p-3 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent focus:bg-[#FFFFFF] text-[#26215C] transition-all" />
               <button @click="field.options.splice(optIndex, 1)" class="text-red-400 hover:text-red-600 p-2 transition-colors cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
-            <button type="button" @click="field.options.push(`Option ${field.options.length + 1}`)" class="text-[#534AB7] text-[11px] font-bold mt-1 flex items-center gap-1 hover:text-[#3C3489] transition-colors cursor-pointer">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <button type="button" @click="field.options.push(`Option ${field.options.length + 1}`)" class="text-[#534AB7] text-xs font-bold mt-2 flex items-center gap-1.5 hover:text-[#3C3489] transition-colors cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
               Add Option
             </button>
           </div>
 
-          <div v-if="field.type === 'RATING'" class="pl-2 border-l-2 border-[#CECBF6] mt-2 py-1">
+          <div v-if="field.type === 'RATING'" class="pl-3 border-l-2 border-[#CECBF6] mt-2 py-1">
             <label class="flex items-center gap-3 text-xs font-bold text-[#26215C]/70">
                 Maximum Rating:
               <input 
@@ -312,40 +312,40 @@ const formattedFormType = computed(() =>
                 v-model.number="field.maxRating" 
                 min="2" 
                 placeholder="e.g. 5"
-                class="w-20 p-2 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-lg text-xs font-semibold focus:outline-none focus:border-[#7F77DD] text-[#26215C] transition-colors" 
+                class="w-24 p-3 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent focus:bg-[#FFFFFF] text-[#26215C] transition-colors" 
               />
             </label>
           </div>
 
-          <div class="mt-3 border-t border-[#EEEDFE] pt-3 flex flex-col gap-3">
+          <div class="mt-4 border-t border-[#CECBF6] pt-4 flex flex-col gap-4">
             
             <div class="flex justify-between items-center">
-              <label class="flex items-center gap-2 text-[11px] font-bold text-[#26215C]/80 cursor-pointer hover:text-[#3C3489] transition-colors uppercase tracking-wider">
+              <label class="flex items-center gap-2.5 text-xs font-bold text-[#26215C]/80 cursor-pointer hover:text-[#3C3489] transition-colors uppercase tracking-widest">
                 <div class="relative flex items-center">
-                  <input type="checkbox" v-model="field.isRequired" class="peer w-4 h-4 text-[#534AB7] bg-[#EEEDFE]/30 border border-[#CECBF6] rounded focus:ring-2 focus:ring-[#7F77DD]/30 focus:ring-offset-0 transition-all cursor-pointer appearance-none checked:bg-[#534AB7] checked:border-[#534AB7]" />
-                  <svg class="absolute w-3 h-3 text-white top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                  <input type="checkbox" v-model="field.isRequired" class="peer w-5 h-5 text-[#534AB7] bg-[#F4F4FA] border border-[#CECBF6] rounded focus:ring-2 focus:ring-[#534AB7]/30 focus:ring-offset-0 transition-all cursor-pointer appearance-none checked:bg-[#534AB7] checked:border-[#534AB7]" />
+                  <svg class="absolute w-3.5 h-3.5 text-white top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                 </div>
                 Required
               </label>
 
-              <button type="button" @click="removeField(index)" class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors tracking-wider uppercase cursor-pointer">
+              <button type="button" @click="removeField(index)" class="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-colors tracking-widest uppercase cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 <span class="hidden sm:inline">Remove</span>
               </button>
             </div>
 
             <div v-if="['TEXT', 'TEXTAREA', 'NUMBER'].includes(field.type)" class="flex items-center">
-              <div class="flex items-center bg-[#EEEDFE]/30 border border-[#CECBF6] hover:border-[#7F77DD] hover:bg-[#EEEDFE]/50 rounded-lg px-2.5 py-1.5 transition-all relative group cursor-pointer shadow-sm">
-                <svg class="w-3.5 h-3.5 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              <div class="flex items-center bg-[#F4F4FA] border border-[#CECBF6] hover:border-[#534AB7] rounded-xl px-3 py-2 transition-all relative group cursor-pointer shadow-sm w-full sm:w-auto">
+                <svg class="w-4 h-4 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 
-                <select v-model="field.autoFillKey" class="pl-2 pr-5 bg-transparent text-[11px] font-bold text-[#534AB7] focus:outline-none cursor-pointer appearance-none w-full tracking-wide">
+                <select v-model="field.autoFillKey" class="pl-2.5 pr-6 bg-transparent text-xs font-bold text-[#534AB7] focus:outline-none cursor-pointer appearance-none w-full tracking-wide">
                   <option :value="null">No Auto-fill Link</option>
                   <option v-for="opt in AUTOFILL_OPTIONS.filter(o => o.value !== null)" :key="opt.label" :value="opt.value">
                     Auto-fill: {{ opt.label }}
                   </option>
                 </select>
                 
-                <svg class="w-3.5 h-3.5 text-[#534AB7]/50 absolute right-2 pointer-events-none group-hover:text-[#534AB7] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg class="w-4 h-4 text-[#534AB7]/50 absolute right-3 pointer-events-none group-hover:text-[#534AB7] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
             
@@ -353,52 +353,51 @@ const formattedFormType = computed(() =>
         </div>
       </div>
 
-      <button type="button" @click="showFieldTypeModal = true" class="w-full py-4 border-2 border-dashed border-[#CECBF6] bg-[#EEEDFE]/50 rounded-2xl text-[#534AB7] font-bold text-[12px] flex items-center justify-center gap-2 hover:bg-[#EEEDFE] hover:border-[#534AB7] transition-colors tracking-wide cursor-pointer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+      <button type="button" @click="showFieldTypeModal = true" class="w-full py-5 border-2 border-dashed border-[#CECBF6] bg-[#FFFFFF] rounded-2xl text-[#534AB7] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#EEEDFE] hover:border-[#534AB7] transition-colors tracking-wide cursor-pointer shadow-sm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
         ADD FIELD
       </button>
     </div>
 
-    <div v-else class="space-y-4 animate-fade-in">
-      <div v-if="form.fields.length === 0" class="text-center py-10 bg-[#FFFFFF] rounded-2xl border border-[#CECBF6] shadow-sm">
-        <p class="text-[#26215C]/50 text-sm">No fields added to this form yet.</p>
+    <div v-else class="space-y-5 animate-fade-in">
+      <div v-if="form.fields.length === 0" class="text-center py-16 bg-[#FFFFFF] rounded-2xl border border-[#CECBF6] shadow-sm">
+        <p class="text-[#26215C]/50 text-sm font-semibold">No fields added to this form yet.</p>
       </div>
 
-      <div v-for="(field, index) in form.fields" :key="field.id" class="p-5 bg-[#FFFFFF] border border-[#CECBF6] rounded-2xl shadow-sm">
-        <div class="flex justify-between items-start mb-3">
+      <div v-for="(field, index) in form.fields" :key="field.id" class="p-5 md:p-6 bg-[#FFFFFF] border border-[#CECBF6] rounded-2xl shadow-sm">
+        <div class="flex justify-between items-start mb-4">
           <label class="block font-bold text-[#26215C] text-sm">
             {{ field.label }} <span v-if="field.isRequired" class="text-red-500 ml-1">*</span>
           </label>
           
-          <span v-if="field.autoFillKey" class="flex items-center gap-1 bg-[#EEEDFE] text-[#534AB7] px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-[#CECBF6] shadow-sm">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <span v-if="field.autoFillKey" class="flex items-center gap-1.5 bg-[#EEEDFE] text-[#534AB7] px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-[#CECBF6] shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             Auto-fills
           </span>
         </div>
         
-        <input v-if="['TEXT', 'NUMBER', 'DATE'].includes(field.type)" :type="field.type.toLowerCase()" class="w-full p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm text-[#26215C]" disabled placeholder="Participant response..." />
+        <input v-if="['TEXT', 'NUMBER', 'DATE'].includes(field.type)" :type="field.type.toLowerCase()" class="w-full p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold text-[#26215C]" disabled placeholder="Participant response..." />
         
-        <textarea v-if="field.type === 'TEXTAREA'" class="w-full p-3 bg-[#EEEDFE]/30 border border-[#CECBF6] rounded-xl text-sm h-24 resize-none text-[#26215C]" disabled placeholder="Participant response..."></textarea>
+        <textarea v-if="field.type === 'TEXTAREA'" class="w-full p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold h-24 resize-none text-[#26215C]" disabled placeholder="Participant response..."></textarea>
         
-        <div v-if="field.type === 'CHOICE'" class="space-y-2.5">
+        <div v-if="field.type === 'CHOICE'" class="space-y-3">
           <label v-for="opt in field.options" :key="opt" class="flex items-center gap-3">
-            <div class="w-4 h-4 rounded-full border-2 border-[#CECBF6] bg-[#EEEDFE]/30"></div> 
-            <span class="text-sm text-[#26215C]/80">{{ opt }}</span>
+            <div class="w-5 h-5 rounded-full border-2 border-[#CECBF6] bg-[#F4F4FA]"></div> 
+            <span class="text-sm font-semibold text-[#26215C]/80">{{ opt }}</span>
           </label>
         </div>
         
-        <div v-if="field.type === 'CHECKBOX'" class="space-y-2.5">
+        <div v-if="field.type === 'CHECKBOX'" class="space-y-3">
           <label v-for="opt in field.options" :key="opt" class="flex items-center gap-3">
-            <div class="w-4 h-4 rounded-sm border-2 border-[#CECBF6] bg-[#EEEDFE]/30"></div> 
-            <span class="text-sm text-[#26215C]/80">{{ opt }}</span>
+            <div class="w-5 h-5 rounded-md border-2 border-[#CECBF6] bg-[#F4F4FA]"></div> 
+            <span class="text-sm font-semibold text-[#26215C]/80">{{ opt }}</span>
           </label>
         </div>
 
-        <div v-if="field.type === 'RATING'" class="flex flex-wrap gap-2 mt-3">
+        <div v-if="field.type === 'RATING'" class="flex flex-wrap gap-2.5 mt-4">
           <label v-for="n in (field.maxRating || 5)" :key="n" class="cursor-not-allowed group">
             <input type="radio" disabled :name="`preview-rating-${field.id || index}`" :value="n" class="peer sr-only" />
-            
-            <div class="w-10 h-10 rounded-full border-2 border-[#CECBF6] bg-[#EEEDFE]/30 flex items-center justify-center text-sm font-bold text-[#26215C]/40 peer-disabled:opacity-70 shadow-sm transition-all">
+            <div class="w-12 h-12 rounded-full border-2 border-[#CECBF6] bg-[#F4F4FA] flex items-center justify-center text-sm font-bold text-[#26215C]/40 peer-disabled:opacity-70 shadow-sm transition-all">
               {{ n }}
             </div>
           </label>
@@ -406,26 +405,26 @@ const formattedFormType = computed(() =>
       </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-[#FFFFFF] border-t border-[#CECBF6] p-3 flex justify-center shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.03)] z-20">
-      <div class="max-w-3xl w-full flex justify-center gap-4 md:gap-6 px-4 md:px-0">
+    <div class="fixed bottom-0 left-0 right-0 bg-[#FFFFFF]/90 backdrop-blur-md border-t border-[#CECBF6] p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
+      <div class="max-w-3xl w-full flex justify-center gap-4 px-5 md:px-0">
         <template v-if="!isEditMode">
           <button 
             v-if="eventStatus === 'PUBLISHED' || eventStatus === 'COMPLETED'" 
             @click="router.push(`/events/${eventId}/forms/${formType}/responses`)" 
-            class="w-35 md:w-40 bg-[#FFFFFF] border border-[#CECBF6] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] py-2.5 rounded-xl font-bold text-[11px] transition-colors cursor-pointer"
+            class="flex-1 sm:w-48 bg-[#FFFFFF] border border-[#CECBF6] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer shadow-sm"
           >
             Responses
           </button>
           <button 
             v-if="eventStatus === 'DRAFT'" 
             @click="toggleEdit" 
-            class="w-35 md:w-40 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-2.5 rounded-xl font-bold text-[11px] transition-colors shadow-sm cursor-pointer"
+            class="flex-1 sm:w-48 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-3 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer"
           >
             Edit Form
           </button>
         </template>
         <template v-else>
-          <button @click="saveForm" class="w-35 md:w-40 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] border border-[#CECBF6] py-2.5 rounded-xl font-bold text-[11px] transition-colors cursor-pointer">
+          <button @click="saveForm" class="flex-1 sm:w-64 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer shadow-sm">
             SAVE FORM
           </button>
         </template>
@@ -433,19 +432,19 @@ const formattedFormType = computed(() =>
     </div>
 
     <div v-if="showFieldTypeModal" @click.self="showFieldTypeModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fade-in p-4 pb-8">
-      <div class="bg-[#FFFFFF] p-6 rounded-3xl shadow-xl max-w-sm w-full transform transition-all">
+      <div class="bg-[#FFFFFF] p-6 md:p-8 rounded-3xl shadow-xl max-w-sm w-full transform transition-all">
         
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-lg text-[#26215C] tracking-tight">Select Field Type</h3>
-          <button @click="showFieldTypeModal = false" class="text-[#26215C]/50 hover:text-[#3C3489] hover:bg-[#EEEDFE] p-1 rounded-full transition-colors cursor-pointer">
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="font-['Nunito'] font-black text-xl text-[#26215C] tracking-tight">Select Field Type</h3>
+          <button @click="showFieldTypeModal = false" class="text-[#26215C]/50 hover:text-[#534AB7] hover:bg-[#EEEDFE] p-1.5 rounded-full transition-colors cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
-        <div class="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-          <button v-for="type in availableFieldTypes" :key="type" @click="addField(type)" class="p-3 border border-[#CECBF6] bg-[#EEEDFE]/30 rounded-xl hover:bg-[#EEEDFE] hover:border-[#534AB7] hover:text-[#534AB7] text-left text-sm font-semibold text-[#26215C] transition-colors cursor-pointer">
+        <div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <button v-for="type in availableFieldTypes" :key="type" @click="addField(type)" class="p-4 border border-[#CECBF6] bg-[#F4F4FA] rounded-xl hover:bg-[#EEEDFE] hover:border-[#534AB7] hover:text-[#534AB7] text-left text-sm font-bold text-[#26215C] transition-colors cursor-pointer shadow-sm">
             {{ type }}
           </button>
         </div>
@@ -453,25 +452,8 @@ const formattedFormType = computed(() =>
       </div>
     </div>
 
-    <ConfirmModal 
-      v-if="alertState.show"
-      :title="alertState.title"
-      :description="alertState.description"
-      :confirmTheme="alertState.theme"
-      confirmText="OK"
-      @confirm="alertState.show = false"
-    />
-
-    <ConfirmModal 
-      v-if="confirmState.show"
-      :title="confirmState.title"
-      :description="confirmState.description"
-      :confirmTheme="confirmState.theme"
-      :confirmText="confirmState.confirmText"
-      cancelText="Cancel"
-      @cancel="confirmState.show = false"
-      @confirm="confirmState.onConfirm"
-    />
+    <ConfirmModal v-if="alertState.show" :title="alertState.title" :description="alertState.description" :confirmTheme="alertState.theme" confirmText="OK" @confirm="alertState.show = false" />
+    <ConfirmModal v-if="confirmState.show" :title="confirmState.title" :description="confirmState.description" :confirmTheme="confirmState.theme" :confirmText="confirmState.confirmText" cancelText="Cancel" @cancel="confirmState.show = false" @confirm="confirmState.onConfirm" />
 
   </div>
 </template>

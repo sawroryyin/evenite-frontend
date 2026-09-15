@@ -35,35 +35,29 @@ const handleImageUpload = async (e: Event) => {
 </script>
 
 <template>
-  <section class="bg-[#FFFFFF] p-4 rounded-xl border border-[#CECBF6] shadow-sm font-['Lato']">
-    <h2 class="text-base font-bold text-[#26215C] mb-3">
+  <section class="bg-[#FFFFFF] p-5 md:p-6 rounded-2xl border border-[#CECBF6] shadow-sm font-['Lato']">
+    <h2 class="text-xl font-['Nunito'] font-black text-[#26215C] mb-4">
       {{ t.eventBanner }} 
-      <span class="text-xs font-medium text-[#26215C]/50">{{ t.universalSub }}</span>
+      <span class="text-xs font-semibold text-[#26215C]/50 ml-1 font-['Lato']">{{ t.universalSub }}</span>
     </h2>
     
     <div v-if="form.bannerUrl" class="relative group">
-      <img :src="form.bannerUrl" class="w-full h-40 object-cover rounded-xl border border-[#CECBF6]" />
+      <img :src="form.bannerUrl" class="w-full h-48 md:h-56 object-cover rounded-xl border border-[#CECBF6] shadow-sm" />
       <button 
         type="button" 
         @click="form.bannerUrl = ''" 
-        class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-600 
-        px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100"
+        class="absolute top-3 right-3 bg-[#FFFFFF]/90 backdrop-blur-sm text-red-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100"
       >
         {{ t.removeImg }}
       </button>
     </div>
     
-    <div v-else class="flex flex-col items-center justify-center h-32 border-2 
-    border-dashed border-[#CECBF6] rounded-xl hover:bg-[#EEEDFE]/80 
-    hover:border-[#7F77DD] transition-colors relative cursor-pointer bg-[#EEEDFE]/30">
-      <input type="file" @change="handleImageUpload" class="absolute inset-0 w-full h-full 
-      opacity-0 cursor-pointer" accept="image/jpeg, image/png, image/webp" />
+    <div v-else class="flex flex-col items-center justify-center h-40 border-2 border-dashed border-[#CECBF6] rounded-xl hover:bg-[#EEEDFE]/80 hover:border-[#534AB7] transition-colors relative cursor-pointer bg-[#F4F4FA]">
+      <input type="file" @change="handleImageUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/jpeg, image/png, image/webp" />
       <div class="text-[#26215C]/70 pointer-events-none flex flex-col items-center px-4 text-center">
-         <svg class="w-6 h-6 mb-1 text-[#7F77DD]" fill="none" stroke="currentColor" 
-         viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" 
-         stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-         <span class="text-xs font-bold text-[#26215C]">{{ t.uploadBanner }}</span>
-         <span class="text-[10px] text-[#26215C]/60 mt-1">JPEG, PNG or WEBP (Max 5MB)</span>
+         <svg class="w-8 h-8 mb-2 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+         <span class="text-sm font-bold text-[#26215C]">{{ t.uploadBanner }}</span>
+         <span class="text-xs font-semibold text-[#26215C]/60 mt-1">JPEG, PNG or WEBP (Max 5MB)</span>
       </div>
     </div>
   </section>
