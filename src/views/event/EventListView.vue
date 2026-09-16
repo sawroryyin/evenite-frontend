@@ -35,7 +35,8 @@ const fetchEventsFromDatabase = async () => {
       allEvents.value = data
     } else {
       const data: any = await EventService.getRegisteredEvents()
-      allEvents.value = data.map((item: any) => item.event ? item.event : item)
+      const filterCancelledRegEvent = data.map((item: any) => item.event ? item.event : item).filter((item: any) => item.registration.status !== 'CANCELLED') 
+      allEvents.value = filterCancelledRegEvent
     }
     
   } catch (error) {
