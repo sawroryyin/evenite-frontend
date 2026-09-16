@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { RegistrationService } from '../../services/RegistrationService'
 import { UserService } from '../../services/UserService'
+import ConfirmModal from '../../components/ConfirmModal.vue'
 
 const router = useRouter()
 
@@ -371,5 +372,24 @@ const mapEmbedUrl = computed(() => {
         </div>
       </div>
     </div>
+    <ConfirmModal 
+      v-if="alertState.show"
+      :title="alertState.title"
+      :description="alertState.description"
+      :confirmTheme="alertState.theme"
+      confirmText="OK"
+      @confirm="alertState.show = false"
+    />
+
+    <ConfirmModal 
+      v-if="confirmState.show"
+      :title="confirmState.title"
+      :description="confirmState.description"
+      :confirmTheme="confirmState.theme"
+      :confirmText="confirmState.confirmText"
+      cancelText="Cancel"
+      @cancel="confirmState.show = false"
+      @confirm="confirmState.onConfirm"
+    />
   </div>
 </template>
