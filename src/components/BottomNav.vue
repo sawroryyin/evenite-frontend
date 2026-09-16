@@ -1,24 +1,46 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useDiscussionStore } from '../stores/discussion'
+import api from '../services/api' 
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const discussionStore = useDiscussionStore()
 
-// Fetch rooms globally when the navigation bar mounts so unread counts persist
-onMounted(() => {
+const globalUnreadTracker = ref<Record<string, number>>({})
+
+onMounted(async () => {
   if (discussionStore.rooms.length === 0) {
-    // Fetch active rooms by default to populate the unread counts
     discussionStore.fetchRooms({ filter: 'active' });
+  }
+
+  try {
+    const [activeRes, archivedRes] = await Promise.all([
+      api.get('/discussions/rooms', { params: { filter: 'active' } }),
+      api.get('/discussions/rooms', { params: { filter: 'archived' } })
+    ]);
+    
+    const allRooms = [...activeRes.data, ...archivedRes.data];
+    
+    allRooms.forEach((room: any) => {
+      globalUnreadTracker.value[room.roomId] = room.unreadCount || 0;
+    });
+  } catch (error) {
+    console.warn('Could not load global unread counts', error);
   }
 })
 
+watch(() => discussionStore.rooms, (newRooms) => {
+  newRooms.forEach(room => {
+    globalUnreadTracker.value[room.roomId] = room.unreadCount || 0;
+  });
+}, { deep: true, immediate: true })
+
 const totalUnreadCount = computed(() => {
-  return discussionStore.rooms.reduce((total, room) => total + (room.unreadCount || 0), 0)
+  return Object.values(globalUnreadTracker.value).reduce((total, count) => total + count, 0);
 })
 
 const navItems = [
@@ -31,7 +53,6 @@ const navItems = [
 
 const filteredNavItems = computed(() => {
   if (authStore.currentRole === 'ORGANIZER') {
-    // Filter out 'home' and 'my-tickets' for the organizer role
     return navItems.filter(item => item.name !== 'home' && item.name !== 'my-tickets')
   }
   return navItems
@@ -39,28 +60,26 @@ const filteredNavItems = computed(() => {
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 w-full bg-[#FFFFFF] border-t border-[#CECBF6] pb-safe z-50 
-  shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] font-['Lato']">
-    <div class="flex justify-around items-center h-14 max-w-3xl mx-auto px-2">
+  <nav class="fixed bottom-0 left-0 w-full bg-[#FFFFFF] backdrop-blur-md border-t border-[#CECBF6] pb-safe z-50 shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] font-['Lato']">
+    <div class="flex justify-around items-center h-18 max-w-3xl mx-auto px-2">
       <button 
         v-for="item in filteredNavItems" 
         :key="item.name"
         @click="router.push({ name: item.name })"
-        class="flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors duration-200"
-        :class="route.name === item.name ? 'text-[#534AB7]' : 'text-[#26215C]/30 hover:text-[#3C3489]'"
+        class="flex flex-col items-center justify-center w-full h-full space-y-1.5 transition-all duration-200 cursor-pointer active:scale-95"
+        :class="route.name === item.name ? 'text-[#534AB7]' : 'text-[#26215C]/40 hover:text-[#3C3489]'"
       >
-        <!-- Relative wrapper allows absolute positioning of the badge -->
         <div class="relative flex items-center justify-center">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"></path>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" :d="item.icon"></path>
           </svg>
           
-          <!-- Minimal Red Dot Notification Badge -->
           <span 
             v-if="item.name === 'discussion' && totalUnreadCount > 0"
-            class="absolute top-0 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-[1.5px] border-white shadow-sm"
+            class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white shadow-sm"
           ></span>
         </div>
+        <span class="text-[10px] font-bold tracking-wide">{{ item.label }}</span>
       </button>
     </div>
   </nav>

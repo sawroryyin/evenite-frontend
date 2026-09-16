@@ -27,12 +27,12 @@ const submit = () => {
 </script>
 
 <template>
-  <div class="bg-[#FFFFFF] border-t border-[#CECBF6] p-4 rounded-b-2xl">
+  <div class="bg-[#FFFFFF] p-4 font-['Lato']">
     <div class="flex flex-col gap-2">
       
       <!-- Organizer Extras -->
       <div v-if="isOrganizer" class="flex items-center">
-        <label class="flex items-center text-[11px] font-bold text-[#26215C]/70 uppercase tracking-widest cursor-pointer">
+        <label class="flex items-center text-xs font-bold text-[#26215C]/70 uppercase tracking-widest cursor-pointer">
           <input 
             type="checkbox" 
             v-model="isAnnouncement" 
@@ -56,7 +56,7 @@ const submit = () => {
         <button 
           @click="submit"
           :disabled="disabled || !content.trim()"
-          class="bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] rounded-xl w-12 h-12 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          class="bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] rounded-xl w-12 h-12 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
         >
           <!-- Send Icon -->
           <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
