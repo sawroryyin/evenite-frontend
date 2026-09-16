@@ -11,7 +11,7 @@ test.describe("Participant send message", () => {
   });
 
   test("send message successful", async ({ page }) => {
-    await page.getByRole('button').filter({ hasText: /^$/ }).nth(5).click();
+    await page.getByRole('button', {name: 'Discuss'}).click();
     await page.getByRole('heading', { name: 'Semester Exchange Program 2026' }).click();
     await page.getByRole('textbox', { name: 'Type your message...' }).click();
     await page.getByRole('textbox', { name: 'Type your message...' }).fill('Sawadee');
@@ -21,7 +21,7 @@ test.describe("Participant send message", () => {
   });
 
   test("send message to archived", async ({ page }) => {
-    await page.getByRole('button').filter({ hasText: /^$/ }).nth(5).click();
+    await page.getByRole('button', {name: 'Discuss'}).click();
     await page.getByRole('button', { name: 'archived' }).click();
     await page.getByRole('heading', { name: 'SE Hackathon' }).click();
     
@@ -34,7 +34,7 @@ test.describe("Participant send message", () => {
   });
 
   test("send message over 2000 char", async ({ page }) => {
-    await page.getByRole('button').filter({ hasText: /^$/ }).nth(5).click();
+    await page.getByRole('button', {name: 'Discuss'}).click();
     await page.getByRole('heading', { name: 'Semester Exchange Program 2026' }).click();
     await page.getByRole('textbox', { name: 'Type your message...' }).click();
     await page.getByRole('textbox', { name: 'Type your message...' }).fill('S'.repeat(2001));

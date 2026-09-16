@@ -10,8 +10,8 @@ export default defineConfig({
       slowMo: 1800,
     },
     // viewport: {
-    //   width: 495,
-    //   height: 600,
+    //   width: 490,
+    //   height: 855,
     // },
 
   },
@@ -25,17 +25,17 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 490, height: 875 } },
+      use: { ...devices['Desktop Chrome'], viewport: { width: 495, height: 865 } },
     },
 
     {
       name: "firefox",
-      use: { ...devices["Desktop Firefox"], viewport: { width: 490, height: 875 } },
+      use: { ...devices["Desktop Firefox"], viewport: { width: 495, height: 865 } },
     },
 
     {
       name: "webkit",
-      use: { ...devices["Desktop Safari"], viewport: { width: 490, height: 875 } },
+      use: { ...devices["Desktop Safari"], viewport: { width: 495, height: 865 } },
     },
   ],
 });
