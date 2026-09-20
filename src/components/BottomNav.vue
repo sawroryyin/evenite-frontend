@@ -62,14 +62,14 @@ const filteredNavItems = computed(() => {
 <template>
   <div class="fixed bottom-5 left-4 right-4 z-50 max-w-3xl mx-auto font-['Lato']">
     <nav 
-      class="flex items-center justify-between rounded-[28px] border border-[#CECBF6] bg-white/95 p-1.5 shadow-[0_14px_35px_rgba(23,35,59,0.13)] backdrop-blur-md"
+      class="flex items-center justify-between rounded-[28px] border border-[#131B2B]/10 bg-white/95 p-1.5 shadow-[0_14px_35px_rgba(23,35,59,0.13)] backdrop-blur-md"
     >
       <button 
         v-for="item in filteredNavItems" 
         :key="item.name"
         @click="router.push({ name: item.name })"
         class="flex flex-1 items-center justify-center rounded-3xl h-14 transition-all duration-300 cursor-pointer active:scale-95"
-        :class="route.name === item.name ? 'bg-[#131B2B] text-white shadow-md' : 'text-[#26215C]/50 hover:text-[#F26E22] hover:bg-[#F26E22]/10'"
+        :class="route.name === item.name ? 'bg-[#131B2B] text-white shadow-md' : 'text-[#131B2B]/50 hover:text-[#F26E22]'"
       >
         <div class="relative flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

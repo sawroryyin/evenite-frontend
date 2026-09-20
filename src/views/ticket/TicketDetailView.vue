@@ -78,8 +78,7 @@ const formattedLocation = computed(() => {
     <LoadingOverlay v-if="isLoading" message="Loading..." />
 
     <div class="space-y-4 mb-6">
-      <!-- Update: Bind to goBack -->
-      <button @click="goBack" class="text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
+      <button @click="goBack" class="text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
@@ -92,9 +91,9 @@ const formattedLocation = computed(() => {
       <div class="relative w-full flex flex-col shadow-lg rounded-2xl">
 
         <!-- Top: Event Details Section -->
-        <div class="p-6 pb-6 bg-[#534AB7] rounded-t-2xl border border-[#CECBF6] border-b-0">
+        <div class="p-6 pb-6 bg-[#131B2B] rounded-t-2xl border border-[#131B2B]/10 border-b-0">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-3xl font-bold text-[#FFFFFF] leading-tight mb-2">
+            <h2 class="text-3xl font-bold text-white leading-tight mb-2">
               {{ ticket.event.title.en || ticket.event.title.th }}
             </h2>
             <span 
@@ -105,7 +104,7 @@ const formattedLocation = computed(() => {
             </span>
           </div>
           
-          <div class="flex items-center gap-18 mb-1 text-m text-[#FFFFFF] pb-1">
+          <div class="flex items-center gap-18 mb-1 text-m text-white pb-1">
             <!-- Date -->
             <p class="flex items-center gap-1">
               <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +120,7 @@ const formattedLocation = computed(() => {
           </div>
           
           <!-- Location -->
-          <p class="text-m text-[#FFFFFF] flex items-start gap-1.5">
+          <p class="text-m text-white flex items-start gap-1.5">
             <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -132,19 +131,19 @@ const formattedLocation = computed(() => {
 
         <div class="relative w-full h-0 z-10">
           <!-- Dashed line -->
-          <div class="absolute left-0 right-0 top-0 border-t-2 border-[#CECBF6] border-dashed"></div>
+          <div class="absolute left-0 right-0 top-0 border-t-2 border-[#131B2B]/10 border-dashed"></div>
           
           <!-- Left and Right Notches (positioned perfectly on the line via -top-3) -->
-          <div class="absolute -left-3 -top-3 w-6 h-6 bg-[#FFFFFF] rounded-full"></div>
-          <div class="absolute -right-3 -top-3 w-6 h-6 bg-[#FFFFFF] rounded-full"></div>
+          <div class="absolute -left-3 -top-3 w-6 h-6 bg-white rounded-full"></div>
+          <div class="absolute -right-3 -top-3 w-6 h-6 bg-white rounded-full"></div>
         </div>
 
         <!-- Bottom: QR Code & Participant Snapshot -->
-        <div class="bg-[#F4EbFF] rounded-b-2xl border border-[#CECBF6] border-t-0 overflow-hidden">
+        <div class="bg-white rounded-b-2xl border border-[#131B2B]/10 border-t-0 overflow-hidden">
           
           <!-- QR Code Section -->
           <div class="pt-12 px-6 pb-12 flex flex-col items-center justify-center">
-            <p class="text-m font-bold text-[#26215C]/50 uppercase tracking-widest mb-4">Present at check-in</p>
+            <p class="text-m font-bold text-[#131B2B]/50 uppercase tracking-widest mb-4">Present at check-in</p>
             
             <div :class="{'opacity-30': ticket.status !== 'ACTIVE'}">
               <TicketQRCode :token="ticket.qrToken" />
@@ -153,15 +152,15 @@ const formattedLocation = computed(() => {
 
           <!-- Participant Snapshot Section -->
           <div class="p-6">
-            <h4 class="text-m font-bold text-[#26215C] uppercase tracking-widest mb-4">Participant Details</h4>
+            <h4 class="text-m font-bold text-[#131B2B] uppercase tracking-widest mb-4">Participant Details</h4>
             <div class="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p class="text-[#26215C]/50">Name</p>
-                <p class="font-bold text-[#26215C]">{{ ticket.participantSnapshot.firstName }} {{ ticket.participantSnapshot.lastName || '' }}</p>
+                <p class="text-[#131B2B]/50">Name</p>
+                <p class="font-bold text-[#131B2B]">{{ ticket.participantSnapshot.firstName }} {{ ticket.participantSnapshot.lastName || '' }}</p>
               </div>
               <div>
-                <p class="text-[#26215C]/50">Student ID</p>
-                <p class="font-bold text-[#26215C]">{{ ticket.participantSnapshot.studentId || 'N/A' }}</p>
+                <p class="text-[#131B2B]/50">Student ID</p>
+                <p class="font-bold text-[#131B2B]">{{ ticket.participantSnapshot.studentId || 'N/A' }}</p>
               </div>
             </div>
           </div>
@@ -171,7 +170,7 @@ const formattedLocation = computed(() => {
       </div>
       <button 
         @click="goToEventDetails"
-        class="w-full mt-6 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] border border-[#CECBF6] py-3.5 rounded-xl font-bold text-sm transition-all"
+        class="w-full mt-6 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm"
       >
         Go to Event Details
       </button>

@@ -13,7 +13,7 @@ const router = useRouter()
     <nav class="flex items-center gap-5">
       <button 
         @click="router.push({ name: 'notifications' })"
-        class="relative p-2.5 bg-white border border-[#CECBF6] rounded-xl shadow-sm hover:bg-[#EEEDFE] transition focus:outline-none cursor-pointer">
+        class="relative p-2.5 bg-white border border-[#131B2B]/5 rounded-xl shadow-sm hover:bg-[#131B2B]/5 transition focus:outline-none cursor-pointer">
         <svg class="w-6 h-6 text-[#131B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 

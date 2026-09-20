@@ -41,24 +41,24 @@ const displayImage = computed(() => {
 </script>
 
 <template>
-  <div class="border border-[#CECBF6] rounded-xl overflow-hidden shadow-sm bg-[#FFFFFF] hover:shadow-md transition-shadow cursor-pointer flex flex-col 
+  <div class="border border-[#131B2B]/10 rounded-xl overflow-hidden shadow-sm bg-[#FFFFFF] hover:shadow-md transition-shadow cursor-pointer flex flex-col 
   h-full font-['Lato']">
     
     <img :src="displayImage" :alt="displayTitle" class="w-full aspect-4/3 object-cover" />
     
     <div class="p-4 flex flex-col grow">
       <div class="flex justify-between items-center mb-2.5 gap-2">
-        <span class="text-[10px] font-extrabold text-[#3C3489] bg-[#EEEDFE] px-2 py-1 rounded-md truncate uppercase tracking-widest 
-        shrink-0 max-w-[60%] border border-[#CECBF6]">
+        <span class="text-[10px] font-extrabold text-[#131B2B] bg-[#131B2B]/5 px-2 py-1 rounded-md truncate uppercase tracking-widest 
+        shrink-0 max-w-[60%] border border-[#131B2B]/10">
           {{ displayCategory }}
         </span>
-        <span class="text-xs font-bold text-[#26215C]/70 whitespace-nowrap">{{ displayDate }}</span>
+        <span class="text-xs font-bold text-[#131B2B]/70 whitespace-nowrap">{{ displayDate }}</span>
       </div>
       
-      <h3 class="font-['Lato'] font-bold text-base text-[#26215C] leading-snug mb-3 line-clamp-2 grow tracking-tight">{{ displayTitle }}</h3>
+      <h3 class="font-['Lato'] font-bold text-base text-[#131B2B] leading-snug mb-3 line-clamp-2 grow tracking-tight">{{ displayTitle }}</h3>
       
-      <div class="flex items-center text-xs text-[#26215C]/70 gap-1.5 font-semibold mt-auto">
-        <svg class="w-4 h-4 text-[#7F77DD] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex items-center text-xs text-[#131B2B]/70 gap-1.5 font-semibold mt-auto">
+        <svg class="w-4 h-4 text-[#131B2B]/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
         </svg>

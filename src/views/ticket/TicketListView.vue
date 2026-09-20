@@ -53,15 +53,15 @@ watch(selectedFilter, fetchTickets);
       </div>
     </div>
 
-    <div class="flex w-full bg-[#FFFFFF] rounded-3xl shadow-sm border border-[#CECBF6] p-1.5 mb-6 relative z-10">
+    <div class="flex w-full bg-white rounded-3xl shadow-sm border border-[#131B2B]/10 p-1.5 mb-6 relative z-10">
       <button
         v-for="filter in filterOptions"
         :key="filter"
         @click="selectedFilter = filter"
         class="flex-1 text-center py-2.5 px-1 text-xs sm:text-sm font-bold rounded-3xl transition-colors tracking-tight whitespace-nowrap cursor-pointer"
         :class="selectedFilter === filter ?
-         'bg-[#534AB7] text-[#FFFFFF] shadow-sm' :
-         'text-[#26215C]/70 hover:bg-[#EEEDFE] hover:text-[#3C3489]'"
+        'bg-[#131B2B] text-white shadow-sm' :
+        'text-[#131B2B]/70 hover:bg-[#131B2B]/5 hover:text-[#131B2B]'"
       >
         {{ filter }}
       </button>

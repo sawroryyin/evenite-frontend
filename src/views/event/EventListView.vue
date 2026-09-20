@@ -101,7 +101,7 @@ onMounted(() => {
       <button 
         v-if="isOrganizer"
         @click="router.push({ name: 'create-options' })"
-        class="bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] text-sm font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center gap-2 transition-colors transform active:scale-95 cursor-pointer shrink-0"
+        class="bg-[#131B2B] hover:bg-[#131B2B] text-white text-sm font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center gap-2 transition-colors transform active:scale-95 cursor-pointer shrink-0"
       >
         <svg class="w-5 h-5 text-[#EEEDFE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
@@ -117,8 +117,8 @@ onMounted(() => {
         @click="activeTab = tab"
         class="flex-1 text-center py-2.5 px-3 text-xs sm:text-sm font-bold rounded-3xl transition-colors tracking-tight whitespace-nowrap cursor-pointer"
         :class="activeTab === tab ?
-         'bg-[#534AB7] text-[#FFFFFF] shadow-sm' : 
-         'text-[#26215C]/70 hover:bg-[#EEEDFE] hover:text-[#3C3489]'"
+         'bg-[#131B2B] text-white shadow-sm' : 
+         'text-[#131B2B]/70 hover:bg-[#131B2B]/5 hover:text-[#131B2B]'"
       >
         {{ tab }}
       </button>

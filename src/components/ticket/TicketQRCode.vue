@@ -8,12 +8,12 @@ defineProps<{
 </script>
 
 <template>
-  <div class="p-4 sm:p-5 bg-white border border-[#CECBF6] rounded-2xl shadow-sm inline-block">
+  <div class="p-4 sm:p-5 bg-white border border-[#131B2B]/10 rounded-2xl shadow-sm inline-block font-['Lato']">
     <qrcode-vue 
       :value="token" 
       :size="size || 200" 
       level="H" 
-      foreground="#26215C" 
+      foreground="#131B2B" 
       background="#ffffff" 
     />
   </div>

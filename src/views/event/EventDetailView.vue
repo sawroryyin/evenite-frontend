@@ -366,30 +366,30 @@ const confirmLeave = () => {
 <template v-if="isDataReady">
   <div class="pt-6 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5 relative">
     
-    <div v-if="isTranslating" class="fixed inset-0 bg-[#F4F4FA]/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
-      <div class="w-10 h-10 border-4 border-[#CECBF6] border-t-[#534AB7] rounded-full animate-spin mb-3"></div>
-      <p class="text-[#26215C] font-bold tracking-widest uppercase text-sm animate-pulse">Translating...</p>
+    <div v-if="isTranslating" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
+      <div class="w-10 h-10 border-4 border-[#131B2B]/10 border-t-[#131B2B] rounded-full animate-spin mb-3"></div>
+      <p class="text-[#131B2B] font-bold tracking-widest uppercase text-sm animate-pulse">Translating...</p>
     </div>
 
     <!-- UI UX Update: Increased touch target for back button -->
-    <button @click="handleBackClick" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer py-1 pr-4">
+    <button @click="handleBackClick" class="mb-5 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer py-1 pr-4">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       {{ t.back }}
     </button>
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-[#CECBF6] pb-4 gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-[#131B2B]/10 pb-4 gap-4">
       <!-- UI UX Update: Standardized Nunito 2xl header -->
-      <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
+      <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
         {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
       </h1>
       
       <div class="flex items-center gap-2.5 w-full md:w-auto">
-        <div class="flex bg-[#FFFFFF] border border-[#CECBF6] p-1 rounded-xl w-full md:w-32 shadow-sm">
-          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-[#534AB7] shadow-sm text-[#FFFFFF]' : 'text-[#26215C]/70 hover:text-[#3C3489] hover:bg-[#EEEDFE]'" class="flex-1 py-1.5 rounded-lg text-xs font-black transition-colors">EN</button>
-          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-[#534AB7] shadow-sm text-[#FFFFFF]' : 'text-[#26215C]/70 hover:text-[#3C3489] hover:bg-[#EEEDFE]'" class="flex-1 py-1.5 rounded-lg text-xs font-black transition-colors">TH</button>
+        <div class="flex bg-white border border-[#131B2B]/10 p-1 rounded-xl w-full md:w-32 shadow-sm">
+          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-[#131B2B] shadow-sm text-white' : 'text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5'" class="flex-1 py-1.5 rounded-lg text-xs font-black transition-colors">EN</button>
+          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-[#131B2B] shadow-sm text-white' : 'text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5'" class="flex-1 py-1.5 rounded-lg text-xs font-black transition-colors">TH</button>
         </div>
         
-        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-[#534AB7] text-[#FFFFFF] px-3 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-[#3C3489] disabled:opacity-50 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-[#131B2B] text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-[#131B2B]/80 disabled:opacity-50 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
           <span class="hidden sm:inline">Auto Translate</span>
         </button>
@@ -410,16 +410,16 @@ const confirmLeave = () => {
       <EventForm :form="form" :t="t" :viewLang="viewLang" :viewMode="viewMode" />
     </form>
 
-    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" class="fixed bottom-0 left-0 right-0 bg-[#FFFFFF]/90 backdrop-blur-md border-t border-[#CECBF6] p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
+    <div v-if="viewMode === 'create' || viewMode === 'edit' || (viewMode === 'preview' && eventStatus === 'DRAFT')" class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
       <div class="max-w-3xl w-full flex justify-center gap-4 px-5 md:px-0">
         
         <template v-if="viewMode === 'preview' && eventStatus === 'DRAFT'">
-          <button @click="viewMode = 'edit'" class="w-full sm:w-64 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer">Edit Draft</button>
+          <button @click="viewMode = 'edit'" class="w-full sm:w-64 bg-[#131B2B]/5 hover:bg-[#131B2B]/10 text-[#131B2B] hover:text-[#131B2B]/80 border border-[#131B2B]/10 py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer">Edit Draft</button>
         </template>
         
         <template v-if="viewMode === 'create' || viewMode === 'edit'">
-          <button @click="saveAsDraft" :disabled="isSaving" class="flex-1 sm:w-48 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 cursor-pointer">Save Draft</button>
-          <button @click="triggerPublish" :disabled="isSaving" class="flex-1 sm:w-48 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 shadow-sm cursor-pointer">Publish</button>
+          <button @click="saveAsDraft" :disabled="isSaving" class="flex-1 sm:w-48 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] hover:text-[#131B2B]/80 border border-[#131B2B]/10 py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 cursor-pointer">Save Draft</button>
+          <button @click="triggerPublish" :disabled="isSaving" class="flex-1 sm:w-48 bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 shadow-sm cursor-pointer">Publish</button>
         </template>
 
       </div>

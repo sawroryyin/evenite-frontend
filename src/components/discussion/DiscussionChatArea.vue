@@ -73,7 +73,6 @@ const scrollToDividerOrBottom = async () => {
   const divider = document.getElementById('unread-divider');
   if (divider && messageContainer.value) {
     divider.scrollIntoView({ behavior: 'auto', block: 'center' });
-    // Ensure hidden newer messages are fetched
     if (store.hasMoreNewer && !store.isFetchingNewer) {
       await store.loadNewerMessages();
     }
@@ -135,7 +134,7 @@ watch(() => store.messages.length, async (newLen, oldLen) => {
         if (messageContainer.value) {
           updateReadStatusOnScroll(messageContainer.value);
         }
-      }, 400); // 400ms allows the smooth scroll to finish
+      }, 400);
     } else {
       showJumpToBottom.value = true;
     }
@@ -165,7 +164,7 @@ const handleScroll = async (e: Event) => {
 const handleSendMessage = (payload: { content: string; isAnnouncement: boolean }) => {
   if (payload.content.length > 2000) {
     showAlert('Alert', 'Message cannot exceed 2000 characters', 'red');
-    return; // Stop execution, do not send to backend
+    return;
   }
 
   store.sendMessage(payload.content, payload.isAnnouncement);
@@ -180,11 +179,11 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-[#F4F4FA] relative font-['Lato']">
+  <div class="flex flex-col h-full bg-transparent relative font-['Lato']">
     <div class="absolute top-4 right-4 z-30 flex flex-col items-end">
       <button 
         @click="toggleAnnouncements"
-        class="bg-[#FFFFFF] text-[#534AB7] w-10 h-10 rounded-full shadow-sm border border-[#CECBF6] flex items-center justify-center hover:bg-[#EEEDFE] transition-colors cursor-pointer"
+        class="bg-white text-[#131B2B] w-10 h-10 rounded-full shadow-sm border border-[#131B2B]/10 flex items-center justify-center hover:bg-[#131B2B]/5 transition-colors cursor-pointer"
         title="View Announcements"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,11 +201,11 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
       >
         <div 
           v-if="showAnnouncementsPopup"
-          class="mt-2 w-72 max-h-80 bg-[#FFFFFF] rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-[#CECBF6] flex flex-col overflow-hidden"
+          class="mt-2 w-72 max-h-80 bg-white/95 backdrop-blur-md rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-[#131B2B]/10 flex flex-col overflow-hidden"
         >
-          <div class="bg-[#534AB7] text-[#FFFFFF] px-4 py-2.5 flex justify-between items-center shrink-0">
+          <div class="bg-[#131B2B] text-white px-4 py-2.5 flex justify-between items-center shrink-0">
             <span class="text-xs font-bold uppercase tracking-widest">Latest Announcements</span>
-            <button @click="showAnnouncementsPopup = false" class="text-[#FFFFFF]/70 hover:text-[#FFFFFF] transition-colors cursor-pointer">
+            <button @click="showAnnouncementsPopup = false" class="text-white/70 hover:text-white transition-colors cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
@@ -216,10 +215,10 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
             class="flex-1 overflow-y-auto p-3 space-y-2.5"
           >
             <div v-if="store.isLoadingAnnouncements" class="flex justify-center py-4">
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[#534AB7]"></div>
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[#131B2B]"></div>
             </div>
 
-            <div v-else-if="store.latestAnnouncements.length === 0" class="text-center py-4 text-xs font-bold text-[#26215C]/50">
+            <div v-else-if="store.latestAnnouncements.length === 0" class="text-center py-4 text-xs font-bold text-[#131B2B]/50">
               No announcements yet
             </div>
 
@@ -227,15 +226,15 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
               <div 
                 v-for="ann in store.latestAnnouncements" 
                 :key="ann.id" 
-                class="bg-[#F4F4FA] p-3 rounded-xl border border-[#CECBF6]"
+                class="bg-[#131B2B]/5 p-3 rounded-xl border border-[#131B2B]/10"
               >
                 <div class="flex justify-between items-baseline mb-1.5">
-                  <span class="text-xs font-bold text-[#26215C] truncate pr-2">{{ ann.sender.name }}</span>
-                  <span class="text-xs font-medium text-[#26215C]/50 shrink-0">
+                  <span class="text-xs font-bold text-[#131B2B] truncate pr-2">{{ ann.sender.name }}</span>
+                  <span class="text-xs font-medium text-[#131B2B]/50 shrink-0">
                     {{ new Date(ann.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) }}
                   </span>
                 </div>
-                <p class="text-sm text-[#26215C] whitespace-pre-wrap leading-relaxed">{{ ann.content }}</p>
+                <p class="text-sm text-[#131B2B] whitespace-pre-wrap leading-relaxed">{{ ann.content }}</p>
               </div>
             </template>
           </div>
@@ -243,29 +242,30 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
       </transition>
     </div>
     
+    <!-- Message Container: Due to `overflow-y-auto`, scrolled messages will seamlessly clip off the top of this container without overlapping the transparent header above -->
     <div 
       ref="messageContainer"
       @scroll="handleScroll"
-      class="flex-1 overflow-y-auto p-4 space-y-1.5"
+      class="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1.5"
     >
       <div v-if="store.isLoadingMessages" class="text-center py-20">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#534AB7] mx-auto"></div>
-        <p class="text-[#26215C]/70 text-sm mt-4 font-bold tracking-widest uppercase">Loading messages...</p>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#131B2B] mx-auto"></div>
+        <p class="text-[#131B2B]/70 text-sm mt-4 font-bold tracking-widest uppercase">Loading messages...</p>
       </div>
       
       <div v-if="store.isFetchingOlder" class="flex justify-center p-2">
-        <span class="text-xs font-bold text-[#534AB7] bg-white px-3 py-1 rounded-full shadow-sm border border-[#CECBF6] tracking-widest uppercase">
+        <span class="text-xs font-bold text-[#131B2B] bg-white px-3 py-1 rounded-full shadow-sm border border-[#131B2B]/10 tracking-widest uppercase">
           Loading older messages...
         </span>
       </div>
 
       <div v-if="!store.isLoadingMessages && store.messages.length === 0" class="flex flex-col items-center justify-center h-full text-center">
-        <div class="w-14 h-14 bg-[#EEEDFE] rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-7 h-7 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-14 h-14 bg-[#131B2B]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-[#131B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
           </svg>
         </div>
-        <p class="text-sm font-bold text-[#26215C]/70">No messages yet</p>
+        <p class="text-sm font-bold text-[#131B2B]/70">No messages yet</p>
       </div>
 
       <div 
@@ -283,7 +283,7 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
       </div>
     </div>
 
-    <div class="absolute bottom-28 left-0 w-full flex justify-center pointer-events-none z-10">
+    <div class="absolute bottom-20 left-0 w-full flex justify-center pointer-events-none z-30">
       <transition 
         enter-active-class="transition duration-200 ease-out" 
         enter-from-class="opacity-0 translate-y-2" 
@@ -295,7 +295,7 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
         <button 
           v-if="showJumpToBottom"
           @click="scrollToBottom('smooth')"
-          class="pointer-events-auto bg-[#534AB7] text-[#FFFFFF] w-10 h-10 rounded-full shadow-sm border border-[#3C3489] flex items-center justify-center hover:bg-[#3C3489] cursor-pointer"
+          class="pointer-events-auto bg-[#131B2B] text-white w-10 h-10 rounded-full shadow-sm border border-[#131B2B]/80 flex items-center justify-center hover:bg-[#131B2B]/80 cursor-pointer"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
@@ -304,7 +304,8 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
       </transition>
     </div>
 
-    <div class="shrink-0 bg-[#FFFFFF] border-t border-[#CECBF6] shadow-[0_-4px_12px_rgba(0,0,0,0.08)] relative z-20">
+    <!-- The input wrapper remains permanently anchored to the bottom of the flex column -->
+    <div class="shrink-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] relative z-20">
       <DiscussionInput 
         v-if="store.activeRoom"
         :disabled="store.activeRoom.isReadOnly"

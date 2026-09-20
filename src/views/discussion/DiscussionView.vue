@@ -52,8 +52,8 @@ const formatTime = (isoString?: string) => {
         @click="activeTab = filter"
         class="flex-1 text-center py-2.5 px-1 text-xs sm:text-sm font-bold rounded-3xl transition-colors tracking-tight whitespace-nowrap capitalize cursor-pointer"
         :class="activeTab === filter ?
-         'bg-[#534AB7] text-[#FFFFFF] shadow-sm' :
-         'text-[#26215C]/70 hover:bg-[#EEEDFE] hover:text-[#3C3489]'"
+         'bg-[#131B2B] text-white shadow-sm' :
+         'text-[#131B2B] hover:bg-[#131B2B]/5 hover:text-[#131B2B]'"
       >
         {{ filter }}
       </button>
