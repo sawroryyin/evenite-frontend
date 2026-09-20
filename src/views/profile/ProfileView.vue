@@ -233,7 +233,7 @@ const onAlertCancel = () => {
 </script>
 
 <template>
-  <div class="pt-6 pb-28 max-w-3xl mx-auto bg-[#F4F4FA] min-h-screen font-['Lato'] px-5 relative">
+  <div class="pt-6 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5 relative">
     
     <AlertBox 
       v-if="showAlert" 

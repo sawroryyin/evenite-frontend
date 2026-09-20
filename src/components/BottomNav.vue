@@ -60,27 +60,28 @@ const filteredNavItems = computed(() => {
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 w-full bg-[#FFFFFF] backdrop-blur-md border-t border-[#CECBF6] pb-safe z-50 shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] font-['Lato']">
-    <div class="flex justify-around items-center h-18 max-w-3xl mx-auto px-2">
+  <div class="fixed bottom-5 left-4 right-4 z-50 max-w-3xl mx-auto font-['Lato']">
+    <nav 
+      class="flex items-center justify-between rounded-[28px] border border-[#CECBF6] bg-white/95 p-1.5 shadow-[0_14px_35px_rgba(23,35,59,0.13)] backdrop-blur-md"
+    >
       <button 
         v-for="item in filteredNavItems" 
         :key="item.name"
         @click="router.push({ name: item.name })"
-        class="flex flex-col items-center justify-center w-full h-full space-y-1.5 transition-all duration-200 cursor-pointer active:scale-95"
-        :class="route.name === item.name ? 'text-[#534AB7]' : 'text-[#26215C]/40 hover:text-[#3C3489]'"
+        class="flex flex-1 items-center justify-center rounded-3xl h-14 transition-all duration-300 cursor-pointer active:scale-95"
+        :class="route.name === item.name ? 'bg-[#131B2B] text-white shadow-md' : 'text-[#26215C]/50 hover:text-[#F26E22] hover:bg-[#F26E22]/10'"
       >
         <div class="relative flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" :d="item.icon"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"></path>
           </svg>
           
           <span 
             v-if="item.name === 'discussion' && totalUnreadCount > 0"
-            class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white shadow-sm"
+            class="absolute -top-1 -right-1.5 h-3.5 w-3.5 rounded-full bg-red-500 border-2 border-white shadow-sm"
           ></span>
         </div>
-        <span class="text-[10px] font-bold tracking-wide">{{ item.label }}</span>
       </button>
-    </div>
-  </nav>
+    </nav>
+  </div>
 </template>

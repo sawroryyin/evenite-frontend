@@ -11,7 +11,7 @@ const feedItems = [
 </script>
 
 <template>
-  <div class="pt-4 pb-12 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
+  <div class="pt-4 pb-12 max-w-3xl mx-auto min-h-screen font-['Lato'] px-4">
     
     <button @click="router.back()" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 font-bold 
     text-[11px] transition-colors cursor-pointer uppercase tracking-wide">

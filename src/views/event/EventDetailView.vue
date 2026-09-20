@@ -364,7 +364,7 @@ const confirmLeave = () => {
 </script>
 
 <template v-if="isDataReady">
-  <div class="pt-6 pb-28 max-w-3xl mx-auto bg-[#F4F4FA] min-h-screen font-['Lato'] px-5 relative">
+  <div class="pt-6 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5 relative">
     
     <div v-if="isTranslating" class="fixed inset-0 bg-[#F4F4FA]/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity">
       <div class="w-10 h-10 border-4 border-[#CECBF6] border-t-[#534AB7] rounded-full animate-spin mb-3"></div>

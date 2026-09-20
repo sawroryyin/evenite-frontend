@@ -213,13 +213,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="pb-28 max-w-3xl mx-auto font-['Lato'] bg-[#F4F4FA] min-h-screen overflow-x-hidden relative">
+  <div class="pb-28 max-w-3xl mx-auto font-['Lato'] min-h-screen overflow-x-hidden relative">
     <div v-if="isSearchMode && (isCategoryOpen || isDateOpen)" @click="closeDropdowns" class="fixed inset-0 z-30"></div>
 
     <div class="pt-6 px-5 relative z-10">
       <template v-if="!isSearchMode">
         <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
-          Discover your next <br /> campus experience ✨
+          Discover your next <br /> campus experience 
         </h1>
         <p class="text-sm font-['Lato'] text-[#26215C]/70 font-semibold tracking-wide mt-2">
           Explore what's happening around you today.
