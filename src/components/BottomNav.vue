@@ -1,46 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useDiscussionStore } from '../stores/discussion'
-import api from '../services/api' 
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const discussionStore = useDiscussionStore()
 
-const globalUnreadTracker = ref<Record<string, number>>({})
-
-onMounted(async () => {
-  if (discussionStore.rooms.length === 0) {
-    discussionStore.fetchRooms({ filter: 'active' });
-  }
-
-  try {
-    const [activeRes, archivedRes] = await Promise.all([
-      api.get('/discussions/rooms', { params: { filter: 'active' } }),
-      api.get('/discussions/rooms', { params: { filter: 'archived' } })
-    ]);
-    
-    const allRooms = [...activeRes.data, ...archivedRes.data];
-    
-    allRooms.forEach((room: any) => {
-      globalUnreadTracker.value[room.roomId] = room.unreadCount || 0;
-    });
-  } catch (error) {
-    console.warn('Could not load global unread counts', error);
-  }
-})
-
-watch(() => discussionStore.rooms, (newRooms) => {
-  newRooms.forEach(room => {
-    globalUnreadTracker.value[room.roomId] = room.unreadCount || 0;
-  });
-}, { deep: true, immediate: true })
-
+// Calculates unread count purely based on the rooms currently loaded in the store
 const totalUnreadCount = computed(() => {
-  return Object.values(globalUnreadTracker.value).reduce((total, count) => total + count, 0);
+  return discussionStore.rooms.reduce((total, room) => total + (room.unreadCount || 0), 0)
 })
 
 const navItems = [
