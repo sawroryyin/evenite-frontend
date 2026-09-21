@@ -377,23 +377,42 @@ const confirmLeave = () => {
       {{ t.back }}
     </button>
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-[#131B2B]/10 pb-4 gap-4">
-      <!-- UI UX Update: Standardized Nunito 2xl header -->
-      <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
+    <!-- Header & Language Toggles (Forced to same horizontal level) -->
+    <div class="flex flex-row justify-between items-center mb-6 border-b border-[#131B2B]/10 pb-4 gap-4">
+      
+      <!-- Title -->
+      <h1 class="text-xl sm:text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none truncate pr-2">
         {{ viewMode === 'preview' ? 'Event Details' : t.detailsTitle }}
       </h1>
       
-      <div class="flex items-center gap-2.5 w-full md:w-auto">
-        <div class="flex bg-white border border-[#131B2B]/10 p-1 rounded-xl w-full md:w-32 shadow-sm">
-          <button @click="viewLang = 'en'" :class="viewLang === 'en' ? 'bg-[#131B2B] shadow-sm text-white' : 'text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5'" class="flex-1 py-1.5 rounded-lg text-xs font-black transition-colors">EN</button>
-          <button @click="viewLang = 'th'" :class="viewLang === 'th' ? 'bg-[#131B2B] shadow-sm text-white' : 'text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5'" class="flex-1 py-1.5 rounded-lg text-xs font-black transition-colors">TH</button>
+      <!-- Right Side Controls -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        
+        <!-- Circular Language Toggles -->
+        <div class="flex gap-2 shrink-0">
+          <button 
+            @click="viewLang = 'en'" 
+            class="w-9 h-9 rounded-full text-xs font-black flex items-center justify-center transition-colors shadow-sm cursor-pointer border"
+            :class="viewLang === 'en' ? 'bg-[#131B2B] text-white border-[#131B2B]' : 'bg-white border-[#131B2B]/10 text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5'"
+          >
+            EN
+          </button>
+          <button 
+            @click="viewLang = 'th'" 
+            class="w-9 h-9 rounded-full text-xs font-black flex items-center justify-center transition-colors shadow-sm cursor-pointer border"
+            :class="viewLang === 'th' ? 'bg-[#131B2B] text-white border-[#131B2B]' : 'bg-white border-[#131B2B]/10 text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5'"
+          >
+            TH
+          </button>
         </div>
         
-        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-[#131B2B] text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-[#131B2B]/80 disabled:opacity-50 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+        <!-- Auto Translate Button -->
+        <button v-if="viewMode !== 'preview'" @click="handleTranslate" :disabled="isTranslating" class="bg-[#131B2B] text-white px-3 py-2 sm:h-9 rounded-xl text-xs font-bold shadow-sm hover:bg-[#131B2B]/80 disabled:opacity-50 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
           <span class="hidden sm:inline">Auto Translate</span>
         </button>
       </div>
+      
     </div>
 
     <div v-if="viewMode === 'preview'" class="animate-fade-in">

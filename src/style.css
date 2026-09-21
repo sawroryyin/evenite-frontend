@@ -42,3 +42,24 @@ body {
     transition: none !important;
   }
 }
+.ticket-mask {
+  /* Default mask position matches w-28 (112px) */
+  --notch-pos: 112px; 
+  --notch-radius: 10px;
+
+  /* Standard properties (Modern Browsers, Firefox) */
+  mask-image: 
+    radial-gradient(circle at var(--notch-pos) 0%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px)),
+    radial-gradient(circle at var(--notch-pos) 100%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px));
+  mask-size: 100% 51%, 100% 51%;
+  mask-position: top, bottom;
+  mask-repeat: no-repeat;
+
+  /* WebKit prefixed properties (Safari, older Chrome/Edge) */
+  -webkit-mask-image: 
+    radial-gradient(circle at var(--notch-pos) 0%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px)),
+    radial-gradient(circle at var(--notch-pos) 100%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px));
+  -webkit-mask-size: 100% 51%, 100% 51%;
+  -webkit-mask-position: top, bottom;
+  -webkit-mask-repeat: no-repeat;
+}

@@ -28,16 +28,15 @@ const statusColors = computed(() => {
 </script>
 
 <template>
+  <!-- 1. Add 'drop-shadow-sm', 'hover:drop-shadow-md', and 'transition-all' to the outermost wrapper -->
   <div 
     @click="router.push(`/events/${ticket.event.id}/tickets/${ticket.id}`)"
-    class="relative cursor-pointer group mb-4"
+    class="relative cursor-pointer group mb-4 drop-shadow-sm hover:drop-shadow-md transition-all"
   >
-    <!-- Mathematical positioning: w-28 is 112px. left-28 centers it at the start of the divider. -->
-    <div class="notch notch-top absolute top-0 left-28 sm:left-32 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border border-[#131B2B]/10 z-10"></div>
-    <div class="notch notch-bottom absolute bottom-0 left-28 sm:left-32 -translate-x-1/2 translate-y-1/2 w-5 h-5 rounded-full border border-[#131B2B]/10 z-10"></div>
-
-    <div class="flex bg-white rounded-2xl overflow-hidden shadow-sm border border-[#131B2B]/10 group-hover:shadow-md group-hover:border-[#131B2B]/30 transition-all">
-      <div class="w-28 sm:w-32 aspect-2/3 shrink-0 relative bg-[#131B2B]/5">
+    <!-- 2. Remove 'shadow-sm' and 'group-hover:shadow-md' from this inner ticket-mask div -->
+    <div class="ticket-mask flex bg-white rounded-2xl overflow-hidden border border-[#131B2B]/10 group-hover:border-[#131B2B]/30 transition-all">
+      
+      <div class="w-28 sm:w-32 aspect-4/5 shrink-0 relative bg-[#131B2B]/5">
         <img 
           v-if="ticket.event.bannerUrl" 
           :src="ticket.event.bannerUrl" 
@@ -79,9 +78,27 @@ const statusColors = computed(() => {
 </template>
 
 <style scoped>
-.notch {
-  background-color: hsl(40, 100%, 99%);
-  border: none;
+/* Creates the transparent cut-out effect */
+.ticket-mask {
+  /* Default mask position matches w-28 (112px) */
+  --notch-pos: 112px; 
+  --notch-radius: 10px;
+
+  /* Standard properties (Modern Browsers, Firefox) */
+  mask-image: 
+    radial-gradient(circle at var(--notch-pos) 0%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px)),
+    radial-gradient(circle at var(--notch-pos) 100%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px));
+  mask-size: 100% 51%, 100% 51%;
+  mask-position: top, bottom;
+  mask-repeat: no-repeat;
+
+  /* WebKit prefixed properties (Safari, older Chrome/Edge) */
+  -webkit-mask-image: 
+    radial-gradient(circle at var(--notch-pos) 0%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px)),
+    radial-gradient(circle at var(--notch-pos) 100%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px));
+  -webkit-mask-size: 100% 51%, 100% 51%;
+  -webkit-mask-position: top, bottom;
+  -webkit-mask-repeat: no-repeat;
 }
 
 .ticket-divider {

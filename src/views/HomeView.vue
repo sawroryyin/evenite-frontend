@@ -219,7 +219,7 @@ onMounted(() => {
     <div class="pt-6 px-5 relative z-10">
       <template v-if="!isSearchMode">
         <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
-          Discover your next <br /> campus experience 
+          Campus Life, Unlocked 
         </h1>
         <p class="text-sm font-['Lato'] text-[#131B2B]/70 font-semibold tracking-wide mt-2">
           Explore what's happening around you today.

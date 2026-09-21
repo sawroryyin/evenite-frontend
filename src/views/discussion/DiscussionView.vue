@@ -39,9 +39,6 @@ const formatTime = (isoString?: string) => {
         <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
           Discussions
         </h1>
-        <p class="text-sm font-['Lato'] text-[#131B2B]/70 font-semibold mt-2.5 tracking-wide">
-          View and manage your event chats
-        </p>
       </div>
     </div>
 

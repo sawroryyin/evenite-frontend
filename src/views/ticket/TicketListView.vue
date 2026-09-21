@@ -47,9 +47,6 @@ watch(selectedFilter, fetchTickets);
         <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
           My Tickets
         </h1>
-        <p class="text-sm font-['Lato'] text-[#131B2B]/70 font-semibold mt-2 tracking-wide">
-          View and manage your event tickets
-        </p>
       </div>
     </div>
 
@@ -98,3 +95,24 @@ watch(selectedFilter, fetchTickets);
     <BottomNav />
   </div>
 </template>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+.scrollbar-hide::-webkit-scrollbar-track,
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  display: none;
+  background: transparent;
+  background-color: transparent;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+</style>
