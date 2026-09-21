@@ -90,10 +90,10 @@ onMounted(() => {
     
     <div class="flex justify-between items-center mb-4 relative z-10">
       <div>
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
+        <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
           My Events
         </h1>
-        <p class="text-sm font-['Lato'] text-[#26215C]/70 font-semibold mt-2 tracking-wide">
+        <p class="text-sm font-['Lato'] text-[#131B2B]/70 font-semibold mt-2 tracking-wide">
           Manage and track your activities
         </p>
       </div>
@@ -110,15 +110,15 @@ onMounted(() => {
       </button>
     </div>
 
-    <div class="flex w-full bg-[#FFFFFF] rounded-3xl shadow-sm border border-[#CECBF6] p-1.5 mb-6 relative z-10 overflow-x-auto scrollbar-hide">
+    <div class="flex gap-3 mb-6 relative z-10 overflow-x-auto scrollbar-hide py-1">
       <button 
         v-for="tab in tabs" 
         :key="tab"
         @click="activeTab = tab"
-        class="flex-1 text-center py-2.5 px-3 text-xs sm:text-sm font-bold rounded-3xl transition-colors tracking-tight whitespace-nowrap cursor-pointer"
+        class="shrink-0 flex items-center gap-2 py-2.5 px-6 text-sm font-bold rounded-full transition-all tracking-tight cursor-pointer"
         :class="activeTab === tab ?
-         'bg-[#131B2B] text-white shadow-sm' : 
-         'text-[#131B2B]/70 hover:bg-[#131B2B]/5 hover:text-[#131B2B]'"
+        'bg-[#131B2B] text-white shadow-md border border-[#131B2B]' : 
+        'bg-white border border-[#131B2B]/20 text-[#131B2B]/70 hover:bg-[#131B2B]/5 hover:text-[#131B2B]'"
       >
         {{ tab }}
       </button>
