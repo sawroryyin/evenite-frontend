@@ -172,7 +172,7 @@ const formattedLocation = computed(() => {
       </div>
       <button 
         @click="goToEventDetails"
-        class="w-full mt-6 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm"
+        class="w-full mt-2 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm"
       >
         Go to Event Details
       </button>

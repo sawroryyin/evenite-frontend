@@ -27,7 +27,7 @@ const goBack = () => {
 <template>
   <!-- Fixed full screen wrapper locks the layout, preventing the input box from jumping -->
   <div class="fixed top-18 bottom-0 left-0 right-0 w-full max-w-3xl mx-auto flex flex-col font-['Lato'] z-40 bg-transparent">
-      <header class="shrink-0 bg-transparent px-4 pb-3 flex items-center z-20">
+      <header class="shrink-0 bg-transparent pt-4 px-4 pb-3 flex items-center z-20">
       <button @click="goBack" class="mr-3 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>

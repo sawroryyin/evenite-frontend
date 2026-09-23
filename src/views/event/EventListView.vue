@@ -86,27 +86,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="pt-6 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5">
+  <div class="pt-2 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5 relative">
     
-    <div class="flex justify-between items-center mb-4 relative z-10">
-      <div>
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
-          My Events
-        </h1>
-      </div>
-      
-      <button 
-        v-if="isOrganizer"
-        @click="router.push({ name: 'create-options' })"
-        class="bg-[#131B2B] hover:bg-[#131B2B] text-white text-sm font-bold py-2.5 px-4 rounded-xl shadow-sm flex items-center gap-2 transition-colors transform active:scale-95 cursor-pointer shrink-0"
-      >
-        <svg class="w-5 h-5 text-[#EEEDFE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Create Event
-      </button>
-    </div>
-
+    <!-- Tabs Section (Top button container removed) -->
     <div class="flex gap-3 mb-6 relative z-10 overflow-x-auto scrollbar-hide py-1">
       <button 
         v-for="tab in tabs" 
@@ -121,18 +103,19 @@ onMounted(() => {
       </button>
     </div>
 
+    <!-- Loading State -->
     <div v-if="isLoading" class="text-center py-20">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#534AB7] mx-auto"></div>
       <p class="text-[#26215C]/70 text-sm mt-4 font-bold tracking-widest uppercase">Fetching records...</p>
     </div>
 
-    <div v-else-if="errorMessage" class="bg-red-50 text-red-600 p-5 rounded-xl border 
-    border-red-200 text-sm font-bold text-center shadow-sm">
+    <!-- Error State -->
+    <div v-else-if="errorMessage" class="bg-red-50 text-red-600 p-5 rounded-xl border border-red-200 text-sm font-bold text-center shadow-sm">
       {{ errorMessage }}
     </div>
 
-    <div v-else-if="filteredEvents.length === 0" class="text-center py-16 bg-[#FFFFFF] rounded-xl border 
-    border-[#CECBF6] shadow-sm relative z-10">
+    <!-- Empty State -->
+    <div v-else-if="filteredEvents.length === 0" class="text-center py-16 bg-[#FFFFFF] rounded-xl border border-[#CECBF6] shadow-sm relative z-10">
       <div class="w-14 h-14 bg-[#EEEDFE] rounded-full flex items-center justify-center mx-auto mb-4">
         <svg class="w-7 h-7 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -144,6 +127,7 @@ onMounted(() => {
       <p class="text-sm font-bold text-[#26215C]/70">No events found matching this tab.</p>
     </div>
 
+    <!-- Event List -->
     <div v-else class="space-y-4 relative z-10">
       <EventCardList
         v-for="event in filteredEvents" 
@@ -151,6 +135,18 @@ onMounted(() => {
         :event="event"
       />
     </div>
+
+    <!-- FLOATING ACTION BUTTON (FAB) FOR ORGANIZERS -->
+    <button 
+      v-if="isOrganizer"
+      @click="router.push({ name: 'create-options' })"
+      class="fixed bottom-28 right-6 z-40 w-14 h-14 bg-[#131B2B] hover:bg-[#131B2B]/90 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all transform active:scale-95 cursor-pointer"
+      aria-label="Create Event"
+    >
+      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+      </svg>
+    </button>
 
     <BottomNav />
   </div>

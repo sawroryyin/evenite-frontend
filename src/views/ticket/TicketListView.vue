@@ -40,15 +40,7 @@ watch(selectedFilter, fetchTickets);
 </script>
 
 <template>
-  <div class="pt-6 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5">
-
-    <div class="flex justify-between items-center mb-4 relative z-10">
-      <div>
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
-          My Tickets
-        </h1>
-      </div>
-    </div>
+  <div class="pt-2 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5">
 
     <div class="flex gap-3 mb-6 relative z-10 overflow-x-auto scrollbar-hide py-1">
       <button

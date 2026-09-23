@@ -208,60 +208,66 @@ const onAlertCancel = () => { showAlert.value = false; alertAction.value = 'NONE
 </script>
 
 <template>
-  <div class="pt-6 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-4 sm:px-6 relative">
+  <div class="pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-4 sm:px-6 relative">
     
     <AlertBox v-if="showAlert" :title="alertTitle" :description="alertDescription" confirmText="OK" :cancelText="alertAction === 'MISSING_PROFILE' ? 'Cancel' : ''" @confirm="onAlertConfirm" @cancel="onAlertCancel" />
     <LoadingOverview v-if="isSwitchingRole" :message="`Switching to ${activeRole === 'PARTICIPANT' ? 'Organizer' : 'Participant'}...`" />
 
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight leading-none">Profile</h1>
-      <span class="bg-transparent text-gray-800 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-gray-400">
-        {{ activeRole }}
-      </span>
-    </div>
-
-    <div v-if="isLoading" class="bg-transparent p-24 rounded-3xl border border-gray-300 flex justify-center items-center">
+    <div v-if="isLoading" class="bg-transparent p-24 rounded-3xl border border-gray-300 flex justify-center items-center mt-8">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
     </div>
 
-    <div v-else class="bg-transparent rounded-3xl pb-8 overflow-hidden backdrop-blur-sm">
+    <div v-else class="bg-transparent rounded-3xl pb-8 overflow-hidden backdrop-blur-sm mt-4">
       
-      <div class="h-20 sm:h-24 w-full relative bg-transparent border-gray-300"></div>
+      <!-- Cover Photo Area -->
+      <div class="h-12 sm:h-16 w-full relative bg-transparent border-gray-300"></div>
       
-      <div class="px-5 sm:px-8 relative z-10 flex flex-row gap-4 sm:gap-6 -mt-12 sm:-mt-16 mb-6">
+      <div class="px-5 sm:px-8 relative z-10 flex flex-col mb-6">
         
-        <div class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-gray-300 bg-transparent overflow-hidden shrink-0 relative group"
-             :class="isEditing ? 'cursor-pointer' : ''"
-             @click="triggerFileInput">
-          <img :src="imagePreviewUrl || profileData.imageUrl || defaultAvatar" alt="Profile Image" class="w-full h-full object-cover" />
-          <div v-if="isEditing" class="absolute inset-0 bg-gray-900/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-            <svg class="w-8 h-8 text-white mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-            <span class="text-xs text-white font-bold tracking-wider uppercase">Edit</span>
+        <!-- Profile Picture and Name Row -->
+        <div class="flex flex-row gap-4 sm:gap-6 -mt-12 sm:-mt-16">
+          <div class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white bg-gray-100 overflow-hidden shrink-0 relative group shadow-sm"
+               :class="isEditing ? 'cursor-pointer' : ''"
+               @click="triggerFileInput">
+            <img :src="imagePreviewUrl || profileData.imageUrl || defaultAvatar" alt="Profile Image" class="w-full h-full object-cover" />
+            <div v-if="isEditing" class="absolute inset-0 bg-gray-900/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+              <svg class="w-8 h-8 text-white mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+              <span class="text-xs text-white font-bold tracking-wider uppercase">Edit</span>
+            </div>
+          </div>
+          
+          <!-- Name and Role Badge -->
+          <div v-if="!isEditing" class="flex flex-col flex-1 pt-2 sm:pt-4 justify-start items-start">
+            <template v-if="activeRole === 'PARTICIPANT'">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{{ profileData.firstName || 'Anonymous' }} {{ profileData.lastName || '' }}</h2>
+              <p v-if="profileData.nickname" class="text-[#EE6A5D] font-medium text-sm mt-0.5">({{ profileData.nickname }})</p>
+            </template>
+
+            <template v-else>
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{{ profileData.name || 'Unnamed Organization' }}</h2>
+            </template>
+
+            <!-- Role Badge moved under the name -->
+            <span class="mt-2.5 text-gray-800 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-400">
+              {{ activeRole }}
+            </span>
+          </div>
+
+          <!-- Edit Photo Buttons -->
+          <div v-else class="flex flex-col flex-1 pt-14 sm:pt-16 justify-start items-start gap-2">
+            <button v-if="!hasCustomImage" type="button" @click="triggerFileInput" class="bg-transparent text-gray-900 border border-gray-400 hover:border-gray-600 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+              Upload Photo
+            </button>
+            <button v-if="hasCustomImage" type="button" @click="removePicture" class="bg-transparent text-gray-900 border border-gray-400 hover:border-gray-600 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+              Remove Photo
+            </button>
+            <input type="file" ref="fileInput" @change="onFileChange" accept="image/jpeg, image/png, image/webp" class="hidden" />
           </div>
         </div>
-        
-        <div v-if="!isEditing" class="flex flex-col flex-1 pt-4 sm:pt-16">
-          <template v-if="activeRole === 'PARTICIPANT'">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{{ profileData.firstName || 'Anonymous' }} {{ profileData.lastName || '' }}</h2>
-            <p v-if="profileData.nickname" class="text-[#EE6A5D] font-medium text-sm mt-1">@{{ profileData.nickname }}</p>
-          </template>
 
-          <template v-else>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{{ profileData.name || 'Unnamed Organization' }}</h2>
-            <p v-if="profileData.bio" class="text-gray-800 text-sm leading-snug mt-1.5 line-clamp-3 sm:line-clamp-none">
-              {{ profileData.bio }}
-            </p>
-          </template>
-        </div>
-
-        <div v-else class="flex flex-col flex-1 pt-12 sm:pt-16 justify-start items-start gap-2">
-          <button v-if="!hasCustomImage" type="button" @click="triggerFileInput" class="bg-transparent text-gray-900 border border-gray-400 hover:border-gray-600 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer">
-            Upload Photo
-          </button>
-          <button v-if="hasCustomImage" type="button" @click="removePicture" class="bg-transparent text-gray-900 border border-gray-400 hover:border-gray-600 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer">
-            Remove Photo
-          </button>
-          <input type="file" ref="fileInput" @change="onFileChange" accept="image/jpeg, image/png, image/webp" class="hidden" />
+        <!-- Organizer Bio moved full-width underneath photo and name -->
+        <div v-if="!isEditing && activeRole === 'ORGANIZER' && profileData.bio" class="mt-5 text-gray-800 text-sm leading-relaxed">
+          {{ profileData.bio }}
         </div>
       </div>
 

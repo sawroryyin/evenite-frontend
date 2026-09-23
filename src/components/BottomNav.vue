@@ -14,10 +14,11 @@ const totalUnreadCount = computed(() => {
   return discussionStore.rooms.reduce((total, room) => total + (room.unreadCount || 0), 0)
 })
 
+// Updated labels to "Home", "Event", "Ticket", "Discuss", and "Profile"
 const navItems = [
   { name: 'home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { name: 'event-list', label: 'My Events', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-  { name: 'my-tickets', label: 'My Tickets', icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 010 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 010-4V7a2 2 0 00-2-2H5z' },
+  { name: 'event-list', label: 'Event', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+  { name: 'my-tickets', label: 'Ticket', icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 010 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 010-4V7a2 2 0 00-2-2H5z' },
   { name: 'discussion', label: 'Discuss', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
   { name: 'profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
 ]
@@ -35,23 +36,29 @@ const filteredNavItems = computed(() => {
     <nav 
       class="flex items-center justify-between rounded-[28px] border border-[#131B2B]/10 bg-white/95 p-1.5 shadow-[0_14px_35px_rgba(23,35,59,0.13)] backdrop-blur-md"
     >
+      <!-- Added flex-col, gap-1, and increased height to h-16 to fit text comfortably -->
       <button 
         v-for="item in filteredNavItems" 
         :key="item.name"
         @click="router.push({ name: item.name })"
-        class="flex flex-1 items-center justify-center rounded-3xl h-14 transition-all duration-300 cursor-pointer active:scale-95"
+        class="flex flex-col flex-1 items-center justify-center rounded-3xl h-16 transition-all duration-300 cursor-pointer active:scale-95 gap-1"
         :class="route.name === item.name ? 'bg-[#131B2B] text-white shadow-md' : 'text-[#131B2B]/50 hover:text-[#F26E22]'"
       >
         <div class="relative flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Scaled down icon slightly to w-5 h-5 to balance with the text -->
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"></path>
           </svg>
           
+          <!-- Adjusted red dot positioning for the new icon size -->
           <span 
             v-if="item.name === 'discussion' && totalUnreadCount > 0"
-            class="absolute -top-1 -right-1.5 h-3.5 w-3.5 rounded-full bg-red-500 border-2 border-white shadow-sm"
+            class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-[1.5px] border-white shadow-sm"
           ></span>
         </div>
+        
+        <!-- Added text label with small, readable typography -->
+        <span class="text-[10px] font-medium tracking-wide">{{ item.label }}</span>
       </button>
     </nav>
   </div>

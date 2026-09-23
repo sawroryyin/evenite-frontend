@@ -216,17 +216,8 @@ onMounted(() => {
   <div class="pb-28 max-w-3xl mx-auto font-['Lato'] min-h-screen overflow-x-hidden relative">
     <div v-if="isSearchMode && (isCategoryOpen || isDateOpen)" @click="closeDropdowns" class="fixed inset-0 z-30"></div>
 
-    <div class="pt-6 px-5 relative z-10">
-      <template v-if="!isSearchMode">
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
-          Campus Life, Unlocked 
-        </h1>
-        <p class="text-sm font-['Lato'] text-[#131B2B]/70 font-semibold tracking-wide mt-2">
-          Explore what's happening around you today.
-        </p>
-      </template>
-
-      <template v-else>
+    <div class="px-5 relative z-10">
+      <template v-if="isSearchMode">
         <div class="flex items-center gap-3 mb-2">
           <button @click="exitSearch" class="p-2 -ml-2 text-[#131B2B]/70 hover:text-[#131B2B] transition-colors cursor-pointer">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +234,7 @@ onMounted(() => {
       </template>
     </div>
 
-    <div class="relative w-full px-5 mt-5 mb-6 z-20">
+    <div class="relative w-full px-5 mt-2 mb-6 z-20">
       <button v-if="isSearchMode" @click="triggerSearch" class="absolute inset-y-0 left-5 pl-4 flex items-center pr-3 cursor-pointer outline-none">
         <svg class="w-5 h-5 text-[#131B2B] hover:text-[#131B2B]/70 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
