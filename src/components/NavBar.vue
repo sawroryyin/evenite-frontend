@@ -5,9 +5,10 @@ const router = useRouter()
 </script>
 
 <template>
-  <header class="bg-transparent px-5 py-4 flex justify-between items-center relative z-60 font-sans">
-    <div class="font-extrabold font-['Lobster'] text-3xl tracking-wider text-[#131B2B] cursor-pointer drop-shadow-sm" @click="router.push({ name: 'home' })">
-      Evenite
+  <!-- Fixed z-[60] and kept py-4 padding intact -->
+  <header class="sticky top-0 px-5 py-4 flex justify-between items-center z-60 font-sans header-mask">
+    <div class="cursor-pointer flex items-center drop-shadow-sm transition-transform hover:scale-105" @click="router.push({ name: 'home' })">
+      <img src="../assets/evenite_logo.png" alt="Evenite Logo" class="h-10 object-contain rounded-md" />
     </div>
     
     <nav class="flex items-center gap-5">
@@ -25,3 +26,25 @@ const router = useRouter()
     </nav>
   </header>
 </template>
+
+<style scoped>
+.header-mask {
+  background-color: hsl(40, 100%, 99%);
+  background-image: radial-gradient(circle at 90% 8%, #ffe6b8 0 13%, transparent 31%), 
+                    radial-gradient(circle at 4% 34%, #d9f5ea 0 14%, transparent 34%);
+  background-attachment: fixed;
+}
+
+/* Creates an invisible 2px extension of the fixed background to cover the rendering gap */
+.header-mask::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: inherit;
+  background-attachment: fixed;
+  z-index: -1;
+}
+</style>
