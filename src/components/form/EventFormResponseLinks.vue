@@ -18,15 +18,15 @@ const navigateToResponses = (type: string) => {
 </script>
 
 <template>
-  <section v-if="hasRegistration || hasFeedback" class="bg-[#FFFFFF] p-4 rounded-xl border border-[#CECBF6] shadow-sm">
-    <h2 class="text-base font-bold text-[#26215C] mb-4">Participant Responses</h2>
+  <section v-if="hasRegistration || hasFeedback" class="bg-white p-4 rounded-xl border border-[#131B2B]/10 shadow-sm font-['Lato']">
+    <h2 class="text-base font-bold text-[#131B2B] mb-4">Participant Responses</h2>
 
     <div class="flex flex-col sm:flex-row gap-3">
       <button 
         v-if="hasRegistration"
         type="button" 
         @click="navigateToResponses('REGISTRATION')" 
-        class="relative flex-1 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] hover:border-[#534AB7] py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer"
+        class="relative flex-1 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 hover:border-[#131B2B]/30 py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer shadow-sm"
       >
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@ const navigateToResponses = (type: string) => {
           </svg>
           Registration Responses
         </div>
-        <span class="text-[#534AB7] bg-[#EEEDFE] border border-[#CECBF6] text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
+        <span class="text-[#131B2B] bg-[#131B2B]/5 border border-[#131B2B]/10 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
           View Data
         </span>
       </button>
@@ -43,7 +43,7 @@ const navigateToResponses = (type: string) => {
         v-if="hasFeedback"
         type="button" 
         @click="navigateToResponses('FEEDBACK')" 
-        class="relative flex-1 bg-[#FFFFFF] hover:bg-[#EEEDFE] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] hover:border-[#534AB7] py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer"
+        class="relative flex-1 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 hover:border-[#131B2B]/30 py-3 rounded-xl font-bold text-sm transition-colors flex flex-col justify-center items-center gap-1 cursor-pointer shadow-sm"
       >
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ const navigateToResponses = (type: string) => {
           </svg>
           Feedback Responses
         </div>
-        <span class="text-[#534AB7] bg-[#EEEDFE] border border-[#CECBF6] text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
+        <span class="text-[#131B2B] bg-[#131B2B]/5 border border-[#131B2B]/10 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider mt-1">
           View Data
         </span>
       </button>

@@ -134,13 +134,12 @@ const fetchHomeFeed = async () => {
     } else {
       selectedEvents.value = upcomingPublicEvents
         .sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
-        .slice(0, 5)
+        .slice(0, 10)
     }
 
-// Sort all future public events chronologically, then slice the first 10
     upcomingEvents.value = [...upcomingPublicEvents]
       .sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
-      .slice(0, 10)
+      .slice(0, 20)
       
   } catch (error) {
     console.error('Failed to load events:', error)
@@ -213,44 +212,35 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="pb-28 max-w-3xl mx-auto font-['Lato'] bg-[#F4F4FA] min-h-screen overflow-x-hidden relative">
+  <div class="pb-28 max-w-3xl mx-auto font-['Lato'] min-h-screen overflow-x-hidden relative">
     <div v-if="isSearchMode && (isCategoryOpen || isDateOpen)" @click="closeDropdowns" class="fixed inset-0 z-30"></div>
 
-    <div class="pt-6 px-5 relative z-10">
-      <template v-if="!isSearchMode">
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
-          Discover your next <br /> campus experience ✨
-        </h1>
-        <p class="text-sm font-['Lato'] text-[#26215C]/70 font-semibold tracking-wide mt-2">
-          Explore what's happening around you today.
-        </p>
-      </template>
-
-      <template v-else>
+    <div class="px-5 relative z-10">
+      <template v-if="isSearchMode">
         <div class="flex items-center gap-3 mb-2">
-          <button @click="exitSearch" class="p-2 -ml-2 text-[#26215C]/70 hover:text-[#3C3489] transition-colors cursor-pointer">
+          <button @click="exitSearch" class="p-2 -ml-2 text-[#131B2B]/70 hover:text-[#131B2B] transition-colors cursor-pointer">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
           </button>
-          <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
+          <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
             Search Events
           </h1>
         </div>
-        <p class="text-sm font-['Lato'] text-[#26215C]/70 font-semibold mt-1 tracking-wide ml-11">
+        <p class="text-sm font-['Lato'] text-[#131B2B]/70 font-semibold mt-1 tracking-wide ml-11">
           Find exactly what you're looking for
         </p>
       </template>
     </div>
 
-    <div class="relative w-full px-5 mt-5 mb-6 z-20">
+    <div class="relative w-full px-5 mt-2 mb-6 z-20">
       <button v-if="isSearchMode" @click="triggerSearch" class="absolute inset-y-0 left-5 pl-4 flex items-center pr-3 cursor-pointer outline-none">
-        <svg class="w-5 h-5 text-[#534AB7] hover:text-[#3C3489] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-[#131B2B] hover:text-[#131B2B]/70 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </button>
       <div v-else class="absolute inset-y-0 left-5 pl-4 flex items-center pointer-events-none">
-        <svg class="w-5 h-5 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-[#131B2B]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
@@ -261,8 +251,8 @@ onMounted(() => {
         @keyup.enter="isSearchMode ? triggerSearch() : null"
         type="text" 
         :placeholder="isSearchMode ? 'Search... (Press Enter)' : 'Search events...'" 
-        class="w-full text-base border border-[#CECBF6] rounded-3xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 
-        focus:ring-[#534AB7] bg-[#FFFFFF] shadow-sm font-['Lato'] transition-all text-[#26215C]" 
+        class="w-full text-base border border-[#131B2B]/10 rounded-3xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 
+        focus:ring-[#131B2B] bg-white shadow-sm font-['Lato'] transition-all text-[#131B2B]" 
       />
     </div>
 
@@ -270,27 +260,27 @@ onMounted(() => {
       <div class="grid grid-cols-2 gap-3 px-5 mb-8 relative z-40 font-['Lato']">
         <div class="relative">
           <button @click="isCategoryOpen = !isCategoryOpen; isDateOpen = false" 
-            class="w-full flex items-center justify-between bg-[#FFFFFF] border border-[#CECBF6] text-[#26215C] text-sm 
-            py-3 pl-4 pr-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#534AB7] font-bold shadow-sm cursor-pointer transition-shadow">
+            class="w-full flex items-center justify-between bg-white border border-[#131B2B]/10 text-[#131B2B] text-sm 
+            py-3 pl-4 pr-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#131B2B] font-bold shadow-sm cursor-pointer transition-shadow">
             <div class="flex items-center gap-2 truncate font-['Lato']">
-              <svg class="w-4 h-4 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-[#131B2B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeCategory.icon"></path>
               </svg>
               <span class="truncate text-sm">{{ activeCategory.label }}</span>
             </div>
-            <svg class="w-4 h-4 text-[#534AB7] shrink-0 transition-transform duration-200" 
+            <svg class="w-4 h-4 text-[#131B2B] shrink-0 transition-transform duration-200" 
               :class="{ 'rotate-180': isCategoryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
 
           <ul v-if="isCategoryOpen" 
-            class="absolute top-full left-0 w-full mt-2 bg-[#FFFFFF] border border-[#EEEDFE] rounded-xl shadow-xl max-h-60 
+            class="absolute top-full left-0 w-full mt-2 bg-white border border-[#131B2B]/10 rounded-xl shadow-xl max-h-60 
             overflow-y-auto scrollbar-hide py-2 z-50 origin-top">
             <li v-for="cat in categoryOptions" :key="cat.value" @click="selectCategory(cat.value)"
               :class="['flex items-center gap-3 px-4 py-3 text-sm font-bold cursor-pointer transition-colors',
-              activeCategoryValue === cat.value ? 'text-[#534AB7] bg-[#EEEDFE]' : 'text-[#26215C] hover:bg-[#EEEDFE] hover:text-[#3C3489]']">
-              <svg class="w-4 h-4 shrink-0" :class="activeCategoryValue === cat.value ? 'text-[#534AB7]' : 'text-[#26215C]/70'" 
+              activeCategoryValue === cat.value ? 'text-[#131B2B] bg-[#131B2B]/5' : 'text-[#131B2B]/80 hover:bg-[#131B2B]/5 hover:text-[#131B2B]']">
+              <svg class="w-4 h-4 shrink-0" :class="activeCategoryValue === cat.value ? 'text-[#131B2B]' : 'text-[#131B2B]/50'" 
                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="cat.icon"></path>
               </svg>
@@ -301,27 +291,27 @@ onMounted(() => {
 
         <div class="relative font-['Lato']">
           <button @click="isDateOpen = !isDateOpen; isCategoryOpen = false" 
-            class="w-full flex items-center justify-between bg-[#FFFFFF] border border-[#CECBF6] text-[#26215C] text-sm 
-            py-3 pl-4 pr-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#534AB7] font-bold shadow-sm cursor-pointer transition-shadow">
+            class="w-full flex items-center justify-between bg-white border border-[#131B2B]/10 text-[#131B2B] text-sm 
+            py-3 pl-4 pr-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#131B2B] font-bold shadow-sm cursor-pointer transition-shadow">
             <div class="flex items-center gap-2 truncate text-sm">
-              <svg class="w-4 h-4 text-[#534AB7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-[#131B2B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="activeDate.icon"></path>
               </svg>
               <span class="truncate">{{ activeDate.label }}</span>
             </div>
-            <svg class="w-4 h-4 text-[#534AB7] shrink-0 transition-transform duration-200" 
+            <svg class="w-4 h-4 text-[#131B2B] shrink-0 transition-transform duration-200" 
               :class="{ 'rotate-180': isDateOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
 
           <ul v-if="isDateOpen" 
-            class="absolute top-full right-0 w-full mt-2 bg-[#FFFFFF] border border-[#EEEDFE] rounded-xl 
+            class="absolute top-full right-0 w-full mt-2 bg-white border border-[#131B2B]/10 rounded-xl 
             shadow-xl overflow-hidden py-2 z-50 origin-top">
             <li v-for="date in dateOptions" :key="date.value" @click="selectDate(date.value)"
               :class="['flex items-center gap-3 px-4 py-3 text-sm font-bold cursor-pointer transition-colors',
-              activeDateValue === date.value ? 'text-[#534AB7] bg-[#EEEDFE]' : 'text-[#26215C] hover:bg-[#EEEDFE] hover:text-[#3C3489]']">
-              <svg class="w-4 h-4 shrink-0" :class="activeDateValue === date.value ? 'text-[#534AB7]' : 'text-[#26215C]/70'" 
+              activeDateValue === date.value ? 'text-[#131B2B] bg-[#131B2B]/5' : 'text-[#131B2B]/80 hover:bg-[#131B2B]/5 hover:text-[#131B2B]']">
+              <svg class="w-4 h-4 shrink-0" :class="activeDateValue === date.value ? 'text-[#131B2B]' : 'text-[#131B2B]/50'" 
                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="date.icon"></path>
               </svg>
@@ -333,23 +323,23 @@ onMounted(() => {
 
       <div class="px-5">
         <div v-if="isSearching" class="text-center py-20">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#534AB7] mx-auto"></div>
-          <p class="text-[#26215C]/70 text-sm mt-4 font-bold tracking-widest uppercase">Searching...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#131B2B] mx-auto"></div>
+          <p class="text-[#131B2B]/70 text-sm mt-4 font-bold tracking-widest uppercase">Searching...</p>
         </div>
 
-        <div v-else-if="!hasActiveFilters" class="text-center py-16 bg-[#FFFFFF] rounded-xl border border-[#CECBF6] shadow-sm relative z-10 mt-12">
-          <div class="w-14 h-14 bg-[#EEEDFE] rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-7 h-7 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="!hasActiveFilters" class="text-center py-16 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm relative z-10 mt-12">
+          <div class="w-14 h-14 bg-[#131B2B]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#131B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </div>
-          <p class="text-sm font-bold text-[#26215C]/70">
+          <p class="text-sm font-bold text-[#131B2B]/70">
             Type a keyword and press <b>Enter</b> <br/> or apply filters to discover campus experiences.
           </p>
         </div>
 
         <div v-else-if="filteredEvents.length > 0">
-          <p class="text-sm font-['Nunito'] font-black mb-3 tracking-tight uppercase text-[#26215C]">
+          <p class="text-sm font-['Nunito'] font-black mb-3 tracking-tight uppercase text-[#131B2B]">
             Search Results ({{ filteredEvents.length }})
           </p>
           <div class="grid grid-cols-2 gap-2.5">
@@ -363,13 +353,13 @@ onMounted(() => {
           </div>
         </div>
 
-        <div v-else class="text-center py-16 bg-[#FFFFFF] rounded-xl border border-[#CECBF6] shadow-sm relative z-10 mt-12">
-          <div class="w-14 h-14 bg-[#EEEDFE] rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-7 h-7 text-[#534AB7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else class="text-center py-16 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm relative z-10 mt-12">
+          <div class="w-14 h-14 bg-[#131B2B]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#131B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
-          <p class="text-sm font-bold text-[#26215C]/70">
+          <p class="text-sm font-bold text-[#131B2B]/70">
             No events found matching your search. <br/> Try adjusting your filters.
           </p>
         </div>
@@ -377,10 +367,9 @@ onMounted(() => {
     </div>
 
     <div v-else class="relative z-10">
-      <!-- UI UX Update: Matched standard spinner and padding -->
       <div v-if="isLoading" class="text-center py-20">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#534AB7] mx-auto"></div>
-        <p class="text-[#26215C]/70 text-sm mt-4 font-bold tracking-widest uppercase">Curating your feed...</p>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#131B2B] mx-auto"></div>
+        <p class="text-[#131B2B]/70 text-sm mt-4 font-bold tracking-widest uppercase">Curating your feed...</p>
       </div>
 
       <div v-else-if="errorMessage" class="px-5">
@@ -391,13 +380,13 @@ onMounted(() => {
 
       <template v-else>
         <div class="flex items-center px-5 mb-4">
-            <div class="w-1.5 h-5 bg-[#534AB7] rounded-full mr-2.5"></div>
-            <h2 class="text-sm font-black uppercase tracking-widest text-[#26215C]">Selected for you</h2>
+            <div class="w-1.5 h-5 bg-[#131B2B] rounded-full mr-2.5"></div>
+            <h2 class="text-sm font-black uppercase tracking-widest text-[#131B2B]">Selected for you</h2>
         </div>
         
         <div v-if="selectedEvents.length === 0" class="px-5 mb-6">
-          <div class="bg-[#FFFFFF] rounded-xl border border-[#CECBF6] p-6 text-center shadow-sm">
-            <p class="text-sm font-bold text-[#26215C]/70">No recommended events right now based on your preferences.</p>
+          <div class="bg-white rounded-xl border border-[#131B2B]/10 p-6 text-center shadow-sm">
+            <p class="text-sm font-bold text-[#131B2B]/70">No recommended events right now based on your preferences.</p>
           </div>
         </div>
 
@@ -425,20 +414,20 @@ onMounted(() => {
               :key="idx"
               :class="[
                 'transition-all duration-300 rounded-full',
-                activeSwipeIndex === idx ? 'w-2 h-2 bg-[#534AB7]' : 'w-1.5 h-1.5 bg-[#EEEDFE]'
+                activeSwipeIndex === idx ? 'w-2 h-2 bg-[#131B2B]' : 'w-1.5 h-1.5 bg-[#131B2B]/15'
               ]"
             ></span>
           </div>
         </div>
 
         <div class="flex items-center px-5 mb-4 mt-8">
-            <div class="w-1.5 h-5 bg-[#534AB7] rounded-full mr-2.5"></div>
-            <h2 class="text-sm font-black uppercase tracking-widest text-[#26215C]">Upcoming Events</h2>
+            <div class="w-1.5 h-5 bg-[#131B2B] rounded-full mr-2.5"></div>
+            <h2 class="text-sm font-black uppercase tracking-widest text-[#131B2B]">Upcoming Events</h2>
         </div>
 
         <div v-if="upcomingEvents.length === 0" class="px-5">
-          <div class="bg-[#FFFFFF] rounded-xl border border-[#CECBF6] p-6 text-center shadow-sm">
-            <p class="text-sm font-bold text-[#26215C]/70">No events happening this week.</p>
+          <div class="bg-white rounded-xl border border-[#131B2B]/10 p-6 text-center shadow-sm">
+            <p class="text-sm font-bold text-[#131B2B]/70">No events happening this week.</p>
           </div>
         </div>
 

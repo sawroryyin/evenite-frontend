@@ -62,35 +62,40 @@ const handleTextGenerate = async () => {
 </script>
 
 <template>
-  <div class="p-4 max-w-md mx-auto font-['Lato'] relative">
+  <div class="p-4 max-w-md mx-auto font-['Lato'] relative bg-transparent min-h-screen">
     
     <LoadingOverlay v-if="isLoading" message="Generating Event Details..." />
 
-    <button @click="router.back()" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 
-    font-bold text-[11px] transition-colors cursor-pointer uppercase tracking-wide">
+    <!-- Updated: text-[11px] to text-sm -->
+    <button @click="router.back()" class="mb-5 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 
+    font-bold text-sm transition-colors cursor-pointer uppercase tracking-wide">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
         stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
     </button>
     
     <div class="mb-4">
-      <h1 class="text-[18px] font-black tracking-tight text-[#26215C]">Generate from Prompt</h1>
-      <p class="text-[11px] text-[#26215C]/70 font-medium mt-1">Describe your event and AI will draft the details.</p>
+      <!-- Updated: text-[18px] to text-xl (20px) -->
+      <h1 class="text-xl font-black tracking-tight text-[#131B2B]">Generate from Prompt</h1>
+      <!-- Updated: text-[11px] to text-sm -->
+      <p class="text-sm text-[#131B2B]/70 font-medium mt-1.5">Describe your event and AI will draft the details.</p>
     </div>
     
+    <!-- Updated: text-[12px] to text-base (16px) to prevent iOS auto-zoom, and increased padding to p-4 -->
     <textarea 
       v-model="promptText" 
-      class="w-full border border-[#CECBF6] p-3 rounded-xl mb-3 focus:ring-1.5 focus:ring-[#7F77DD] 
-      focus:border-transparent focus:outline-none text-[12px] bg-[#EEEDFE]/30 placeholder-[#26215C]/40 text-[#26215C] shadow-sm" 
+      class="w-full border border-[#131B2B]/10 p-4 rounded-xl mb-4 focus:ring-1.5 focus:ring-[#131B2B]/30 
+      focus:border-transparent focus:outline-none text-base bg-[#131B2B]/5 placeholder-[#131B2B]/40 text-[#131B2B] shadow-inner" 
       rows="6"
       placeholder="E.g., We are hosting a Web Development workshop next Friday at CMU Library..."
     ></textarea>
     
+    <!-- Updated: text-[12px] to text-base, and increased padding to py-3.5 for a better touch target -->
     <button 
       @click="handleTextGenerate" 
       :disabled="isLoading"
-      class="bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] px-4 py-2.5 rounded-xl 
-      w-full text-[12px] font-bold disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+      class="bg-[#131B2B] hover:bg-[#131B2B]/80 text-white px-4 py-3.5 rounded-xl 
+      w-full text-base font-bold disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
     >
       Generate Event
     </button>

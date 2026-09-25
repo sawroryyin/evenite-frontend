@@ -214,34 +214,34 @@ const showConfirm = (title: string, description: string, confirmText: string, th
 </script>
 
 <template>
-  <div class="pt-6 pb-28 max-w-3xl mx-auto bg-[#F4F4FA] min-h-screen font-['Lato'] px-5 relative">
+  <div class="pt-6 pb-28 max-w-3xl mx-auto bg-transparent min-h-screen font-['Lato'] px-5 relative">
     <LoadingOverlay 
       v-if="isLoading || isSubmitting" 
       :message="isSubmitting ? 'Registering...' : 'Loading Form...'" 
     />
     
     <template v-if="!isLoading && form">
-      <button @click="handleCancel" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer py-1 pr-4">
+      <button @click="handleCancel" class="mb-5 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer py-1 pr-4">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         BACK TO EVENT
       </button>
 
-      <div class="mb-6 border-b border-[#CECBF6] pb-5">
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
+      <div class="mb-6 border-b border-[#131B2B]/10 pb-5">
+        <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none">
           {{ form.title || `${formType} Form` }}
         </h1>
-        <p v-if="form.description" class="text-sm font-semibold text-[#26215C]/70 mt-2.5">{{ form.description }}</p>
+        <p v-if="form.description" class="text-sm font-semibold text-[#131B2B]/70 mt-2.5">{{ form.description }}</p>
       </div>
 
       <form id="submit-form" @submit.prevent="handlePreSubmit" class="space-y-6 animate-fade-in">
-        <div v-for="(field, index) in form.fields" :key="field.id || index" class="p-5 md:p-6 bg-[#FFFFFF] border border-[#CECBF6] rounded-2xl shadow-sm">
+        <div v-for="(field, index) in form.fields" :key="field.id || index" class="p-5 md:p-6 bg-white border border-[#131B2B]/10 rounded-2xl shadow-sm">
           
           <div class="flex justify-between items-start mb-4">
-            <label class="block font-bold text-[#26215C] text-sm">
+            <label class="block font-bold text-[#131B2B] text-sm">
               {{ field.label }} <span v-if="field.isRequired" class="text-red-500 ml-1">*</span>
             </label>
             
-            <span v-if="field.autoFillKey && participantProfile[field.autoFillKey]" class="flex items-center gap-1.5 bg-[#EEEDFE] text-[#534AB7] px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-[#CECBF6] shadow-sm shrink-0 ml-2">
+            <span v-if="field.autoFillKey && participantProfile[field.autoFillKey]" class="flex items-center gap-1.5 bg-[#131B2B]/5 text-[#131B2B] px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-[#131B2B]/10 shadow-sm shrink-0 ml-2">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
               Auto-filled
             </span>
@@ -251,14 +251,14 @@ const showConfirm = (title: string, description: string, confirmText: string, th
             v-if="['TEXT', 'NUMBER', 'DATE'].includes(field.type)" 
             :type="field.type.toLowerCase()" 
             v-model="answers[field.id || index]"
-            class="w-full p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold focus:outline-none focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#534AB7] focus:border-transparent text-[#26215C] transition-all" 
+            class="w-full p-3.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-sm font-semibold focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 focus:border-transparent text-[#131B2B] transition-all" 
             placeholder="Your answer..." 
           />
           
           <textarea 
             v-if="field.type === 'TEXTAREA'" 
             v-model="answers[field.id || index]"
-            class="w-full p-3.5 bg-[#F4F4FA] border border-[#CECBF6] rounded-xl text-sm font-semibold h-24 resize-none focus:outline-none focus:bg-[#FFFFFF] focus:ring-2 focus:ring-[#534AB7] focus:border-transparent text-[#26215C] transition-all" 
+            class="w-full p-3.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-sm font-semibold h-24 resize-none focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 focus:border-transparent text-[#131B2B] transition-all" 
             placeholder="Your answer..."></textarea>
           
           <div v-if="field.type === 'CHOICE'" class="space-y-3">
@@ -271,10 +271,10 @@ const showConfirm = (title: string, description: string, confirmText: string, th
                   v-model="answers[field.id || index]"
                   class="peer sr-only" 
                 />
-                <div class="w-5 h-5 rounded-full border-2 border-[#CECBF6] bg-[#F4F4FA] peer-checked:border-[#534AB7] peer-checked:bg-[#534AB7] transition-all"></div>
+                <div class="w-5 h-5 rounded-full border-2 border-[#131B2B]/20 bg-[#131B2B]/5 peer-checked:border-[#131B2B] peer-checked:bg-[#131B2B] transition-all"></div>
                 <div class="absolute inset-0 m-auto w-2 h-2 rounded-full bg-white opacity-0 peer-checked:opacity-100 transition-opacity"></div>
               </div>
-              <span class="text-sm font-semibold text-[#26215C]/80 group-hover:text-[#26215C] transition-colors">{{ opt }}</span>
+              <span class="text-sm font-semibold text-[#131B2B]/80 group-hover:text-[#131B2B] transition-colors">{{ opt }}</span>
             </label>
           </div>
           
@@ -285,11 +285,11 @@ const showConfirm = (title: string, description: string, confirmText: string, th
                   type="checkbox" 
                   :value="opt" 
                   v-model="answers[field.id || index]"
-                  class="peer w-5 h-5 text-[#534AB7] bg-[#F4F4FA] border border-[#CECBF6] rounded focus:ring-2 focus:ring-[#534AB7]/30 transition-all cursor-pointer appearance-none checked:bg-[#534AB7] checked:border-[#534AB7]" 
+                  class="peer w-5 h-5 text-[#131B2B] bg-[#131B2B]/5 border border-[#131B2B]/20 rounded focus:ring-2 focus:ring-[#131B2B]/30 transition-all cursor-pointer appearance-none checked:bg-[#131B2B] checked:border-[#131B2B]" 
                 />
                 <svg class="absolute w-3.5 h-3.5 text-white top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
               </div>
-              <span class="text-sm font-semibold text-[#26215C]/80 group-hover:text-[#26215C] transition-colors">{{ opt }}</span>
+              <span class="text-sm font-semibold text-[#131B2B]/80 group-hover:text-[#131B2B] transition-colors">{{ opt }}</span>
             </label>
           </div>
 
@@ -302,7 +302,7 @@ const showConfirm = (title: string, description: string, confirmText: string, th
                 v-model="answers[field.id || index]"
                 class="peer sr-only" 
               />
-              <div class="w-12 h-12 rounded-full border-2 border-[#CECBF6] bg-[#F4F4FA] flex items-center justify-center text-sm font-bold text-[#26215C]/50 peer-checked:bg-[#534AB7] peer-checked:text-[#FFFFFF] peer-checked:border-[#534AB7] group-hover:border-[#534AB7] transition-all shadow-sm">
+              <div class="w-12 h-12 rounded-full border-2 border-[#131B2B]/20 bg-[#131B2B]/5 flex items-center justify-center text-sm font-bold text-[#131B2B]/50 peer-checked:bg-[#131B2B] peer-checked:text-white peer-checked:border-[#131B2B] group-hover:border-[#131B2B]/40 transition-all shadow-sm">
                 {{ n }}
               </div>
             </label>
@@ -311,16 +311,16 @@ const showConfirm = (title: string, description: string, confirmText: string, th
         </div>
       </form>
 
-      <div class="fixed bottom-0 left-0 right-0 bg-[#FFFFFF]/90 backdrop-blur-md border-t border-[#CECBF6] p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
+      <div class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
         <div class="max-w-3xl w-full flex justify-center gap-4 px-5 md:px-0">
-          <button @click="handleCancel" class="flex-1 sm:w-48 bg-[#FFFFFF] border border-[#CECBF6] hover:bg-red-50 text-red-500 hover:text-red-700 py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer shadow-sm">
+          <button @click="handleCancel" class="flex-1 sm:w-48 bg-white border border-[#131B2B]/10 hover:bg-red-50 text-red-500 hover:text-red-700 py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer shadow-sm">
             CANCEL
           </button>
           <button 
             type="submit" 
             form="submit-form"
             :disabled="isSubmitting"
-            class="flex-1 sm:w-48 bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] py-3 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+            class="flex-1 sm:w-48 bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50"
           >
             {{ isSubmitting ? 'SUBMITTING...' : 'SUBMIT' }}
           </button>

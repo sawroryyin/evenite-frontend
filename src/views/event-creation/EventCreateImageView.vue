@@ -48,7 +48,7 @@ const handleFileSelect = (e: Event) => {
   const error = validateImage(file);
   if (error) {
     showAlert("Validation Error", error, "red");
-    if (fileInput.value) fileInput.value.value = ""; // Reset input so it doesn't break the preview
+    if (fileInput.value) fileInput.value.value = ""; 
     return;
   }
 
@@ -87,13 +87,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-4 max-w-md mx-auto font-['Lato'] relative">
+  <div class="p-4 max-w-md mx-auto font-['Lato'] relative bg-transparent min-h-screen">
     
     <LoadingOverlay v-if="isLoading" message="Analyzing Image & Generating Event..." />
 
+    <!-- Updated: text-[11px] to text-sm for better readability -->
     <button
       @click="router.back()"
-      class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 font-bold text-[11px] transition-colors 
+      class="mb-5 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 font-bold text-sm transition-colors 
       cursor-pointer uppercase tracking-wide"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,8 +104,10 @@ onUnmounted(() => {
     </button>
     
     <div class="mb-5">
-      <h1 class="text-[18px] font-black tracking-tight text-[#26215C] mb-1">Generate from Image</h1>
-      <p class="text-[11px] text-[#26215C]/70 font-medium leading-snug">
+      <!-- Updated: text-[18px] to text-xl -->
+      <h1 class="text-xl font-black tracking-tight text-[#131B2B] mb-1">Generate from Image</h1>
+      <!-- Updated: text-[11px] to text-sm -->
+      <p class="text-sm text-[#131B2B]/70 font-medium leading-snug">
         Upload an event poster or screenshot, and we'll extract the details for you.
       </p>
     </div>
@@ -118,14 +121,15 @@ onUnmounted(() => {
     />
 
     <template v-if="!previewUrl">
+      <!-- Updated: text-[12px] to text-base, and increased padding to py-12 for a larger dropzone/touch target -->
       <button
         @click="fileInput?.click()"
         :disabled="isLoading"
-        class="px-4 py-8 border-2 border-[#CECBF6] border-dashed rounded-xl w-full text-[12px] font-bold flex flex-col 
-        items-center gap-2.5 text-[#26215C]/70 disabled:bg-[#EEEDFE]/50 disabled:text-[#26215C]/40 disabled:border-[#CECBF6]/50 
-        transition-colors cursor-pointer hover:bg-[#EEEDFE]/50 hover:border-[#7F77DD] shadow-sm bg-[#FFFFFF]"
+        class="px-4 py-12 border-2 border-[#131B2B]/20 border-dashed rounded-xl w-full text-base font-bold flex flex-col 
+        items-center gap-3 text-[#131B2B]/70 disabled:bg-[#131B2B]/5 disabled:text-[#131B2B]/40 disabled:border-[#131B2B]/10 
+        transition-colors cursor-pointer hover:bg-[#131B2B]/5 hover:border-[#131B2B]/30 shadow-sm bg-white"
       >
-        <svg class="w-7 h-7 text-[#7F77DD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-8 h-8 text-[#131B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
         </svg>
@@ -134,22 +138,24 @@ onUnmounted(() => {
     </template>
 
     <template v-else>
-      <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden border border-[#CECBF6] shadow-sm mb-4 bg-[#EEEDFE]/30">
+      <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden border border-[#131B2B]/10 shadow-sm mb-4 bg-white">
         <img :src="previewUrl" class="w-full h-full object-contain" />
+        <!-- Updated: text-[10px] to text-xs, adjusted padding for touch target -->
         <button 
           @click="clearImage" 
-          class="absolute top-2 right-2 bg-[#FFFFFF]/90 backdrop-blur-sm text-red-600 px-3 py-1.5 rounded-lg text-[10px] 
+          class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-600 px-3 py-2 rounded-lg text-xs 
           font-bold shadow-sm hover:bg-red-50 transition-colors border border-red-100 cursor-pointer"
         >
           Remove
         </button>
       </div>
 
+      <!-- Updated: text-[12px] to text-base, and increased padding to py-3.5 -->
       <button 
         @click="handleGenerate" 
         :disabled="isLoading"
-        class="bg-[#534AB7] hover:bg-[#3C3489] text-[#FFFFFF] px-4 py-2.5 rounded-xl 
-        w-full text-[12px] font-bold disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+        class="bg-[#131B2B] hover:bg-[#131B2B]/80 text-white px-4 py-3.5 rounded-xl 
+        w-full text-base font-bold disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
       >
         Generate Event
       </button>

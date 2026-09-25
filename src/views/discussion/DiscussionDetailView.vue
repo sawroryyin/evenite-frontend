@@ -25,16 +25,17 @@ const goBack = () => {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto bg-[#F4F4FA] flex flex-col h-[calc(100dvh-4rem)] font-['Lato'] relative">
-      <header class="shrink-0 sticky top-0 bg-[#FFFFFF] border-b border-[#CECBF6] px-4 py-4 shadow-sm flex items-center z-20">
-      <button @click="goBack" class="mr-3 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer">
+  <!-- Fixed full screen wrapper locks the layout, preventing the input box from jumping -->
+  <div class="fixed top-18 bottom-0 left-0 right-0 w-full max-w-3xl mx-auto flex flex-col font-['Lato'] z-40 bg-transparent">
+      <header class="shrink-0 bg-transparent pt-4 px-4 pb-3 flex items-center z-20">
+      <button @click="goBack" class="mr-3 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
         </svg>
       </button>
       
       <div class="flex-1 min-w-0 flex items-center">
-        <h2 class="text-lg font-['Nunito'] font-black text-[#26215C] tracking-tight truncate">
+        <h2 class="text-lg font-['Nunito'] font-black text-[#131B2B] tracking-tight truncate">
           {{ store.activeRoom?.event.title?.en || 'Loading...' }}
         </h2>
         <span 
@@ -45,11 +46,10 @@ const goBack = () => {
         </span>
       </div>
 
-      <!-- "Go to event" Button -->
       <button 
         v-if="store.activeRoom?.event?.id"
         @click="router.push(`/event/${store.activeRoom.event.id}`)"
-        class="ml-3 shrink-0 bg-[#EEEDFE] hover:bg-[#CECBF6] text-[#534AB7] hover:text-[#3C3489] border border-[#CECBF6] px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer uppercase tracking-wider"
+        class="ml-3 shrink-0 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer uppercase tracking-wider"
       >
         <span>Event Info</span>
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

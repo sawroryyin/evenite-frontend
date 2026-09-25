@@ -1,1 +1,65 @@
 @import "tailwindcss";
+
+:root {
+  --background: 40 100% 99%;
+  --foreground: 220 44% 16%;
+}
+
+body {
+  /* Replaces @apply bg-background text-foreground font-body antialiased */
+  background-color: hsl(40, 100%, 99%);
+  color: hsl(220, 44%, 16%);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* The global circle background */
+  background-image: radial-gradient(circle at 90% 8%, #ffe6b8 0 13%, transparent 31%), 
+                    radial-gradient(circle at 4% 34%, #d9f5ea 0 14%, transparent 34%);
+  background-attachment: fixed;
+}
+
+/* Your custom animations */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes floatin {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-rise { animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-rise-1 { animation: rise 0.65s 0.08s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-rise-2 { animation: rise 0.65s 0.16s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-rise-3 { animation: rise 0.65s 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-floatin { animation: floatin 0.7s 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.ticket-mask {
+  /* Default mask position matches w-28 (112px) */
+  --notch-pos: 112px; 
+  --notch-radius: 10px;
+
+  /* Standard properties (Modern Browsers, Firefox) */
+  mask-image: 
+    radial-gradient(circle at var(--notch-pos) 0%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px)),
+    radial-gradient(circle at var(--notch-pos) 100%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px));
+  mask-size: 100% 51%, 100% 51%;
+  mask-position: top, bottom;
+  mask-repeat: no-repeat;
+
+  /* WebKit prefixed properties (Safari, older Chrome/Edge) */
+  -webkit-mask-image: 
+    radial-gradient(circle at var(--notch-pos) 0%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px)),
+    radial-gradient(circle at var(--notch-pos) 100%, transparent var(--notch-radius), black calc(var(--notch-radius) + 0.5px));
+  -webkit-mask-size: 100% 51%, 100% 51%;
+  -webkit-mask-position: top, bottom;
+  -webkit-mask-repeat: no-repeat;
+}

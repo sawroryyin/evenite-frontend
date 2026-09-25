@@ -40,28 +40,17 @@ watch(selectedFilter, fetchTickets);
 </script>
 
 <template>
-  <div class="pt-6 pb-28 max-w-3xl mx-auto bg-[#F4F4FA] min-h-screen font-['Lato'] px-5">
+  <div class="pt-2 pb-28 max-w-3xl mx-auto min-h-screen font-['Lato'] px-5">
 
-    <div class="flex justify-between items-center mb-4 relative z-10">
-      <div>
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none">
-          My Tickets
-        </h1>
-        <p class="text-sm font-['Lato'] text-[#26215C]/70 font-semibold mt-2 tracking-wide">
-          View and manage your event tickets
-        </p>
-      </div>
-    </div>
-
-    <div class="flex w-full bg-[#FFFFFF] rounded-3xl shadow-sm border border-[#CECBF6] p-1.5 mb-6 relative z-10">
+    <div class="flex gap-3 mb-6 relative z-10 overflow-x-auto scrollbar-hide py-1">
       <button
         v-for="filter in filterOptions"
         :key="filter"
         @click="selectedFilter = filter"
-        class="flex-1 text-center py-2.5 px-1 text-xs sm:text-sm font-bold rounded-3xl transition-colors tracking-tight whitespace-nowrap cursor-pointer"
+        class="shrink-0 flex items-center gap-2 py-2.5 px-6 text-sm font-bold rounded-full transition-all tracking-tight cursor-pointer"
         :class="selectedFilter === filter ?
-         'bg-[#534AB7] text-[#FFFFFF] shadow-sm' :
-         'text-[#26215C]/70 hover:bg-[#EEEDFE] hover:text-[#3C3489]'"
+        'bg-[#131B2B] text-white shadow-md border border-[#131B2B]' :
+        'bg-white border border-[#131B2B]/20 text-[#131B2B]/70 hover:bg-[#131B2B]/5 hover:text-[#131B2B]'"
       >
         {{ filter }}
       </button>
@@ -98,3 +87,24 @@ watch(selectedFilter, fetchTickets);
     <BottomNav />
   </div>
 </template>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+.scrollbar-hide::-webkit-scrollbar-track,
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  display: none;
+  background: transparent;
+  background-color: transparent;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+</style>

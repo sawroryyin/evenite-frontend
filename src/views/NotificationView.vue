@@ -11,16 +11,16 @@ const feedItems = [
 </script>
 
 <template>
-  <div class="pt-4 pb-12 max-w-3xl mx-auto bg-[#FFFFFF] min-h-screen font-['Lato'] px-4">
+  <div class="pt-4 pb-12 max-w-3xl mx-auto min-h-screen font-['Lato'] px-4">
     
-    <button @click="router.back()" class="mb-5 text-[#26215C]/70 hover:text-[#3C3489] flex items-center gap-1.5 font-bold 
+    <button @click="router.back()" class="mb-5 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 font-bold 
     text-[11px] transition-colors cursor-pointer uppercase tracking-wide">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" 
         stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
     </button>
 
-    <h1 class="text-[22px] font-['Nunito'] font-black text-[#26215C] tracking-tight leading-none mb-6">
+    <h1 class="text-[22px] font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-none mb-6">
       Notifications
     </h1>
 
@@ -28,11 +28,11 @@ const feedItems = [
       <div 
         v-for="item in feedItems" 
         :key="item.id" 
-        class="bg-[#FFFFFF] p-4 rounded-2xl border border-[#CECBF6] shadow-sm flex gap-3"
+        class="bg-white p-4 rounded-2xl border border-[#131B2B]/10 shadow-sm flex gap-3"
       >
         <div 
-          class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-[#CECBF6]/50"
-          :class="item.type === 'update' ? 'bg-[#EEEDFE] text-[#534AB7]' : 'bg-[#EEEDFE]/50 text-[#3C3489]'"
+          class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-[#131B2B]/5"
+          :class="item.type === 'update' ? 'bg-[#131B2B]/10 text-[#131B2B]' : 'bg-[#131B2B]/5 text-[#131B2B]/70'"
         >
           <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -40,9 +40,9 @@ const feedItems = [
           </svg>
         </div>
         <div>
-          <h2 class="text-[14px] font-bold text-[#26215C] tracking-tight">{{ item.title }}</h2>
-          <p class="text-[12px] text-[#26215C]/70 font-medium mt-1 leading-snug">{{ item.details }}</p>
-          <span class="text-[10px] font-bold text-[#26215C]/40 uppercase mt-2 block tracking-widest">{{ item.elapsed }}</span>
+          <h2 class="text-[14px] font-bold text-[#131B2B] tracking-tight">{{ item.title }}</h2>
+          <p class="text-[12px] text-[#131B2B]/70 font-medium mt-1 leading-snug">{{ item.details }}</p>
+          <span class="text-[10px] font-bold text-[#131B2B]/40 uppercase mt-2 block tracking-widest">{{ item.elapsed }}</span>
         </div>
       </div>
     </div>
