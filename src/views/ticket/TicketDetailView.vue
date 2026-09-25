@@ -58,7 +58,11 @@ const goBack = () => {
 
 const goToEventDetails = () => {
   if (ticket.value) {
-    router.push(`/event/${ticket.value.event.id}`);
+    if (window.history.state?.back?.includes(ticket.value.event.id)) {
+      router.back();
+    } else {
+      router.push(`/event/${ticket.value.event.id}`);
+    }
   }
 };
 

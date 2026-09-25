@@ -134,13 +134,12 @@ const fetchHomeFeed = async () => {
     } else {
       selectedEvents.value = upcomingPublicEvents
         .sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
-        .slice(0, 5)
+        .slice(0, 10)
     }
 
-// Sort all future public events chronologically, then slice the first 10
     upcomingEvents.value = [...upcomingPublicEvents]
       .sort((a, b) => new Date(a.startAt!).getTime() - new Date(b.startAt!).getTime())
-      .slice(0, 10)
+      .slice(0, 20)
       
   } catch (error) {
     console.error('Failed to load events:', error)

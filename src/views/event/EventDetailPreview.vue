@@ -79,7 +79,11 @@ const navigateToSubmitForm = (type: string) => {
 
 const viewTicket = () => {
   if (userTicket.value) {
-    router.push(`/events/${props.event.id}/tickets/${userTicket.value.id}`)
+    if (window.history.state?.back?.includes(`/tickets/${userTicket.value.id}`)) {
+      router.back();
+    } else {
+      router.push(`/events/${props.event.id}/tickets/${userTicket.value.id}`);
+    }
   }
 }
 
