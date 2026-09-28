@@ -7,12 +7,21 @@ class DiscussionSocketService {
   private currentRoomId: string | null = null;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private failedAttempts = 0;
+  private currentToken: string | null = null;
 
   connect(token: string) {
-    if (this.socket?.connected) return;
+    if (this.socket?.connected) {
+      if (this.currentToken === token) return;
+      
+      this.currentToken = token;
+      this.socket.auth = { token };
+      this.socket.disconnect().connect();
+      return;
+    }
 
+    this.currentToken = token;
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-    
+
     this.socket = io(`${baseUrl}/discussion`, {
       auth: { token },
       transports: ['websocket'],
@@ -72,6 +81,7 @@ class DiscussionSocketService {
       this.socket = null;
     }
     this.currentRoomId = null;
+    this.currentToken = null;
   }
 
   joinRoom(roomId: string) {
