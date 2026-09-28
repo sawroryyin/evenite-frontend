@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import api from './api';
+import { useAuthStore } from '../stores/auth';
 import type { Message, CreateMessagePayload, SocketErrorPayload } from '../types';
 
 class DiscussionSocketService {
@@ -54,12 +55,12 @@ class DiscussionSocketService {
     this.stopProactiveRefresh();
     this.refreshTimer = setInterval(async () => {
       try {
-        const response = await api.post('/auth/refresh'); 
+        const response = await api.post('/auth/refresh');
         const newToken = response.data.accessToken;
-        
-        if (this.socket && newToken) {
-          this.socket.auth = { token: newToken };
-          this.socket.disconnect().connect();
+
+        if (newToken) {
+          const authStore = useAuthStore();
+          authStore.setTokens(newToken, authStore.refreshToken!);
         }
       } catch (error) {
         console.error('Proactive token refresh failed', error);
