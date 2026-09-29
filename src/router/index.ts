@@ -58,7 +58,6 @@ const router = createRouter({
     { path: '/events/:id/register', name: 'event-register', redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` },
     { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
     { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } },
-    { path: '/discussion', name: 'DiscussionList', component: () => import('../views/discussion/DiscussionView.vue') },
     { path: '/discussion/:roomId', name: 'DiscussionDetail', component: () => import('../views/discussion/DiscussionDetailView.vue'), meta: { requiresAuth: true } }
   ],
 scrollBehavior() {
