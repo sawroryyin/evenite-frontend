@@ -8,10 +8,11 @@ import type {
 } from '../types';
 
 // Front-end sanitizer to fix lingering non-hex UUIDs (g->7, h->8) from cached browser state
-const sanitizeId = (id: string): string => {
+export const sanitizeId = (id: string): string => {
   if (!id) return id;
   return id.replace(/^g/, '7').replace(/^h/, '8');
 };
+
 
 export const DiscussionService = {
   async getCreatedRooms(params?: GetRoomsQuery): Promise<DiscussionRoom[]> {

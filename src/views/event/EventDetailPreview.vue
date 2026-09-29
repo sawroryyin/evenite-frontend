@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { RegistrationService } from '../../services/RegistrationService'
 import { UserService } from '../../services/UserService'
 import ConfirmModal from '../../components/ConfirmModal.vue'
+import { sanitizeId } from '../../services/DiscussionService'
 
 const router = useRouter()
 
@@ -89,8 +90,7 @@ const viewTicket = () => {
 
 const goToChat = () => {
   if (props.event?.roomId) {
-    // Adjust this route if your router uses a different path or named route
-    router.push(`/discussion/${props.event.roomId}`); 
+    router.push({ name: 'DiscussionDetail', params: { roomId: sanitizeId(props.event.roomId) } });
   } else {
     showAlert('Error', 'Discussion room is not available yet.', 'red');
   }

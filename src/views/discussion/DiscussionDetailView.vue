@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, watch, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDiscussionStore } from '../../stores/discussion';
 import { useChatViewport } from '../../composables/useChatViewport';
+import { sanitizeId } from '../../services/DiscussionService';
 import DiscussionChatArea from '../../components/discussion/DiscussionChatArea.vue';
 
 const route = useRoute();
@@ -11,10 +12,45 @@ const store = useDiscussionStore();
 
 useChatViewport();
 
+const loadError = ref<string | null>(null);
+
+const findRoom = (roomId: string) =>
+  store.rooms.find(r => sanitizeId(r.roomId) === roomId);
+
+const openRoom = async (rawRoomId: string) => {
+  loadError.value = null;
+  const roomId = sanitizeId(rawRoomId);
+
+  store.initGlobalSocket();
+
+  if (!findRoom(roomId)) {
+    await store.fetchRooms({ filter: 'active' });
+  }
+  if (!findRoom(roomId)) {
+    await store.fetchRooms({ filter: 'archived' });
+  }
+  if (!findRoom(roomId)) {
+    loadError.value = 'This discussion room could not be found or you no longer have access.';
+    return;
+  }
+
+  await store.setActiveRoom(roomId);
+};
+
 onMounted(async () => {
   const roomId = route.params.roomId as string;
-  if (roomId) await store.setActiveRoom(roomId);
+  if (roomId) await openRoom(roomId);
 });
+
+watch(
+  () => route.params.roomId,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      store.cleanup();
+      await openRoom(newId as string);
+    }
+  }
+);
 
 onBeforeUnmount(() => {
   store.cleanup();
@@ -34,7 +70,7 @@ const goBack = () => router.push('/discussion');
 
       <div class="flex-1 min-w-0 flex items-center">
         <h2 class="text-lg font-['Nunito'] font-black text-[#131B2B] tracking-tight truncate">
-          {{ store.activeRoom?.event.title?.en || 'Loading...' }}
+          {{ loadError ? 'Discussion' : (store.activeRoom?.event.title?.en || 'Loading...') }}
         </h2>
         <span
           v-if="store.activeRoom?.isReadOnly"
@@ -56,6 +92,16 @@ const goBack = () => router.push('/discussion');
       </button>
     </header>
 
-    <DiscussionChatArea class="flex-1 min-h-0" />
+    <div v-if="loadError" class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+      <p class="text-sm font-bold text-[#131B2B]/70">{{ loadError }}</p>
+      <button
+        @click="goBack"
+        class="mt-4 bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-2.5 px-5 rounded-xl text-sm font-bold transition-all cursor-pointer"
+      >
+        Back to discussions
+      </button>
+    </div>
+
+    <DiscussionChatArea v-else class="flex-1 min-h-0" />
   </div>
 </template>
