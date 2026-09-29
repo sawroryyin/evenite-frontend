@@ -10,6 +10,8 @@ const password = ref('')
 const message = ref('')
 const showModal = ref(false)
 const isLoading = ref(false)
+const isUnverified = ref(false)
+const verifyEmailTarget = ref('')
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -17,7 +19,8 @@ const login = async () => {
   isLoading.value = true
   message.value = ''
   showModal.value = false
-  
+  isUnverified.value = false
+
   try {
     const { data } = await api.post('/auth/login', { email: email.value, password: password.value })
     authStore.setTokens(data.accessToken, data.refreshToken)
@@ -29,13 +32,21 @@ const login = async () => {
     }
   } catch (error: any) {
     message.value = error.response?.data?.message || 'Invalid credentials. Please try again.'
+    isUnverified.value = error.response?.status === 403 &&
+      error.response?.data?.message?.includes('verify')
+    verifyEmailTarget.value = email.value
     showModal.value = true
-    
+
     email.value = ''
-    password.value = '' 
+    password.value = ''
   } finally {
     isLoading.value = false
   }
+}
+
+const goToVerify = () => {
+  showModal.value = false
+  router.push({ path: '/verify-email', query: { email: verifyEmailTarget.value } })
 }
 </script>
 
@@ -49,11 +60,11 @@ const login = async () => {
       <form @submit.prevent="login" class="flex flex-col gap-4">
         <div>
           <label class="block text-[10px] font-bold text-[#131B2B]/70 uppercase tracking-wider mb-1">Email</label>
-          <input v-model="email" type="email" required class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
+          <input v-model="email" type="email" required autocomplete="email" class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-base md:text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
         </div>
         <div>
           <label class="block text-[10px] font-bold text-[#131B2B]/70 uppercase tracking-wider mb-1">Password</label>
-          <input v-model="password" type="password" required class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
+          <input v-model="password" type="password" required autocomplete="current-password" class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-base md:text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
         </div>
         <button type="submit" :disabled="isLoading" class="mt-2 w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3 rounded-xl font-bold text-[12px] uppercase tracking-wider shadow-sm disabled:opacity-50 transition-colors cursor-pointer">
           {{ isLoading ? 'Logging in...' : 'Log In' }}
@@ -74,9 +85,9 @@ const login = async () => {
       v-if="showModal"
       title="Login Failed"
       :description="message"
-      confirmText="Okay"
+      :confirmText="isUnverified ? 'Verify Email' : 'Okay'"
       confirmTheme="red"
-      @confirm="showModal = false"
+      @confirm="isUnverified ? goToVerify() : (showModal = false)"
     />
   </div>
 </template>
