@@ -27,9 +27,9 @@ import TicketDetailView from '../views/ticket/TicketDetailView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/auth/login', name: 'login', component: LoginView, meta: { isGuest: true } },
-    { path: '/auth/register', name: 'register', component: RegisterView, meta: { isGuest: true } },
-    { path: '/verify-email', name: 'verify-email', component: VerifyEmailView, meta: { isPublic: true } },
+    { path: '/auth/login', name: 'login', component: LoginView, meta: { isGuest: true, hideNavActions: true } },
+    { path: '/auth/register', name: 'register', component: RegisterView, meta: { isGuest: true, hideNavActions: true } },
+    { path: '/verify-email', name: 'verify-email', component: VerifyEmailView, meta: { isPublic: true, hideNavActions: true } },
     { path: '/login', redirect: '/auth/login' },
     { path: '/register', redirect: '/auth/register' },
     { path: '/auth/verify-email', redirect: (to) => ({ path: '/verify-email', query: to.query }) },
@@ -49,7 +49,7 @@ const router = createRouter({
     { path: '/profile/create', name: 'profile-create', component: ProfileCreateView, meta: { requiresAuth: true } },
     { path: '/profile/drafts', name: 'draft-events', component: SavedEventsView, meta: { requiresAuth: true } },
     { path: '/profile/published', name: 'published-events', component: PublishedEventsView, meta: { requiresAuth: true } },
-    { path: '/role-select', name: 'role-select', component: RoleSelectView, meta: { requiresAuth: true } },
+    { path: '/role-select', name: 'role-select', component: RoleSelectView, meta: { requiresAuth: true, hideNavActions: true } },
 
     { path: '/events/:id/forms/:formType', name: 'form-detail', component: FormDetailView, meta: { requiresAuth: true } },
     { path: '/events/:id/forms/:formType/responses', name: 'form-responses', component: FormResponseView, meta: { requiresAuth: true }},
@@ -59,7 +59,7 @@ const router = createRouter({
     { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
     { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } },
     { path: '/discussion', name: 'DiscussionList', component: () => import('../views/discussion/DiscussionView.vue') },
-    { path: '/discussion/:roomId', name: 'DiscussionDetail', component: () => import('../views/discussion/DiscussionDetailView.vue') }
+    { path: '/discussion/:roomId', name: 'DiscussionDetail', component: () => import('../views/discussion/DiscussionDetailView.vue'), meta: { requiresAuth: true } }
   ],
 scrollBehavior() {
     return { top: 0, left: 0, behavior: 'instant' };
@@ -97,5 +97,14 @@ router.beforeEach((to) => {
   }
   return true
 })
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    isGuest?: boolean
+    isPublic?: boolean
+    hideNavActions?: boolean
+  }
+}
 
 export default router
