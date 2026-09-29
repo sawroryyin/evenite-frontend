@@ -2,51 +2,49 @@
 import { onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDiscussionStore } from '../../stores/discussion';
+import { useChatViewport } from '../../composables/useChatViewport';
 import DiscussionChatArea from '../../components/discussion/DiscussionChatArea.vue';
 
 const route = useRoute();
 const router = useRouter();
 const store = useDiscussionStore();
 
+useChatViewport();
+
 onMounted(async () => {
   const roomId = route.params.roomId as string;
-  if (roomId) {
-    await store.setActiveRoom(roomId);
-  }
+  if (roomId) await store.setActiveRoom(roomId);
 });
 
 onBeforeUnmount(() => {
   store.cleanup();
 });
 
-const goBack = () => {
-  router.push('/discussion');
-};
+const goBack = () => router.push('/discussion');
 </script>
 
 <template>
-  <!-- Fixed full screen wrapper locks the layout, preventing the input box from jumping -->
-  <div class="fixed top-18 bottom-0 left-0 right-0 w-full max-w-3xl mx-auto flex flex-col font-['Lato'] z-40 bg-transparent">
-      <header class="shrink-0 bg-transparent pt-4 px-4 pb-3 flex items-center z-20">
+  <div class="chat-screen w-full max-w-3xl mx-auto flex flex-col font-['Lato'] z-40 bg-transparent">
+    <header class="shrink-0 bg-transparent pt-2 px-4 pb-3 flex items-center z-20">
       <button @click="goBack" class="mr-3 text-[#131B2B]/70 hover:text-[#131B2B] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
         </svg>
       </button>
-      
+
       <div class="flex-1 min-w-0 flex items-center">
         <h2 class="text-lg font-['Nunito'] font-black text-[#131B2B] tracking-tight truncate">
           {{ store.activeRoom?.event.title?.en || 'Loading...' }}
         </h2>
-        <span 
-          v-if="store.activeRoom?.isReadOnly" 
+        <span
+          v-if="store.activeRoom?.isReadOnly"
           class="ml-2 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded border bg-red-50 text-red-600 border-red-200 shrink-0"
         >
           Archived
         </span>
       </div>
 
-      <button 
+      <button
         v-if="store.activeRoom?.event?.id"
         @click="router.push(`/event/${store.activeRoom.event.id}`)"
         class="ml-3 shrink-0 bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer uppercase tracking-wider"
@@ -59,6 +57,5 @@ const goBack = () => {
     </header>
 
     <DiscussionChatArea class="flex-1 min-h-0" />
-    
   </div>
 </template>

@@ -105,3 +105,37 @@ body::before {
   -webkit-mask-position: top, bottom;
   -webkit-mask-repeat: no-repeat;
 }
+
+/* ---------- Prevent iOS auto-zoom on every input in the app ---------- */
+/* Unlayered CSS beats Tailwind v4 utilities, so this wins over text-sm on touch devices only */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* ---------- Chat screen (messenger-style) ---------- */
+html.chat-locked,
+html.chat-locked body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.chat-screen {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: calc(var(--top-nav-h) + env(safe-area-inset-top));
+  height: calc(var(--app-height, 100dvh) - var(--top-nav-h) - env(safe-area-inset-top));
+}
+
+/* Input bar: clear the iPhone home indicator when the keyboard is closed, sit flush when open */
+.chat-input-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+html[data-keyboard-open] .chat-input-safe {
+  padding-bottom: 0.75rem;
+}
