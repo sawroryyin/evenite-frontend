@@ -10,6 +10,8 @@ const password = ref('')
 const message = ref('')
 const showModal = ref(false)
 const isLoading = ref(false)
+const isUnverified = ref(false)
+const verifyEmailTarget = ref('')
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -17,7 +19,8 @@ const login = async () => {
   isLoading.value = true
   message.value = ''
   showModal.value = false
-  
+  isUnverified.value = false
+
   try {
     const { data } = await api.post('/auth/login', { email: email.value, password: password.value })
     authStore.setTokens(data.accessToken, data.refreshToken)
@@ -29,13 +32,21 @@ const login = async () => {
     }
   } catch (error: any) {
     message.value = error.response?.data?.message || 'Invalid credentials. Please try again.'
+    isUnverified.value = error.response?.status === 403 &&
+      error.response?.data?.message?.includes('verify')
+    verifyEmailTarget.value = email.value
     showModal.value = true
-    
+
     email.value = ''
-    password.value = '' 
+    password.value = ''
   } finally {
     isLoading.value = false
   }
+}
+
+const goToVerify = () => {
+  showModal.value = false
+  router.push({ path: '/verify-email', query: { email: verifyEmailTarget.value } })
 }
 </script>
 
@@ -74,9 +85,9 @@ const login = async () => {
       v-if="showModal"
       title="Login Failed"
       :description="message"
-      confirmText="Okay"
+      :confirmText="isUnverified ? 'Verify Email' : 'Okay'"
       confirmTheme="red"
-      @confirm="showModal = false"
+      @confirm="isUnverified ? goToVerify() : (showModal = false)"
     />
   </div>
 </template>
