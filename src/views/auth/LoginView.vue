@@ -49,11 +49,11 @@ const login = async () => {
       <form @submit.prevent="login" class="flex flex-col gap-4">
         <div>
           <label class="block text-[10px] font-bold text-[#131B2B]/70 uppercase tracking-wider mb-1">Email</label>
-          <input v-model="email" type="email" required class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
+          <input v-model="email" type="email" required autocomplete="email" class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-base md:text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
         </div>
         <div>
           <label class="block text-[10px] font-bold text-[#131B2B]/70 uppercase tracking-wider mb-1">Password</label>
-          <input v-model="password" type="password" required class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
+          <input v-model="password" type="password" required autocomplete="current-password" class="w-full px-4 py-2.5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl text-base md:text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#131B2B]/30 text-[#131B2B] transition-all" />
         </div>
         <button type="submit" :disabled="isLoading" class="mt-2 w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3 rounded-xl font-bold text-[12px] uppercase tracking-wider shadow-sm disabled:opacity-50 transition-colors cursor-pointer">
           {{ isLoading ? 'Logging in...' : 'Log In' }}

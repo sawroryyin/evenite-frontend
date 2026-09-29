@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useDiscussionStore } from '../../stores/discussion';
 import { useAuthStore } from '../../stores/auth';
 import DiscussionMessage from './DiscussionMessage.vue';
 import DiscussionInput from './DiscussionInput.vue';
 import ConfirmModal from '../ConfirmModal.vue';
-
+let resizeObserver: ResizeObserver | null = null;
 const store = useDiscussionStore();
 const authStore = useAuthStore();
 const messageContainer = ref<HTMLElement | null>(null);
@@ -25,6 +25,14 @@ const toggleAnnouncements = async () => {
     }
   }
 };
+
+  // Tap anywhere in the message list → close the keyboard (text stays in the box)
+const dismissKeyboard = () => {
+  const el = document.activeElement as HTMLElement | null
+  if (el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT')) {
+    el.blur()
+  }
+}
 
 const isMyMessage = (sender: any) => {
   if (!sender || !authStore.parsedToken) return false;
@@ -176,6 +184,17 @@ const alertState = ref({ show: false, title: '', description: '', theme: 'red' a
 const showAlert = (title: string, description: string, theme: 'blue' | 'red' = 'red') => {
   alertState.value = { show: true, title, description, theme };
 };
+
+onMounted(() => {
+  if (!messageContainer.value) return;
+  resizeObserver = new ResizeObserver(() => {
+    // showJumpToBottom === false means the user was already at the bottom
+    if (!showJumpToBottom.value) scrollToBottom('auto');
+  });
+  resizeObserver.observe(messageContainer.value);
+});
+
+onBeforeUnmount(() => resizeObserver?.disconnect());
 </script>
 
 <template>
@@ -246,6 +265,7 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
     <div 
       ref="messageContainer"
       @scroll="handleScroll"
+      @click="dismissKeyboard"
       class="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1.5"
     >
       <div v-if="store.isLoadingMessages" class="text-center py-20">
@@ -305,7 +325,7 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
     </div>
 
     <!-- The input wrapper remains permanently anchored to the bottom of the flex column -->
-    <div class="shrink-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] relative z-20">
+    <div class="chat-input-safe shrink-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] relative z-20">
       <DiscussionInput 
         v-if="store.activeRoom"
         :disabled="store.activeRoom.isReadOnly"

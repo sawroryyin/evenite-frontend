@@ -50,10 +50,11 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
 
-      // 3. Sever the socket connection immediately upon logout
       discussionSocketService.disconnect()
 
-      window.location.href = '/login'
+      // replace() swaps out the current history entry instead of adding a new one,
+      // and the full reload also wipes every Pinia store (discussion rooms, drafts, etc.)
+      window.location.replace('/auth/login')
     }
   }
 })
