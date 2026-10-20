@@ -23,6 +23,9 @@ import FormResponseView from '../views/form/FormResponseView.vue'
 import FormSubmitView from '../views/form/FormSubmitView.vue'
 import MyTicketsView from '../views/ticket/TicketListView.vue'
 import TicketDetailView from '../views/ticket/TicketDetailView.vue'
+import CheckInEventListView from '../views/attendance/CheckInEventListView.vue'
+import CheckInView from '../views/attendance/CheckInView.vue'
+import AttendanceAnalyticsView from '../views/attendance/AttendanceAnalyticsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -64,7 +67,10 @@ const router = createRouter({
 
     { path: '/events/:id/register', name: 'event-register', redirect: to => `/events/${to.params.id}/forms/REGISTRATION/submit` },
     { path: '/my-tickets', name: 'my-tickets', component: MyTicketsView, meta: { requiresAuth: true } },
-    { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } }
+    { path: '/events/:eventId/tickets/:ticketId', name: 'ticket-detail', component: TicketDetailView, meta: { requiresAuth: true } },
+    { path: '/check-in', name: 'check-in', component: CheckInEventListView, meta: { requiresAuth: true, requiresRole: 'ORGANIZER' } },
+    { path: '/check-in/:eventId', name: 'check-in-event', component: CheckInView, meta: { requiresAuth: true, requiresRole: 'ORGANIZER' } },
+    { path: '/check-in/:eventId/analytics', name: 'check-in-analytics', component: AttendanceAnalyticsView, meta: { requiresAuth: true, requiresRole: 'ORGANIZER' } }
   ],
   scrollBehavior() {
     return { top: 0, left: 0, behavior: 'instant' };
@@ -99,6 +105,10 @@ router.beforeEach((to) => {
     if (authStore.currentRole === 'ORGANIZER' && !authStore.hasOrganizerProfile) {
       return { name: 'profile-create', query: { role: 'ORGANIZER' } }
     }
+  }
+    // organizer-only pages (check-in / analytics)
+  if (to.meta.requiresRole && authStore.currentRole !== to.meta.requiresRole) {
+    return { name: authStore.currentRole === 'ORGANIZER' ? 'event-list' : 'home' }
   }
   return true
 })
