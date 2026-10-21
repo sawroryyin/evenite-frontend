@@ -54,6 +54,17 @@ watch(() => props.event?.id, (newId) => {
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
 
+// analytics/attendance exist for any saved, non-draft event (incl. CONCLUDED / CANCELLED)
+const canViewInsights = computed(() =>
+  !!props.event?.id && props.event?.status && props.event.status !== 'DRAFT'
+)
+
+const goToAnalytics = () =>
+  router.push({ name: 'check-in-analytics', params: { eventId: props.event.id } })
+
+const goToAttendance = () =>
+  router.push({ name: 'check-in-event', params: { eventId: props.event.id } })
+
 const isEventFull = computed(() => {
   if (props.event.seatLimit === null || props.event.seatLimit === undefined) return false;
   return props.event.seatsTaken >= props.event.seatLimit;
@@ -358,6 +369,25 @@ const mapEmbedUrl = computed(() => {
                 Cancel Registration
               </button>
             </div>
+          </div>
+
+          <div v-if="isOrganizer && canViewInsights" class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-base font-['Nunito'] font-black text-[#131B2B]">Event Insights</h3>
+              <span
+                v-if="event.status === 'CONCLUDED' || event.status === 'CANCELLED'"
+                class="text-[10px] font-black uppercase tracking-widest text-[#131B2B]/60 bg-[#131B2B]/5 border border-[#131B2B]/10 px-2 py-1 rounded-lg"
+              >
+                Final results
+              </span>
+            </div>
+            <button
+              @click="goToAnalytics"
+              class="w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              View Analytics
+            </button>
           </div>
 
           <div v-if="isOrganizer" class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-4">
