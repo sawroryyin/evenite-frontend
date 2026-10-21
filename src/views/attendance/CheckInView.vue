@@ -1,19 +1,27 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { EventService } from '../../services/EventService'
 import {
   AttendanceService,
+  AttendanceErrorCode,
   type AttendanceEvent,
-  type AttendanceRegistrant,
+  type AttendanceListItem,
+  type AttendeeSnapshot,
   type CheckInResult,
   type ScanOutcome,
   getApiErrorMessage,
+  getApiErrorCode,
+  getExistingCheckIn,
+  toAttendanceRecord,
   getAttendeeName,
   getEventTitle,
   formatEventDate,
+  formatClock,
+  isValidQrToken,
   CHECK_IN_OPEN_STATUSES
 } from '../../services/AttendanceService'
+import { useRealtime } from '../../composables/useRealTime'
 import ConfirmModal from '../../components/ConfirmModal.vue'
 import EventStatusBadge from '../../components/attendance/EventStatusBadge.vue'
 import ParticipantCheckInRow from '../../components/attendance/ParticipantCheckInRow.vue'
@@ -26,7 +34,7 @@ const router = useRouter()
 const eventId = route.params.eventId as string
 
 const event = ref<AttendanceEvent | null>(null)
-const registrants = ref<AttendanceRegistrant[]>([])
+const items = ref<AttendanceListItem[]>([])
 const isLoading = ref(true)
 const isRefreshing = ref(false)
 const errorMessage = ref('')
@@ -47,107 +55,185 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
   alertState.value = { show: true, title, description, theme }
 }
 
+// ---------- Derived state ----------
+
 const canCheckIn = computed(() => !!event.value && CHECK_IN_OPEN_STATUSES.includes(event.value.status))
-const confirmedRegistrants = computed(() => registrants.value.filter(r => r.status === 'CONFIRMED'))
-const checkedInCount = computed(() => confirmedRegistrants.value.filter(r => r.checkedInAt).length)
+const checkedInCount = computed(() => items.value.filter(i => i.attendance).length)
 const attendancePercent = computed(() =>
-  confirmedRegistrants.value.length ? Math.round((checkedInCount.value / confirmedRegistrants.value.length) * 100) : 0
+  items.value.length ? Math.round((checkedInCount.value / items.value.length) * 100) : 0
 )
 
 const filterCounts = computed<Record<string, number>>(() => ({
-  'All': confirmedRegistrants.value.length,
-  'Not yet': confirmedRegistrants.value.length - checkedInCount.value,
+  'All': items.value.length,
+  'Not yet': items.value.length - checkedInCount.value,
   'Checked in': checkedInCount.value
 }))
 
-const visibleRegistrants = computed(() => {
+const visibleItems = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  return confirmedRegistrants.value
-    .filter(r => {
-      if (activeFilter.value === 'Checked in') return !!r.checkedInAt
-      if (activeFilter.value === 'Not yet') return !r.checkedInAt
+  return items.value
+    .filter(i => {
+      if (activeFilter.value === 'Checked in') return !!i.attendance
+      if (activeFilter.value === 'Not yet') return !i.attendance
       return true
     })
-    .filter(r => {
+    .filter(i => {
       if (!q) return true
-      const s = r.participantSnapshot || ({} as any)
+      const s: AttendeeSnapshot = i.participantSnapshot || {}
       return [`${s.firstName ?? ''} ${s.lastName ?? ''}`, s.nickname, s.studentId, s.major]
-        .some(v => v?.toLowerCase().includes(q))
+        .some(v => typeof v === 'string' && v.toLowerCase().includes(q))
     })
     .sort((a, b) => getAttendeeName(a.participantSnapshot).localeCompare(getAttendeeName(b.participantSnapshot)))
 })
 
-const loadData = async (silent = false) => {
+// ---------- Loading ----------
+
+const loadData = async ({ silent = false, quiet = false } = {}) => {
   if (silent) isRefreshing.value = true
   else isLoading.value = true
-  errorMessage.value = ''
+  if (!silent) errorMessage.value = ''
 
   try {
-    const [eventData, registrantData] = await Promise.all([
+    const [eventData, list] = await Promise.all([
       EventService.getEventById(eventId),
-      AttendanceService.getRegistrants(eventId)
+      AttendanceService.getAttendanceList(eventId)
     ])
     event.value = eventData as unknown as AttendanceEvent
-    registrants.value = registrantData
+    items.value = list.items
   } catch (error) {
     console.error('Failed to load check-in data:', error)
-    if (silent) showAlert('Error', 'Could not refresh the participant list.', 'red')
-    else errorMessage.value = getApiErrorMessage(error, 'Could not load participants for this event.')
+    if (!silent) errorMessage.value = getApiErrorMessage(error, 'Could not load participants for this event.')
+    else if (!quiet) showAlert('Error', 'Could not refresh the participant list.', 'red')
   } finally {
     isLoading.value = false
     isRefreshing.value = false
   }
 }
 
-const applyCheckInResult = (result: CheckInResult) => {
-  const target = registrants.value.find(
-    r => r.id === result.registrationId || (!!result.ticketId && r.ticketId === result.ticketId)
-  )
-  if (target) target.checkedInAt = result.checkedInAt
-  else loadData(true)
+// background refetch (debounced) when something changed that we can't patch locally
+let refreshTimer: ReturnType<typeof setTimeout> | null = null
+const scheduleRefresh = () => {
+  if (refreshTimer) clearTimeout(refreshTimer)
+  refreshTimer = setTimeout(() => loadData({ silent: true, quiet: true }), 800)
 }
 
-// --- Manual toggle ---
+const findItem = (registrationId: string) => items.value.find(i => i.registrationId === registrationId)
 
-const applyManualCheckIn = async (registrant: AttendanceRegistrant, checkedIn: boolean) => {
-  pendingIds.value.push(registrant.id)
-  const previous = registrant.checkedInAt
-  registrant.checkedInAt = checkedIn ? new Date().toISOString() : null // optimistic
+const markCheckedIn = (result: CheckInResult) => {
+  const item = findItem(result.registrationId)
+  if (!item) return scheduleRefresh()
+  item.attendance = toAttendanceRecord(result)
+  item.ticket.status = 'USED'
+}
+
+// ---------- Realtime (other devices / co-organizers) ----------
+
+useRealtime(
+  {
+    'attendance:checkedIn': (p: any) => {
+      if (p.eventId !== eventId) return
+      const item = findItem(p.registrationId)
+      if (!item) return scheduleRefresh()
+      item.attendance = { id: p.attendanceId, method: p.method, checkedInAt: p.checkedInAt }
+      item.ticket.status = 'USED'
+    },
+    'attendance:undone': (p: any) => {
+      if (p.eventId !== eventId) return
+      const item = findItem(p.registrationId)
+      if (!item) return scheduleRefresh()
+      item.attendance = null
+      item.ticket.status = 'ACTIVE'
+    },
+    // a participant registered or cancelled -> list changed
+    'analytics:changed': (p: any) => {
+      if (p.eventId === eventId && p.reason === 'registration') scheduleRefresh()
+    }
+  },
+  scheduleRefresh
+)
+
+// ---------- Manual check-in / undo ----------
+
+const setPending = (id: string, on: boolean) => {
+  pendingIds.value = on ? [...pendingIds.value, id] : pendingIds.value.filter(x => x !== id)
+}
+
+const manualCheckIn = async (item: AttendanceListItem) => {
+  setPending(item.registrationId, true)
+  const previous = item.attendance
+  // optimistic; the toggle stays disabled until the real record arrives
+  item.attendance = { id: '', method: 'MANUAL', checkedInAt: new Date().toISOString() }
 
   try {
-    const result = await AttendanceService.setCheckIn(eventId, registrant.id, checkedIn)
-    registrant.checkedInAt = result.checkedInAt
+    markCheckedIn(await AttendanceService.checkInManually(eventId, item.registrationId))
   } catch (error) {
-    registrant.checkedInAt = previous
-    showAlert('Error', getApiErrorMessage(error, 'Could not update attendance. Please try again.'), 'red')
+    const existing = getExistingCheckIn(error)
+    if (existing) {
+      markCheckedIn(existing)
+      showAlert('Already Checked In', `${getAttendeeName(item.participantSnapshot)} was already checked in at ${formatClock(existing.checkedInAt)}.`)
+    } else {
+      item.attendance = previous
+      showAlert('Error', getApiErrorMessage(error, 'Could not check in this participant. Please try again.'), 'red')
+    }
   } finally {
-    pendingIds.value = pendingIds.value.filter(id => id !== registrant.id)
+    setPending(item.registrationId, false)
   }
 }
 
-const handleToggle = (registrant: AttendanceRegistrant) => {
+const undoCheckIn = async (item: AttendanceListItem) => {
+  const record = item.attendance
+  if (!record?.id) return
+
+  setPending(item.registrationId, true)
+  item.attendance = null // optimistic
+
+  try {
+    const updated = await AttendanceService.undoCheckIn(eventId, record.id)
+    item.attendance = updated.attendance
+    item.ticket = updated.ticket
+  } catch (error) {
+    const code = getApiErrorCode(error)
+    if (code === AttendanceErrorCode.ATTENDANCE_NOT_FOUND) {
+      // already undone on another device
+      item.ticket.status = 'ACTIVE'
+    } else {
+      item.attendance = record
+      showAlert(
+        code === AttendanceErrorCode.FEEDBACK_ALREADY_SUBMITTED ? 'Cannot Undo' : 'Error',
+        getApiErrorMessage(error, 'Could not undo the check-in. Please try again.'),
+        'red'
+      )
+    }
+  } finally {
+    setPending(item.registrationId, false)
+  }
+}
+
+const handleToggle = (item: AttendanceListItem) => {
   if (!canCheckIn.value) {
     return showAlert('Check-In Closed', 'Attendance can only be changed for upcoming or ongoing events.', 'red')
   }
 
-  if (registrant.checkedInAt) {
+  if (!item.attendance && item.ticket.status !== 'ACTIVE') return // expired / cancelled ticket
+
+  if (item.attendance) {
     confirmState.value = {
       show: true,
       title: 'Undo Check-In',
-      description: `Mark ${getAttendeeName(registrant.participantSnapshot)} as not checked in?`,
+      description: `Mark ${getAttendeeName(item.participantSnapshot)} as not checked in?`,
       confirmText: 'Undo',
       theme: 'red',
       onConfirm: () => {
         confirmState.value.show = false
-        applyManualCheckIn(registrant, false)
+        undoCheckIn(item)
       }
     }
   } else {
-    applyManualCheckIn(registrant, true)
+    manualCheckIn(item)
   }
 }
 
-// --- QR scan ---
+// ---------- QR scan ----------
 
 const openScanner = () => {
   if (!canCheckIn.value) {
@@ -157,9 +243,13 @@ const openScanner = () => {
 }
 
 const submitScan = async (qrToken: string): Promise<ScanOutcome> => {
+  if (!isValidQrToken(qrToken)) {
+    return { status: 'error', title: 'Invalid QR Code', message: 'This QR code is not an Evenite ticket.' }
+  }
+
   try {
     const result = await AttendanceService.checkInByQr(eventId, qrToken)
-    applyCheckInResult(result)
+    markCheckedIn(result)
     return {
       status: 'success',
       title: 'Checked In!',
@@ -169,10 +259,30 @@ const submitScan = async (qrToken: string): Promise<ScanOutcome> => {
     if (!error?.response) {
       return { status: 'error', title: 'Network Error', message: 'Could not reach the server. Check your connection.' }
     }
-    if (error.response.status === 409) {
-      return { status: 'warning', title: 'Already Checked In', message: getApiErrorMessage(error, 'This ticket has already been used.') }
+
+    const existing = getExistingCheckIn(error)
+    if (existing) {
+      markCheckedIn(existing)
+      return {
+        status: 'warning',
+        title: 'Already Checked In',
+        message: `${getAttendeeName(existing.participantSnapshot)} was already checked in at ${formatClock(existing.checkedInAt)}.`
+      }
     }
-    return { status: 'error', title: 'Invalid Ticket', message: getApiErrorMessage(error, 'This ticket is not valid for this event.') }
+
+    const message = getApiErrorMessage(error, 'This ticket is not valid for this event.')
+    switch (getApiErrorCode(error)) {
+      case AttendanceErrorCode.TICKET_NOT_FOUND:
+        return { status: 'error', title: 'Invalid Ticket', message: 'This ticket does not belong to this event.' }
+      case AttendanceErrorCode.TICKET_CANCELLED:
+        return { status: 'error', title: 'Ticket Cancelled', message }
+      case AttendanceErrorCode.TICKET_EXPIRED:
+        return { status: 'error', title: 'Ticket Expired', message }
+      case AttendanceErrorCode.EVENT_NOT_CHECKABLE:
+        return { status: 'error', title: 'Check-In Closed', message }
+      default:
+        return { status: 'error', title: 'Check-In Failed', message }
+    }
   }
 }
 
@@ -184,6 +294,10 @@ const goBack = () => {
 onMounted(() => {
   window.scrollTo({ top: 0, behavior: 'instant' })
   loadData()
+})
+
+onBeforeUnmount(() => {
+  if (refreshTimer) clearTimeout(refreshTimer)
 })
 </script>
 
@@ -205,11 +319,23 @@ onMounted(() => {
     </div>
 
     <template v-else-if="event">
-      <div class="mb-6 border-b border-[#131B2B]/10 pb-4">
-        <EventStatusBadge :status="event.status" />
-        <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-tight mt-2">{{ getEventTitle(event) }}</h1>
-        <p class="text-sm font-semibold text-[#131B2B]/70 mt-1.5">{{ formatEventDate(event.startAt) }}</p>
-      </div>
+      <div class="mb-6 border-b border-[#131B2B]/10 pb-4 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+            <EventStatusBadge :status="event.status" />
+            <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-tight mt-2">{{ getEventTitle(event) }}</h1>
+            <p class="text-sm font-semibold text-[#131B2B]/70 mt-1.5">{{ formatEventDate(event.startAt) }}</p>
+        </div>
+        <button
+            @click="router.push({ name: 'check-in-analytics', params: { eventId } })"
+            aria-label="View analytics"
+            class="shrink-0 flex items-center gap-1.5 bg-white border border-[#131B2B]/10 hover:bg-[#131B2B]/5 text-[#131B2B] px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Analytics
+        </button>
+        </div>
 
       <div v-if="!canCheckIn" class="mb-5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-4 text-sm font-bold text-[#131B2B]/80">
         Check-in is only available for upcoming or ongoing events. This list is read-only.
@@ -222,11 +348,11 @@ onMounted(() => {
             <h2 class="text-xs font-black text-[#131B2B]/70 uppercase tracking-widest">Attendance</h2>
             <p class="mt-1.5">
               <span class="text-3xl font-['Nunito'] font-black text-[#131B2B]">{{ checkedInCount }}</span>
-              <span class="text-sm font-bold text-[#131B2B]/60"> / {{ confirmedRegistrants.length }} checked in</span>
+              <span class="text-sm font-bold text-[#131B2B]/60"> / {{ items.length }} checked in</span>
             </p>
           </div>
           <button
-            @click="loadData(true)"
+            @click="loadData({ silent: true })"
             :disabled="isRefreshing"
             aria-label="Refresh"
             class="w-9 h-9 rounded-full border border-[#131B2B]/10 bg-white text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5 flex items-center justify-center shadow-sm transition-colors cursor-pointer disabled:opacity-50"
@@ -276,7 +402,7 @@ onMounted(() => {
       </div>
 
       <!-- List -->
-      <div v-if="confirmedRegistrants.length === 0" class="text-center py-16 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm">
+      <div v-if="items.length === 0" class="text-center py-16 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm">
         <div class="w-14 h-14 bg-[#131B2B]/5 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg class="w-7 h-7 text-[#131B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -285,45 +411,36 @@ onMounted(() => {
         <p class="text-sm font-bold text-[#131B2B]/70">No participants have registered yet.</p>
       </div>
 
-      <div v-else-if="visibleRegistrants.length === 0" class="text-center py-12 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm">
+      <div v-else-if="visibleItems.length === 0" class="text-center py-12 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm">
         <p class="text-sm font-bold text-[#131B2B]/70">No participants match your search.</p>
       </div>
 
       <div v-else class="space-y-3">
         <ParticipantCheckInRow
-          v-for="r in visibleRegistrants"
-          :key="r.id"
-          :registrant="r"
-          :pending="pendingIds.includes(r.id)"
+          v-for="item in visibleItems"
+          :key="item.registrationId"
+          :item="item"
+          :pending="pendingIds.includes(item.registrationId)"
           :disabled="!canCheckIn"
-          @toggle="handleToggle(r)"
+          @toggle="handleToggle(item)"
         />
       </div>
     </template>
 
-    <!-- Bottom actions -->
+    <!-- Bottom action: scan only -->
     <div v-if="event && !isLoading" class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
-      <div class="max-w-3xl w-full flex justify-center gap-4 px-5 md:px-0">
-        <button
-          @click="router.push({ name: 'check-in-analytics', params: { eventId } })"
-          class="flex-1 sm:w-48 bg-white border border-[#131B2B]/10 hover:bg-[#131B2B]/5 text-[#131B2B] py-3 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-2"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-          Analytics
-        </button>
-        <button
-          @click="openScanner"
-          :disabled="!canCheckIn"
-          class="flex-1 sm:w-48 bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M4 12h16"></path>
-          </svg>
-          Check-In
-        </button>
-      </div>
+        <div class="max-w-3xl w-full px-5 md:px-0">
+            <button
+            @click="openScanner"
+            :disabled="!canCheckIn"
+            class="w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3.5 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M4 12h16"></path>
+            </svg>
+            {{ canCheckIn ? 'Scan Ticket' : 'Check-In Closed' }}
+            </button>
+        </div>
     </div>
 
     <QrScannerModal

@@ -1,28 +1,38 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type AttendanceRegistrant, getAttendeeName, formatClock } from '../../services/AttendanceService'
+import { type AttendanceListItem, getAttendeeName, formatClock } from '../../services/AttendanceService'
 
 const props = defineProps<{
-  registrant: AttendanceRegistrant
+  item: AttendanceListItem
   pending?: boolean
   disabled?: boolean
 }>()
 
 const emit = defineEmits<{ (e: 'toggle'): void }>()
 
-const snapshot = computed(() => props.registrant.participantSnapshot)
+const snapshot = computed(() => props.item.participantSnapshot)
 const name = computed(() => getAttendeeName(snapshot.value))
-const isCheckedIn = computed(() => !!props.registrant.checkedInAt)
+const isCheckedIn = computed(() => !!props.item.attendance)
 
 const initials = computed(() => {
-  const first = snapshot.value?.firstName?.trim()?.[0] ?? ''
-  const last = snapshot.value?.lastName?.trim()?.[0] ?? ''
+  const first = (snapshot.value?.firstName as string | undefined)?.trim()?.[0] ?? ''
+  const last = (snapshot.value?.lastName as string | undefined)?.trim()?.[0] ?? ''
   return (first + last).toUpperCase() || '?'
 })
 
 const subInfo = computed(() =>
   [snapshot.value?.studentId, snapshot.value?.major].filter(Boolean).join(' · ') || 'No student info'
 )
+
+// only ACTIVE tickets can be checked in; EXPIRED / CANCELLED rows have no action
+const notCheckable = computed(() => !props.item.attendance && props.item.ticket.status !== 'ACTIVE')
+const ticketStatusLabel = computed(() =>
+  props.item.ticket.status === 'EXPIRED' ? 'Ticket expired'
+    : props.item.ticket.status === 'CANCELLED' ? 'Ticket cancelled'
+    : 'Ticket not active'
+)
+
+const methodLabel = computed(() => (props.item.attendance?.method === 'QR_SCAN' ? 'QR' : 'Manual'))
 </script>
 
 <template>
@@ -44,7 +54,11 @@ const subInfo = computed(() =>
       </p>
       <p class="text-xs font-semibold text-[#131B2B]/60 truncate mt-0.5">{{ subInfo }}</p>
       <p v-if="isCheckedIn" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">
-        Checked in · {{ formatClock(registrant.checkedInAt) }}
+        Checked in · {{ formatClock(item.attendance?.checkedInAt) }}
+        <span class="text-[#131B2B]/40">· {{ methodLabel }}</span>
+      </p>
+      <p v-else-if="notCheckable" class="text-[10px] font-black uppercase tracking-widest text-red-500 mt-1">
+        {{ ticketStatusLabel }}
       </p>
     </div>
 
@@ -53,7 +67,7 @@ const subInfo = computed(() =>
       role="switch"
       :aria-checked="isCheckedIn"
       :aria-label="`Toggle check-in for ${name}`"
-      :disabled="pending || disabled"
+      :disabled="pending || disabled || notCheckable"
       @click="emit('toggle')"
       class="relative w-12 h-7 rounded-full transition-colors shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
       :class="isCheckedIn ? 'bg-[#131B2B]' : 'bg-[#131B2B]/15'"
