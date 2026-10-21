@@ -1,86 +1,140 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { EventService } from '../../services/EventService'
-import { FormService } from '../../services/FormService'
 import {
-  AttendanceService,
   type AttendanceEvent,
-  type AttendanceRegistrant,
   getApiErrorMessage,
   getEventTitle,
   formatEventDate
 } from '../../services/AttendanceService'
+import {
+  AnalyticsService,
+  type AnalyticsRange,
+  type EventAnalytics,
+  formatPercent
+} from '../../services/AnalyticService'
+import { useRealtime } from '../../composables/useRealTime'
 import EventStatusBadge from '../../components/attendance/EventStatusBadge.vue'
 import StatRing from '../../components/attendance/StatRing.vue'
 import CheckInTimeline from '../../components/attendance/CheckInTimeline.vue'
+
+type ChartRange = Exclude<AnalyticsRange, 'all'>
 
 const route = useRoute()
 const router = useRouter()
 const eventId = route.params.eventId as string
 
 const event = ref<AttendanceEvent | null>(null)
-const registrants = ref<AttendanceRegistrant[]>([])
-const forms = ref<{ type: string }[]>([])
+const analytics = ref<EventAnalytics | null>(null)
+const range = ref<ChartRange>('24h')
+
 const isLoading = ref(true)
 const isRefreshing = ref(false)
+const isRangeLoading = ref(false)
 const errorMessage = ref('')
 
-const loadData = async (silent = false) => {
-  if (silent) isRefreshing.value = true
-  else isLoading.value = true
+const loadAll = async () => {
+  isLoading.value = true
   errorMessage.value = ''
-
   try {
-    const [eventData, registrantData, formData] = await Promise.all([
+    const [eventData, analyticsData] = await Promise.all([
       EventService.getEventById(eventId),
-      AttendanceService.getRegistrants(eventId),
-      FormService.getFormsByEventId(eventId).catch(() => [])
+      AnalyticsService.getEventAnalytics(eventId, range.value)
     ])
     event.value = eventData as unknown as AttendanceEvent
-    registrants.value = registrantData
-    forms.value = formData ?? []
+    analytics.value = analyticsData
   } catch (error) {
     console.error('Failed to load analytics:', error)
     errorMessage.value = getApiErrorMessage(error, 'Could not load analytics for this event.')
   } finally {
     isLoading.value = false
-    isRefreshing.value = false
   }
 }
 
-const confirmed = computed(() => registrants.value.filter(r => r.status === 'CONFIRMED'))
-const cancelledCount = computed(() => registrants.value.filter(r => r.status === 'CANCELLED').length)
-const checkInTimes = computed(() => confirmed.value.filter(r => r.checkedInAt).map(r => r.checkedInAt as string))
-const checkedInCount = computed(() => checkInTimes.value.length)
-const notCheckedInCount = computed(() => confirmed.value.length - checkedInCount.value)
+// refetch analytics only (event header doesn't change)
+let requestId = 0
+const refreshAnalytics = async (mode: 'manual' | 'range' | 'background' = 'manual') => {
+  const id = ++requestId
+  if (mode === 'manual') isRefreshing.value = true
+  if (mode === 'range') isRangeLoading.value = true
+  try {
+    const data = await AnalyticsService.getEventAnalytics(eventId, range.value)
+    if (id === requestId) analytics.value = data // ignore out-of-order responses
+  } catch (error) {
+    console.error('Failed to refresh analytics:', error)
+  } finally {
+    if (id === requestId) {
+      isRefreshing.value = false
+      isRangeLoading.value = false
+    }
+  }
+}
+
+const changeRange = (value: ChartRange) => {
+  if (value === range.value) return
+  range.value = value
+  refreshAnalytics('range')
+}
+
+// ---------- Realtime: the server only nudges, we refetch (debounced) ----------
+
+let nudgeTimer: ReturnType<typeof setTimeout> | null = null
+const scheduleRefresh = () => {
+  if (nudgeTimer) clearTimeout(nudgeTimer)
+  nudgeTimer = setTimeout(() => refreshAnalytics('background'), 1000)
+}
+
+useRealtime(
+  {
+    'analytics:changed': (p: any) => {
+      if (p.eventId === eventId) scheduleRefresh()
+    }
+  },
+  scheduleRefresh
+)
+
+// ---------- Derived ----------
+
+const overview = computed(() => analytics.value?.overview)
 const isConcluded = computed(() => event.value?.status === 'CONCLUDED')
 
-const seatLimit = computed(() => event.value?.seatLimit ?? null)
-const seatsRegistered = computed(() => event.value?.seatsTaken ?? confirmed.value.length)
+const quickStats = computed(() => {
+  const o = overview.value
+  if (!o) return []
+  return [
+    { label: 'Registered', value: o.registered },
+    { label: 'Checked in', value: o.checkedIn },
+    { label: isConcluded.value ? 'No-show' : 'Not yet', value: o.notCheckedIn },
+    { label: 'Cancelled', value: o.cancelled }
+  ]
+})
 
-const quickStats = computed(() => [
-  { label: 'Registered', value: confirmed.value.length },
-  { label: 'Checked in', value: checkedInCount.value },
-  { label: isConcluded.value ? 'No-show' : 'Not yet', value: notCheckedInCount.value },
-  { label: 'Cancelled', value: cancelledCount.value }
-])
+const methods = computed(() => analytics.value?.checkInMethods ?? { QR_SCAN: 0, MANUAL: 0 })
+const methodTotal = computed(() => methods.value.QR_SCAN + methods.value.MANUAL)
+const qrShare = computed(() => (methodTotal.value ? (methods.value.QR_SCAN / methodTotal.value) * 100 : 0))
 
-const hasForm = (type: string) => forms.value.some(f => f.type === type)
+const hasRegistrationForm = computed(() => (analytics.value?.registrationAnswers.length ?? 0) > 0)
+const feedback = computed(() => analytics.value?.feedback ?? null)
 
 const openResponses = (type: 'REGISTRATION' | 'FEEDBACK') => {
-  if (!hasForm(type)) return
+  if (type === 'REGISTRATION' && !hasRegistrationForm.value) return
+  if (type === 'FEEDBACK' && !feedback.value) return
   router.push(`/events/${eventId}/forms/${type}/responses`)
 }
 
 const goBack = () => {
   if (window.history.state?.back) router.back()
-  else router.push({ name: 'check-in-event', params: { eventId } })
+  else router.push({ name: 'check-in' })
 }
 
 onMounted(() => {
   window.scrollTo({ top: 0, behavior: 'instant' })
-  loadData()
+  loadAll()
+})
+
+onBeforeUnmount(() => {
+  if (nudgeTimer) clearTimeout(nudgeTimer)
 })
 </script>
 
@@ -98,10 +152,10 @@ onMounted(() => {
 
     <div v-else-if="errorMessage" class="bg-red-50 text-red-600 p-5 rounded-xl border border-red-200 text-sm font-bold text-center shadow-sm">
       {{ errorMessage }}
-      <button @click="loadData()" class="block mx-auto mt-3 text-xs font-black uppercase tracking-widest underline cursor-pointer">Retry</button>
+      <button @click="loadAll()" class="block mx-auto mt-3 text-xs font-black uppercase tracking-widest underline cursor-pointer">Retry</button>
     </div>
 
-    <template v-else-if="event">
+    <template v-else-if="event && analytics && overview">
       <!-- Header -->
       <div class="flex items-start justify-between gap-4 mb-6 border-b border-[#131B2B]/10 pb-4">
         <div class="min-w-0">
@@ -113,7 +167,7 @@ onMounted(() => {
           </div>
         </div>
         <button
-          @click="loadData(true)"
+          @click="refreshAnalytics('manual')"
           :disabled="isRefreshing"
           aria-label="Refresh"
           class="w-9 h-9 rounded-full border border-[#131B2B]/10 bg-white text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5 flex items-center justify-center shadow-sm transition-colors cursor-pointer disabled:opacity-50 shrink-0"
@@ -128,16 +182,16 @@ onMounted(() => {
       <div class="grid grid-cols-2 gap-3 mb-5 animate-fade-in">
         <StatRing
           title="Seats"
-          :value="seatsRegistered"
-          :total="seatLimit"
+          :value="overview.registered"
+          :total="overview.seatLimit"
           valueLabel="Registered"
           totalLabel="Total seats"
           color="#131B2B"
         />
         <StatRing
           title="Attendance"
-          :value="checkedInCount"
-          :total="confirmed.length"
+          :value="overview.checkedIn"
+          :total="overview.registered"
           valueLabel="Checked in"
           totalLabel="Registered"
           color="#10B981"
@@ -152,31 +206,69 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Timeline -->
+      <div class="mb-5">
+        <CheckInTimeline
+          :check-in-timeline="analytics.checkInTimeline"
+          :registration-timeline="analytics.registrationTimeline"
+          :range="range"
+          :time-zone="analytics.timeZone"
+          :generated-at="analytics.generatedAt"
+          :loading="isRangeLoading"
+          @update:range="changeRange"
+        />
+      </div>
+
+      <!-- Check-in methods -->
+      <div class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm mb-5">
+        <h3 class="text-base font-['Nunito'] font-black text-[#131B2B] mb-3">Check-in Method</h3>
+        <div v-if="methodTotal === 0" class="text-sm font-semibold text-[#131B2B]/50">No check-ins recorded yet.</div>
+        <template v-else>
+          <div class="h-2.5 w-full bg-[#131B2B]/10 rounded-full overflow-hidden flex">
+            <div class="h-full bg-[#131B2B] transition-all duration-500" :style="{ width: `${qrShare}%` }"></div>
+            <div class="h-full bg-[#F26E22] transition-all duration-500" :style="{ width: `${100 - qrShare}%` }"></div>
+          </div>
+          <div class="flex justify-between mt-2.5 text-xs font-bold text-[#131B2B]">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#131B2B]"></span>QR scan · {{ methods.QR_SCAN }}</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#F26E22]"></span>Manual · {{ methods.MANUAL }}</span>
+          </div>
+        </template>
+      </div>
+
       <!-- Form responses -->
-      <div class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-3 mb-5">
+      <div class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-3">
         <h3 class="text-base font-['Nunito'] font-black text-[#131B2B] mb-1">Form Responses</h3>
+
+        <div v-if="feedback" class="grid grid-cols-2 gap-2 mb-1">
+          <div class="bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-3">
+            <p class="text-[10px] font-black text-[#131B2B]/60 uppercase tracking-widest">Feedback</p>
+            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">{{ feedback.responses }}</p>
+          </div>
+          <div class="bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-3">
+            <p class="text-[10px] font-black text-[#131B2B]/60 uppercase tracking-widest">Response rate</p>
+            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">{{ formatPercent(feedback.responseRate) }}</p>
+            <p class="text-[10px] font-semibold text-[#131B2B]/60">of checked-in</p>
+          </div>
+        </div>
 
         <button
           @click="openResponses('REGISTRATION')"
-          :disabled="!hasForm('REGISTRATION')"
+          :disabled="!hasRegistrationForm"
           class="w-full bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          {{ hasForm('REGISTRATION') ? 'Registration Responses' : 'No Registration Form' }}
+          {{ hasRegistrationForm ? 'Registration Responses' : 'No Registration Form' }}
         </button>
 
         <button
           @click="openResponses('FEEDBACK')"
-          :disabled="!hasForm('FEEDBACK')"
+          :disabled="!feedback"
           class="w-full bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-          {{ hasForm('FEEDBACK') ? 'Feedback Responses' : 'No Feedback Form' }}
+          {{ feedback ? 'Feedback Responses' : 'No Feedback Form' }}
         </button>
       </div>
-
-      <!-- Timeline -->
-      <CheckInTimeline :check-ins="checkInTimes" />
     </template>
   </div>
 </template>
