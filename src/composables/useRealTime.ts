@@ -1,18 +1,22 @@
 import { onMounted, onBeforeUnmount } from 'vue'
 import { io, type Socket } from 'socket.io-client'
 import api from '../services/api'
+import { useAuthStore } from '../stores/auth'
 
 // One shared connection to the backend's `realtime` namespace.
 // The server puts every socket into the user's personal channel, so clients only
 // connect and listen — there is no room-join step.
 
 // TODO: use the same token source as your discussion-room socket / axios interceptor
-const getAccessToken = (): string => localStorage.getItem('accessToken') ?? ''
+const getAccessToken = (): string => useAuthStore().accessToken ?? ''
 
 // TODO: call your existing refresh logic (POST /auth/refresh with the refresh token)
 // and store the new access token where getAccessToken() reads it.
 const refreshAccessToken = async (): Promise<void> => {
-  // e.g. await AuthService.refreshToken()
+  const authStore = useAuthStore()
+  const response = await api.post('/auth/refresh')
+  const newToken = response.data.accessToken
+  if (newToken) authStore.setTokens(newToken, authStore.refreshToken!)
 }
 
 // sockets connect to the server origin; an `/api` prefix in baseURL does not apply to socket.io
@@ -26,25 +30,30 @@ const MAX_AUTH_RETRIES = 3
 let socket: Socket | null = null
 let users = 0
 let retryTimer: ReturnType<typeof setTimeout> | null = null
+let stableTimer: ReturnType<typeof setTimeout> | null = null
 let authRetries = 0
+let closeTimer: ReturnType<typeof setTimeout> | null = null
 
 const acquireSocket = (): Socket => {
   users++
+  if (closeTimer) { clearTimeout(closeTimer); closeTimer = null }
   if (socket) return socket
 
   socket = io(`${getSocketOrigin()}/realtime`, {
-    // a function, so every (re)connect sends the latest access token
     auth: (cb) => cb({ token: getAccessToken() }),
     withCredentials: true,
     transports: ['websocket', 'polling']
   })
 
-  socket.on('connect', () => { authRetries = 0 })
+  // NestJS rejects in handleConnection, i.e. AFTER 'connect' fires,
+  // so only treat the connection as authenticated if it survives a few seconds
+  socket.on('connect', () => {
+    if (stableTimer) clearTimeout(stableTimer)
+    stableTimer = setTimeout(() => { authRetries = 0 }, 5000)
+  })
 
-  // The token is only checked on connect. An expired token (15 min) gets
-  // `error: Unauthorized` + a server-side disconnect, and socket.io does NOT
-  // auto-reconnect after that -> refresh the token, then reconnect ourselves.
   socket.on('disconnect', (reason) => {
+    if (stableTimer) clearTimeout(stableTimer)
     if (reason !== 'io server disconnect' || users === 0) return
     if (authRetries >= MAX_AUTH_RETRIES) return // give up (e.g. logged out)
     authRetries++
@@ -57,19 +66,22 @@ const acquireSocket = (): Socket => {
   return socket
 }
 
-const releaseSocket = () => {
-  users = Math.max(users - 1, 0)
-  if (users === 0) closeRealtime()
-}
-
-// call on logout
 export const closeRealtime = () => {
   if (retryTimer) clearTimeout(retryTimer)
+  if (stableTimer) clearTimeout(stableTimer)
   if (!socket) return
   socket.removeAllListeners()
   socket.disconnect()
   socket = null
   users = 0
+}
+
+const releaseSocket = () => {
+  users = Math.max(users - 1, 0)
+  if (users === 0) {
+    // keep the socket briefly so the next page can reuse it
+    closeTimer = setTimeout(() => { if (users === 0) closeRealtime() }, 3000)
+  }
 }
 
 // call after your axios interceptor refreshes the access token,
