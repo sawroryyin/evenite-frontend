@@ -5,6 +5,7 @@ import { RegistrationService } from '../../services/RegistrationService'
 import { UserService } from '../../services/UserService'
 import ConfirmModal from '../../components/ConfirmModal.vue'
 import { sanitizeId } from '../../services/DiscussionService'
+import { useTicketLiveStatus } from '../../composables/useTicketLiveStatus'
 
 const router = useRouter()
 
@@ -51,6 +52,18 @@ watch(() => props.event?.id, (newId) => {
   }
 }, { immediate: true })
 
+// live: participant's ticket for this event flips to USED on check-in (ACTIVE again on undo)
+useTicketLiveStatus({
+  match: change => !props.isOrganizer && change.eventId === props.event?.id,
+  onChange: change => {
+    if (userTicket.value) userTicket.value.status = change.status
+  },
+  onReconnect: () => { if (!props.isOrganizer && userTicket.value) fetchUserTicket() }
+})
+
+// a checked-in registration can't be cancelled (backend: "Cannot cancel after checking in.")
+const isCheckedIn = computed(() => userTicket.value?.status === 'USED')
+
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
 
@@ -61,9 +74,6 @@ const canViewInsights = computed(() =>
 
 const goToAnalytics = () =>
   router.push({ name: 'check-in-analytics', params: { eventId: props.event.id } })
-
-const goToAttendance = () =>
-  router.push({ name: 'check-in-event', params: { eventId: props.event.id } })
 
 const isEventFull = computed(() => {
   if (props.event.seatLimit === null || props.event.seatLimit === undefined) return false;
@@ -337,7 +347,14 @@ const mapEmbedUrl = computed(() => {
             </div>
 
             <div v-if="userTicket?.registration?.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
-              <p v-if="isEventOver || isEventStarted" class="text-center text-[#131B2B]/80 text-sm font-bold py-2 px-1">
+              <div v-if="isCheckedIn" class="flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl py-2.5 px-3">
+                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <p class="text-sm font-bold text-emerald-700">You're checked in for this event.</p>
+              </div>
+
+              <p v-else-if="isEventOver || isEventStarted" class="text-center text-[#131B2B]/80 text-sm font-bold py-2 px-1">
                 {{ isEventOver ? 'This event is already over.' : 'This event has already started. Cancellation is no longer available.' }}
               </p>
 
@@ -364,7 +381,7 @@ const mapEmbedUrl = computed(() => {
                 Give Feedback
               </button>
 
-              <button v-if="!isEventStarted && !isEventOver" @click="confirmCancelRegistration" 
+              <button v-if="!isEventStarted && !isEventOver && !isCheckedIn" @click="confirmCancelRegistration"
                 class="w-full bg-red-50 hover:bg-red-100 text-red-600 border-red-200 border shadow-sm transform active:scale-95 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 Cancel Registration
               </button>

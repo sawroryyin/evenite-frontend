@@ -5,26 +5,24 @@ import type { AnalyticsRange, AnalyticsTimeline } from '../../services/AnalyticS
 // Column chart for the backend's analytics timelines.
 // The backend already decides the window:
 //   timelineEnd = min(now, event end)   (event end = endAt, or startAt + 24h when endAt is empty)
-// so while the event is running the columns end at "now", and once it has ended
-// they end at the event's end and "now" no longer matters.
-
-type ChartRange = Exclude<AnalyticsRange, 'all'>
+// For 'all', the backend picks hourly buckets when the activity spans <= 48h, otherwise daily.
 
 const props = defineProps<{
   checkInTimeline: AnalyticsTimeline
   registrationTimeline: AnalyticsTimeline
-  range: ChartRange
+  range: AnalyticsRange
   timeZone: string
   generatedAt: string
   loading?: boolean
 }>()
 
-const emit = defineEmits<{ (e: 'update:range', value: ChartRange): void }>()
+const emit = defineEmits<{ (e: 'update:range', value: AnalyticsRange): void }>()
 
-const ranges: { value: ChartRange; label: string }[] = [
+const ranges: { value: AnalyticsRange; label: string }[] = [
   { value: '24h', label: '24H' },
   { value: '7d', label: '7D' },
-  { value: '30d', label: '30D' }
+  { value: '30d', label: '30D' },
+  { value: 'all', label: 'All' }
 ]
 
 const metrics = [
@@ -65,16 +63,18 @@ const bucketLabel = (iso: string) => {
 const axisLabel = (iso: string) => {
   const d = new Date(iso)
   if (isHourly.value) return fmt.value.hourShort.format(d)
-  return props.range === '7d' ? fmt.value.day.format(d) : fmt.value.dayShort.format(d)
+  // few daily columns -> "23 Oct", many -> "23"
+  return points.value.length <= 10 ? fmt.value.day.format(d) : fmt.value.dayShort.format(d)
 }
 
 const peakLabel = (iso: string) =>
   isHourly.value ? fmt.value.hour.format(new Date(iso)) : fmt.value.day.format(new Date(iso))
 
-// label every Nth column, counted back from the latest one
+// aim for ~6 labels whatever the range (24h, 7d, 30d or a variable-length 'all')
 const labelStep = computed(() => {
-  if (isHourly.value) return 6
-  return props.range === '7d' ? 1 : 5
+  const n = points.value.length
+  if (n <= 8) return 1
+  return Math.ceil(n / 6)
 })
 const showAxisLabel = (i: number) => (points.value.length - 1 - i) % labelStep.value === 0
 
@@ -104,20 +104,24 @@ const windowCaption = computed(() => {
     : `Up to now · ${fmt.value.full.format(new Date(end))}`
 })
 
+const unit = computed(() => (metric.value === 'checkIn' ? 'check-in' : 'registration'))
+const plural = (n: number) => `${n} ${unit.value}${n === 1 ? '' : 's'}`
+
+// UC-028 D9: empty columns + "No check-ins in this period."
+const emptyMessage = computed(() =>
+  metric.value === 'checkIn' ? 'No check-ins in this period.' : 'No registrations in this period.'
+)
+
 // ---------- Selection ----------
 
-// The selection is remembered by the column's time (bucketStart), not its position,
-// so background refreshes (realtime nudges, reconnects) never move or reset it.
-// It only changes when the user clicks another column, clicks the same column again
-// (= deselect), or switches range / metric so that column no longer exists.
+// remembered by bucketStart (not index) so background refreshes never move it
 const selectedKey = ref<string | null>(null)
 
 const toggleSelect = (bucketStart: string) => {
   selectedKey.value = selectedKey.value === bucketStart ? null : bucketStart
 }
 
-// switching metric or range: drop a selection whose column isn't in the new chart
-watch([metric, () => props.range], () => {
+watch([metric, () => props.range, points], () => {
   if (selectedKey.value && !points.value.some(p => p.bucketStart === selectedKey.value)) {
     selectedKey.value = null
   }
@@ -126,13 +130,10 @@ watch([metric, () => props.range], () => {
 const selectedPoint = computed(() =>
   selectedKey.value ? points.value.find(p => p.bucketStart === selectedKey.value) ?? null : null
 )
-// nothing clicked -> the detail line shows the latest column (without highlighting it)
 const selected = computed(() => selectedPoint.value ?? points.value[points.value.length - 1] ?? null)
 const isSelected = (bucketStart: string) => selectedKey.value === bucketStart
 
 const barHeight = (count: number) => (count ? `${Math.max((count / maxCount.value) * 100, 4)}%` : '0%')
-const unit = computed(() => (metric.value === 'checkIn' ? 'check-in' : 'registration'))
-const plural = (n: number) => `${n} ${unit.value}${n === 1 ? '' : 's'}`
 </script>
 
 <template>
@@ -190,8 +191,9 @@ const plural = (n: number) => `${n} ${unit.value}${n === 1 ? '' : 's'}`
         </div>
       </div>
 
+      <!-- 'all' with no activity at all: the backend returns no points -->
       <div v-if="points.length === 0" class="text-center py-10 bg-[#131B2B]/5 rounded-xl border border-[#131B2B]/10">
-        <p class="text-sm font-semibold text-[#131B2B]/50">No data for this range.</p>
+        <p class="text-sm font-semibold text-[#131B2B]/50">{{ emptyMessage }}</p>
       </div>
 
       <template v-else>
@@ -212,6 +214,10 @@ const plural = (n: number) => `${n} ${unit.value}${n === 1 ? '' : 's'}`
 
         <!-- Columns -->
         <div class="relative h-40 flex items-end gap-[2px] border-b border-[#131B2B]/15">
+          <!-- empty columns are still drawn; the message sits on top -->
+          <div v-if="totalInRange === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <p class="text-sm font-semibold text-[#131B2B]/50 bg-white/80 px-3 py-1 rounded-lg">{{ emptyMessage }}</p>
+          </div>
           <button
             v-for="p in points"
             :key="p.bucketStart"

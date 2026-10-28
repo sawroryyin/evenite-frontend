@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { EventService } from '../../services/EventService'
 import {
   type AttendanceEvent,
-  getApiErrorMessage,
   getEventTitle,
   formatEventDate
 } from '../../services/AttendanceService'
@@ -18,8 +17,9 @@ import { useRealtime } from '../../composables/useRealTime'
 import EventStatusBadge from '../../components/attendance/EventStatusBadge.vue'
 import StatRing from '../../components/attendance/StatRing.vue'
 import CheckInTimeline from '../../components/attendance/CheckInTimeline.vue'
+import FormFieldStatsCard from '../../components/attendance/FormFieldStatsCard.vue'
 
-type ChartRange = Exclude<AnalyticsRange, 'all'>
+type FormTab = 'REGISTRATION' | 'FEEDBACK'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,12 +27,18 @@ const eventId = route.params.eventId as string
 
 const event = ref<AttendanceEvent | null>(null)
 const analytics = ref<EventAnalytics | null>(null)
-const range = ref<ChartRange>('24h')
+const range = ref<AnalyticsRange>('24h')
 
 const isLoading = ref(true)
 const isRefreshing = ref(false)
 const isRangeLoading = ref(false)
 const errorMessage = ref('')
+
+// UC-028 I3 / network
+const loadErrorMessage = (error: any) =>
+  !error?.response
+    ? 'Could not reach the server. Check your connection.'
+    : 'Could not load analytics for this event.'
 
 const loadAll = async () => {
   isLoading.value = true
@@ -46,7 +52,7 @@ const loadAll = async () => {
     analytics.value = analyticsData
   } catch (error) {
     console.error('Failed to load analytics:', error)
-    errorMessage.value = getApiErrorMessage(error, 'Could not load analytics for this event.')
+    errorMessage.value = loadErrorMessage(error)
   } finally {
     isLoading.value = false
   }
@@ -63,6 +69,11 @@ const refreshAnalytics = async (mode: 'manual' | 'range' | 'background' = 'manua
     if (id === requestId) analytics.value = data // ignore out-of-order responses
   } catch (error) {
     console.error('Failed to refresh analytics:', error)
+    // SRS-162: show the error state with Retry for user-triggered retrievals;
+    // background (realtime) refreshes stay silent
+    if (id === requestId && mode !== 'background') {
+      errorMessage.value = loadErrorMessage(error)
+    }
   } finally {
     if (id === requestId) {
       isRefreshing.value = false
@@ -71,7 +82,7 @@ const refreshAnalytics = async (mode: 'manual' | 'range' | 'background' = 'manua
   }
 }
 
-const changeRange = (value: ChartRange) => {
+const changeRange = (value: AnalyticsRange) => {
   if (value === range.value) return
   range.value = value
   refreshAnalytics('range')
@@ -114,10 +125,32 @@ const methods = computed(() => analytics.value?.checkInMethods ?? { QR_SCAN: 0, 
 const methodTotal = computed(() => methods.value.QR_SCAN + methods.value.MANUAL)
 const qrShare = computed(() => (methodTotal.value ? (methods.value.QR_SCAN / methodTotal.value) * 100 : 0))
 
-const hasRegistrationForm = computed(() => (analytics.value?.registrationAnswers.length ?? 0) > 0)
+// ---------- Forms ----------
+
+const registrationFields = computed(() => analytics.value?.registrationAnswers ?? [])
+const hasRegistrationForm = computed(() => registrationFields.value.length > 0)
 const feedback = computed(() => analytics.value?.feedback ?? null)
 
-const openResponses = (type: 'REGISTRATION' | 'FEEDBACK') => {
+// every CONFIRMED registration submitted the registration form
+const registrationResponses = computed(() => overview.value?.registered ?? 0)
+
+const formTab = ref<FormTab>('REGISTRATION')
+const formTabs = computed(() => [
+  { value: 'REGISTRATION' as const, label: 'Registration', available: hasRegistrationForm.value },
+  { value: 'FEEDBACK' as const, label: 'Feedback', available: !!feedback.value }
+])
+
+const activeFields = computed(() =>
+  formTab.value === 'REGISTRATION' ? registrationFields.value : feedback.value?.fields ?? []
+)
+const activeResponses = computed(() =>
+  formTab.value === 'REGISTRATION' ? registrationResponses.value : feedback.value?.responses ?? 0
+)
+const activeAvailable = computed(() =>
+  formTab.value === 'REGISTRATION' ? hasRegistrationForm.value : !!feedback.value
+)
+
+const openResponses = (type: FormTab) => {
   if (type === 'REGISTRATION' && !hasRegistrationForm.value) return
   if (type === 'FEEDBACK' && !feedback.value) return
   router.push(`/events/${eventId}/forms/${type}/responses`)
@@ -236,38 +269,80 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Form responses -->
-      <div class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-3">
-        <h3 class="text-base font-['Nunito'] font-black text-[#131B2B] mb-1">Form Responses</h3>
+      <div class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm">
+        <h3 class="text-base font-['Nunito'] font-black text-[#131B2B] mb-3">Form Responses</h3>
 
-        <div v-if="feedback" class="grid grid-cols-2 gap-2 mb-1">
-          <div class="bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-3">
-            <p class="text-[10px] font-black text-[#131B2B]/60 uppercase tracking-widest">Feedback</p>
-            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">{{ feedback.responses }}</p>
+                <!-- Overview -->
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <div class="min-w-0 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-2.5 sm:p-3">
+            <p class="text-[9px] sm:text-[10px] font-black text-[#131B2B]/60 uppercase tracking-wider truncate">Registration</p>
+            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">
+              {{ hasRegistrationForm ? registrationResponses : '—' }}
+            </p>
           </div>
-          <div class="bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-3">
-            <p class="text-[10px] font-black text-[#131B2B]/60 uppercase tracking-widest">Response rate</p>
-            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">{{ formatPercent(feedback.responseRate) }}</p>
-            <p class="text-[10px] font-semibold text-[#131B2B]/60">of checked-in</p>
+          <div class="min-w-0 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-2.5 sm:p-3">
+            <p class="text-[9px] sm:text-[10px] font-black text-[#131B2B]/60 uppercase tracking-wider truncate">Feedback</p>
+            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">
+              {{ feedback ? feedback.responses : '—' }}
+            </p>
+          </div>
+          <div class="min-w-0 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-2.5 sm:p-3">
+            <p class="text-[9px] sm:text-[10px] font-black text-[#131B2B]/60 uppercase tracking-wider truncate">Fb. rate</p>
+            <p class="text-lg font-['Nunito'] font-black text-[#131B2B] leading-tight mt-0.5">{{ formatPercent(feedback?.responseRate) }}</p>
+            <p class="text-[10px] font-semibold text-[#131B2B]/60 leading-tight">of checked-in</p>
           </div>
         </div>
 
-        <button
-          @click="openResponses('REGISTRATION')"
-          :disabled="!hasRegistrationForm"
-          class="w-full bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          {{ hasRegistrationForm ? 'Registration Responses' : 'No Registration Form' }}
-        </button>
+        <!-- Form tabs -->
+        <div class="flex bg-[#131B2B]/5 border border-[#131B2B]/10 p-1 rounded-xl mb-4">
+          <button
+            v-for="t in formTabs"
+            :key="t.value"
+            @click="formTab = t.value"
+            class="flex-1 py-2 rounded-lg text-xs font-black tracking-wide cursor-pointer transition-colors"
+            :class="formTab === t.value ? 'bg-[#131B2B] text-white shadow-sm' : 'text-[#131B2B]/70 hover:text-[#131B2B]'"
+          >
+            {{ t.label }}
+          </button>
+        </div>
 
-        <button
-          @click="openResponses('FEEDBACK')"
-          :disabled="!feedback"
-          class="w-full bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-          {{ feedback ? 'Feedback Responses' : 'No Feedback Form' }}
-        </button>
+        <!-- Per-question stats -->
+        <div v-if="!activeAvailable" class="text-center py-8 bg-[#131B2B]/5 rounded-xl border border-[#131B2B]/10 text-sm font-semibold text-[#131B2B]/50">
+          {{ formTab === 'REGISTRATION' ? 'No Registration Form' : 'No Feedback Form' }}
+        </div>
+        <div v-else-if="activeResponses === 0" class="text-center py-8 bg-[#131B2B]/5 rounded-xl border border-[#131B2B]/10 text-sm font-semibold text-[#131B2B]/50">
+          No responses yet.
+        </div>
+        <div v-else class="space-y-3">
+          <FormFieldStatsCard
+            v-for="(field, i) in activeFields"
+            :key="field.fieldId"
+            :field="field"
+            :index="i"
+            :responses="activeResponses"
+          />
+        </div>
+
+        <!-- Navigation to full responses (UC-007) -->
+        <div class="mt-4 space-y-3">
+          <button
+            @click="openResponses('REGISTRATION')"
+            :disabled="!hasRegistrationForm"
+            class="w-full bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            {{ hasRegistrationForm ? 'Registration Responses' : 'No Registration Form' }}
+          </button>
+
+          <button
+            @click="openResponses('FEEDBACK')"
+            :disabled="!feedback"
+            class="w-full bg-white hover:bg-[#131B2B]/5 text-[#131B2B] border border-[#131B2B]/10 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            {{ feedback ? 'Feedback Responses' : 'No Feedback Form' }}
+          </button>
+        </div>
       </div>
     </template>
   </div>
