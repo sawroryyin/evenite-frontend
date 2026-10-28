@@ -6,6 +6,8 @@ import TicketQRCode from '../../components/ticket/TicketQRCode.vue';
 import LoadingOverlay from '../../components/LoadingOverlay.vue';
 import ConfirmModal from '../../components/ConfirmModal.vue';
 import type { ReturnTicketDetailDto } from '../../types';
+import { useTicketLiveStatus } from '../../composables/useTicketLiveStatus';
+import { getTicketStatusStyle } from '../../components/ticket/ticketStatus';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,14 +16,13 @@ const ticketId = route.params.ticketId as string;
 const ticket = ref<ReturnTicketDetailDto | null>(null);
 const isLoading = ref(true);
 
-onMounted(async () => {
-  if (route.query.newRegistration) {
-    showSuccessModal.value = true;
-    router.replace({ query: undefined });
-  }
+// set only by a live check-in while this page is open (the ticket DTO has no check-in time)
+const liveCheckedInAt = ref<string | null>(null);
+const justCheckedIn = ref(false);
 
+const fetchTicket = async ({ silent = false } = {}) => {
   try {
-    isLoading.value = true;
+    if (!silent) isLoading.value = true;
     const response = await api.get(`/users/me/tickets/${ticketId}`);
     ticket.value = response.data;
   } catch (error) {
@@ -29,7 +30,37 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+// live: the ticket flips to USED as soon as the organizer scans it (and back to ACTIVE on undo)
+useTicketLiveStatus({
+  match: change => change.ticketId === ticketId,
+  onChange: change => {
+    if (!ticket.value) return;
+    ticket.value.status = change.status as any;
+    liveCheckedInAt.value = change.checkedInAt;
+    justCheckedIn.value = change.status === 'USED';
+    if (change.status === 'USED') navigator.vibrate?.(120);
+  },
+  // missed messages are not replayed, so resync after every (re)connect
+  onReconnect: () => { if (ticket.value) fetchTicket({ silent: true }); }
 });
+
+onMounted(async () => {
+  if (route.query.newRegistration) {
+    showSuccessModal.value = true;
+    router.replace({ query: undefined });
+  }
+  await fetchTicket();
+});
+
+const statusStyle = computed(() => getTicketStatusStyle(ticket.value?.status));
+
+const checkedInTime = computed(() =>
+  liveCheckedInAt.value
+    ? new Date(liveCheckedInAt.value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : ''
+);
 
 const formattedDateOnly = computed(() => {
   if (!ticket.value?.event.startAt) return 'TBA';
@@ -105,11 +136,11 @@ const formattedLocation = computed(() => {
               {{ ticket.event.title.en || ticket.event.title.th }}
             </h2>
             <!-- Added shrink-0 and removed ml-4 to keep badge firmly in bounds -->
-            <span 
-              class="shrink-0 mt-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded border"
-              :class="ticket.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
+            <span
+              class="shrink-0 mt-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded border transition-colors duration-300"
+              :class="statusStyle.cls"
             >
-              {{ ticket.status }}
+              {{ statusStyle.label }}
             </span>
           </div>
           
@@ -149,9 +180,28 @@ const formattedLocation = computed(() => {
           
           <!-- QR Code Section -->
           <div class="pt-10 px-6 pb-8 flex flex-col items-center justify-center border-b border-[#131B2B]/5">
-            <p class="text-sm font-bold text-[#131B2B]/50 uppercase tracking-widest mb-4">Present at check-in</p>
-            
-            <div :class="{'opacity-30': ticket.status !== 'ACTIVE'}">
+            <!-- live check-in confirmation -->
+            <div
+              v-if="ticket.status === 'USED'"
+              class="w-full mb-5 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3"
+              :class="{ 'pop-in': justCheckedIn }"
+            >
+              <div class="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-black text-emerald-700">You're checked in!</p>
+                <p class="text-xs font-semibold text-emerald-700/80">
+                  {{ checkedInTime ? `Checked in at ${checkedInTime}. Enjoy the event.` : 'This ticket has been used. Enjoy the event.' }}
+                </p>
+              </div>
+            </div>
+
+            <p v-else class="text-sm font-bold text-[#131B2B]/50 uppercase tracking-widest mb-4">Present at check-in</p>
+
+            <div class="transition-opacity duration-300" :class="{'opacity-30': ticket.status !== 'ACTIVE'}">
               <TicketQRCode :token="ticket.qrToken" />
             </div>
           </div>
@@ -194,6 +244,12 @@ const formattedLocation = computed(() => {
 </template>
 
 <style scoped>
+.pop-in { animation: popIn 0.35s ease-out; }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* Bottom-left and Bottom-right transparent cut-outs */
 .ticket-top {
   mask-image: 

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { ReturnParticipantTicketListDto } from '../../types';
+import { getTicketStatusStyle } from '../../components/ticket/ticketStatus';
 
 const props = defineProps<{
   ticket: ReturnParticipantTicketListDto;
@@ -17,14 +18,8 @@ const formattedDate = computed(() => {
   });
 });
 
-const statusColors = computed(() => {
-  switch (props.ticket.status) {
-    case 'ACTIVE': return 'bg-green-100 text-green-700 border-green-200';
-    case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200';
-    case 'EXPIRED': return 'bg-gray-100 text-gray-700 border-gray-200';
-    default: return 'bg-[#131B2B]/5 text-[#131B2B] border-[#131B2B]/10';
-  }
-});
+// reactive: the list patches ticket.status live from the socket
+const statusStyle = computed(() => getTicketStatusStyle(props.ticket.status));
 </script>
 
 <template>
@@ -59,10 +54,10 @@ const statusColors = computed(() => {
                 {{ ticket.event.title.en || ticket.event.title.th }}
               </h3>
               <span 
-                class="shrink-0 px-2.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-md border shadow-sm whitespace-nowrap"
-                :class="statusColors"
+                class="shrink-0 px-2.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-md border shadow-sm whitespace-nowrap transition-colors duration-300"
+                :class="statusStyle.cls"
               >
-                {{ ticket.status }}
+                {{ statusStyle.label }}
               </span>
             </div>
             <p class="text-sm text-[#131B2B]/60 mt-2 flex items-center gap-1.5 font-medium">

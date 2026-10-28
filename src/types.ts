@@ -140,6 +140,7 @@ export const TicketStatus = {
   ACTIVE: 'ACTIVE',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED',
+  USED: 'USED',
 } as const;
 export type TicketStatus = typeof TicketStatus[keyof typeof TicketStatus];
 

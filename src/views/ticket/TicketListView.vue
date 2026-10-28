@@ -4,17 +4,19 @@ import api from '../../services/api';
 import TicketCard from '../../components/ticket/TicketCard.vue';
 import type { ReturnParticipantTicketListDto } from '../../types.ts';
 import BottomNav from '../../components/BottomNav.vue'
+import { useTicketLiveStatus } from '../../composables/useTicketLiveStatus';
 
 const tickets = ref<ReturnParticipantTicketListDto[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref('');
 
-const filterOptions = ['All', 'Active', 'Expired', 'Cancelled'];
+// 'Used' = checked-in tickets (TicketStatus.USED)
+const filterOptions = ['All', 'Active', 'Used', 'Expired', 'Cancelled'];
 const selectedFilter = ref('All');
 
-const fetchTickets = async () => {
+const fetchTickets = async ({ silent = false } = {}) => {
   try {
-    isLoading.value = true;
+    if (!silent) isLoading.value = true;
     errorMessage.value = '';
     
     const dbFilterStatus = selectedFilter.value.toUpperCase();
@@ -36,7 +38,27 @@ onMounted(() => {
 });
 
 // Refetch tickets whenever the user clicks a new filter
-watch(selectedFilter, fetchTickets);
+watch(selectedFilter, () => fetchTickets());
+
+// ---------- Live ticket status (check-in / undo by the organizer) ----------
+
+useTicketLiveStatus({
+  onChange: change => {
+    const row = tickets.value.find(t => t.id === change.ticketId);
+    const filter = selectedFilter.value.toUpperCase();
+    const stillMatches = filter === 'ALL' || filter === change.status;
+
+    if (row && stillMatches) {
+      row.status = change.status as any; // patch in place, the card re-renders
+    } else if (row || stillMatches) {
+      // it left this filter (e.g. Active -> Used) or now belongs to it: resync quietly
+      fetchTickets({ silent: true });
+    }
+  },
+  // missed messages are not replayed
+  // (skipped on the first connect while the initial load is still running)
+  onReconnect: () => { if (!isLoading.value) fetchTickets({ silent: true }); }
+});
 </script>
 
 <template>
