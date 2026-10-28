@@ -7,7 +7,6 @@ import {
   AttendanceErrorCode,
   type AttendanceEvent,
   type AttendanceListItem,
-  type AttendeeSnapshot,
   type CheckInResult,
   type ScanOutcome,
   getApiErrorMessage,
@@ -39,8 +38,7 @@ const isLoading = ref(true)
 const isRefreshing = ref(false)
 const errorMessage = ref('')
 
-const searchQuery = ref('')
-const filters = ['All', 'Not yet', 'Checked in'] as const
+const filters = ['All', 'Not Checked In', 'Checked In'] as const
 const activeFilter = ref<(typeof filters)[number]>('All')
 const pendingIds = ref<string[]>([])
 const showScanner = ref(false)
@@ -55,6 +53,17 @@ const showAlert = (title: string, description: string, theme: 'blue' | 'red' = '
   alertState.value = { show: true, title, description, theme }
 }
 
+// UC-025/026/027 K: server cannot be reached
+const NETWORK_ERROR = { title: 'Network Error', message: 'Could not reach the server. Check your connection.' }
+const isNetworkError = (error: any) => !error?.response
+
+// UC-025 C11: same message whether the QR is not an Evenite ticket or belongs to another event
+const INVALID_TICKET: ScanOutcome = {
+  status: 'error',
+  title: 'Invalid',
+  message: 'The ticket not found for this event.'
+}
+
 // ---------- Derived state ----------
 
 const canCheckIn = computed(() => !!event.value && CHECK_IN_OPEN_STATUSES.includes(event.value.status))
@@ -65,26 +74,19 @@ const attendancePercent = computed(() =>
 
 const filterCounts = computed<Record<string, number>>(() => ({
   'All': items.value.length,
-  'Not yet': items.value.length - checkedInCount.value,
-  'Checked in': checkedInCount.value
+  'Not Checked In': items.value.length - checkedInCount.value,
+  'Checked In': checkedInCount.value
 }))
 
-const visibleItems = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  return items.value
+const visibleItems = computed(() =>
+  items.value
     .filter(i => {
-      if (activeFilter.value === 'Checked in') return !!i.attendance
-      if (activeFilter.value === 'Not yet') return !i.attendance
+      if (activeFilter.value === 'Checked In') return !!i.attendance
+      if (activeFilter.value === 'Not Checked In') return !i.attendance
       return true
     })
-    .filter(i => {
-      if (!q) return true
-      const s: AttendeeSnapshot = i.participantSnapshot || {}
-      return [`${s.firstName ?? ''} ${s.lastName ?? ''}`, s.nickname, s.studentId, s.major]
-        .some(v => typeof v === 'string' && v.toLowerCase().includes(q))
-    })
     .sort((a, b) => getAttendeeName(a.participantSnapshot).localeCompare(getAttendeeName(b.participantSnapshot)))
-})
+)
 
 // ---------- Loading ----------
 
@@ -102,8 +104,13 @@ const loadData = async ({ silent = false, quiet = false } = {}) => {
     items.value = list.items
   } catch (error) {
     console.error('Failed to load check-in data:', error)
-    if (!silent) errorMessage.value = getApiErrorMessage(error, 'Could not load participants for this event.')
-    else if (!quiet) showAlert('Error', 'Could not refresh the participant list.', 'red')
+    if (!silent) {
+      errorMessage.value = isNetworkError(error)
+        ? NETWORK_ERROR.message
+        : getApiErrorMessage(error, 'Could not load participants for this event.')
+    } else if (!quiet) {
+      showAlert('Error', 'Could not refresh the participant list.', 'red')
+    }
   } finally {
     isLoading.value = false
     isRefreshing.value = false
@@ -152,7 +159,7 @@ useRealtime(
   scheduleRefresh
 )
 
-// ---------- Manual check-in / undo ----------
+// ---------- Manual check-in (UC-026) / undo (UC-027) ----------
 
 const setPending = (id: string, on: boolean) => {
   pendingIds.value = on ? [...pendingIds.value, id] : pendingIds.value.filter(x => x !== id)
@@ -165,7 +172,9 @@ const manualCheckIn = async (item: AttendanceListItem) => {
   item.attendance = { id: '', method: 'MANUAL', checkedInAt: new Date().toISOString() }
 
   try {
-    markCheckedIn(await AttendanceService.checkInManually(eventId, item.registrationId))
+    const result = await AttendanceService.checkInManually(eventId, item.registrationId)
+    markCheckedIn(result)
+    showAlert('Checked In!', `${getAttendeeName(result.participantSnapshot)} is now checked in.`)
   } catch (error) {
     const existing = getExistingCheckIn(error)
     if (existing) {
@@ -173,7 +182,8 @@ const manualCheckIn = async (item: AttendanceListItem) => {
       showAlert('Already Checked In', `${getAttendeeName(item.participantSnapshot)} was already checked in at ${formatClock(existing.checkedInAt)}.`)
     } else {
       item.attendance = previous
-      showAlert('Error', getApiErrorMessage(error, 'Could not check in this participant. Please try again.'), 'red')
+      if (isNetworkError(error)) showAlert(NETWORK_ERROR.title, NETWORK_ERROR.message, 'red')
+      else showAlert('Error', getApiErrorMessage(error, 'Could not check in this participant. Please try again.'), 'red')
     }
   } finally {
     setPending(item.registrationId, false)
@@ -191,18 +201,24 @@ const undoCheckIn = async (item: AttendanceListItem) => {
     const updated = await AttendanceService.undoCheckIn(eventId, record.id)
     item.attendance = updated.attendance
     item.ticket = updated.ticket
+    showAlert('Success', 'Undo Checked In successfully.')
   } catch (error) {
     const code = getApiErrorCode(error)
     if (code === AttendanceErrorCode.ATTENDANCE_NOT_FOUND) {
       // already undone on another device
       item.ticket.status = 'ACTIVE'
+      showAlert('Error', getApiErrorMessage(error, 'Check-in record not found for this event.'), 'red')
     } else {
       item.attendance = record
-      showAlert(
-        code === AttendanceErrorCode.FEEDBACK_ALREADY_SUBMITTED ? 'Cannot Undo' : 'Error',
-        getApiErrorMessage(error, 'Could not undo the check-in. Please try again.'),
-        'red'
-      )
+      if (isNetworkError(error)) {
+        showAlert(NETWORK_ERROR.title, NETWORK_ERROR.message, 'red')
+      } else {
+        showAlert(
+          code === AttendanceErrorCode.FEEDBACK_ALREADY_SUBMITTED ? 'Cannot Undo' : 'Error',
+          getApiErrorMessage(error, 'Could not undo the check-in. Please try again.'),
+          'red'
+        )
+      }
     }
   } finally {
     setPending(item.registrationId, false)
@@ -211,7 +227,7 @@ const undoCheckIn = async (item: AttendanceListItem) => {
 
 const handleToggle = (item: AttendanceListItem) => {
   if (!canCheckIn.value) {
-    return showAlert('Check-In Closed', 'Attendance can only be changed for upcoming or ongoing events.', 'red')
+    return showAlert('Check-In Closed', 'Check-in is closed for concluded or cancelled events.', 'red')
   }
 
   if (!item.attendance && item.ticket.status !== 'ACTIVE') return // expired / cancelled ticket
@@ -220,8 +236,8 @@ const handleToggle = (item: AttendanceListItem) => {
     confirmState.value = {
       show: true,
       title: 'Undo Check-In',
-      description: `Mark ${getAttendeeName(item.participantSnapshot)} as not checked in?`,
-      confirmText: 'Undo',
+      description: `Mark ${getAttendeeName(item.participantSnapshot)} as not check-in?`,
+      confirmText: 'Confirm',
       theme: 'red',
       onConfirm: () => {
         confirmState.value.show = false
@@ -233,19 +249,18 @@ const handleToggle = (item: AttendanceListItem) => {
   }
 }
 
-// ---------- QR scan ----------
+// ---------- QR scan (UC-025) ----------
 
 const openScanner = () => {
   if (!canCheckIn.value) {
-    return showAlert('Check-In Closed', 'Scanning is only available for upcoming or ongoing events.', 'red')
+    return showAlert('Check-In Closed', 'Check-in is closed for concluded or cancelled events.', 'red')
   }
   showScanner.value = true
 }
 
 const submitScan = async (qrToken: string): Promise<ScanOutcome> => {
-  if (!isValidQrToken(qrToken)) {
-    return { status: 'error', title: 'Invalid QR Code', message: 'This QR code is not an Evenite ticket.' }
-  }
+  // not an Evenite QR at all
+  if (!isValidQrToken(qrToken)) return INVALID_TICKET
 
   try {
     const result = await AttendanceService.checkInByQr(eventId, qrToken)
@@ -256,8 +271,8 @@ const submitScan = async (qrToken: string): Promise<ScanOutcome> => {
       message: `${getAttendeeName(result.participantSnapshot)} is now checked in.`
     }
   } catch (error: any) {
-    if (!error?.response) {
-      return { status: 'error', title: 'Network Error', message: 'Could not reach the server. Check your connection.' }
+    if (isNetworkError(error)) {
+      return { status: 'error', ...NETWORK_ERROR }
     }
 
     const existing = getExistingCheckIn(error)
@@ -270,10 +285,11 @@ const submitScan = async (qrToken: string): Promise<ScanOutcome> => {
       }
     }
 
-    const message = getApiErrorMessage(error, 'This ticket is not valid for this event.')
+    const message = getApiErrorMessage(error, 'An error occurred while saving the check-in. Please try again later.')
     switch (getApiErrorCode(error)) {
       case AttendanceErrorCode.TICKET_NOT_FOUND:
-        return { status: 'error', title: 'Invalid Ticket', message: 'This ticket does not belong to this event.' }
+        // Evenite QR, but from another event (or deleted)
+        return INVALID_TICKET
       case AttendanceErrorCode.TICKET_CANCELLED:
         return { status: 'error', title: 'Ticket Cancelled', message }
       case AttendanceErrorCode.TICKET_EXPIRED:
@@ -321,24 +337,24 @@ onBeforeUnmount(() => {
     <template v-else-if="event">
       <div class="mb-6 border-b border-[#131B2B]/10 pb-4 flex items-start justify-between gap-3">
         <div class="min-w-0">
-            <EventStatusBadge :status="event.status" />
-            <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-tight mt-2">{{ getEventTitle(event) }}</h1>
-            <p class="text-sm font-semibold text-[#131B2B]/70 mt-1.5">{{ formatEventDate(event.startAt) }}</p>
+          <EventStatusBadge :status="event.status" />
+          <h1 class="text-2xl font-['Nunito'] font-black text-[#131B2B] tracking-tight leading-tight mt-2">{{ getEventTitle(event) }}</h1>
+          <p class="text-sm font-semibold text-[#131B2B]/70 mt-1.5">{{ formatEventDate(event.startAt) }}</p>
         </div>
         <button
-            @click="router.push({ name: 'check-in-analytics', params: { eventId } })"
-            aria-label="View analytics"
-            class="shrink-0 flex items-center gap-1.5 bg-white border border-[#131B2B]/10 hover:bg-[#131B2B]/5 text-[#131B2B] px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
+          @click="router.push({ name: 'check-in-analytics', params: { eventId } })"
+          aria-label="View analytics"
+          class="shrink-0 flex items-center gap-1.5 bg-white border border-[#131B2B]/10 hover:bg-[#131B2B]/5 text-[#131B2B] px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
         >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-            </svg>
-            Analytics
+          </svg>
+          Analytics
         </button>
-        </div>
+      </div>
 
       <div v-if="!canCheckIn" class="mb-5 bg-[#131B2B]/5 border border-[#131B2B]/10 rounded-xl p-4 text-sm font-bold text-[#131B2B]/80">
-        Check-in is only available for upcoming or ongoing events. This list is read-only.
+        Check-in is closed for concluded or cancelled events. This list is read-only.
       </div>
 
       <!-- Attendance summary -->
@@ -368,21 +384,6 @@ onBeforeUnmount(() => {
         <p class="text-xs font-bold text-[#131B2B]/60 mt-2">{{ attendancePercent }}% of registered participants</p>
       </div>
 
-      <!-- Search -->
-      <div class="relative mb-4">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <svg class="w-5 h-5 text-[#131B2B]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </div>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search name, nickname or student ID"
-          class="w-full text-sm border border-[#131B2B]/10 rounded-3xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-[#131B2B] bg-white shadow-sm transition-all text-[#131B2B] font-semibold"
-        />
-      </div>
-
       <!-- Filters -->
       <div class="flex gap-3 mb-5 overflow-x-auto scrollbar-hide py-1">
         <button
@@ -408,11 +409,11 @@ onBeforeUnmount(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
           </svg>
         </div>
-        <p class="text-sm font-bold text-[#131B2B]/70">No participants have registered yet.</p>
+        <p class="text-sm font-bold text-[#131B2B]/70">No participants has registered</p>
       </div>
 
       <div v-else-if="visibleItems.length === 0" class="text-center py-12 bg-white rounded-xl border border-[#131B2B]/10 shadow-sm">
-        <p class="text-sm font-bold text-[#131B2B]/70">No participants match your search.</p>
+        <p class="text-sm font-bold text-[#131B2B]/70">No participants in this filter.</p>
       </div>
 
       <div v-else class="space-y-3">
@@ -429,18 +430,18 @@ onBeforeUnmount(() => {
 
     <!-- Bottom action: scan only -->
     <div v-if="event && !isLoading" class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#131B2B]/10 p-4 flex justify-center shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] z-40">
-        <div class="max-w-3xl w-full px-5 md:px-0">
-            <button
-            @click="openScanner"
-            :disabled="!canCheckIn"
-            class="w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3.5 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M4 12h16"></path>
-            </svg>
-            {{ canCheckIn ? 'Scan Ticket' : 'Check-In Closed' }}
-            </button>
-        </div>
+      <div class="max-w-3xl w-full px-5 md:px-0">
+        <button
+          @click="openScanner"
+          :disabled="!canCheckIn"
+          class="w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3.5 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2M4 12h16"></path>
+          </svg>
+          {{ canCheckIn ? 'Scan Ticket' : 'Check-In Closed' }}
+        </button>
+      </div>
     </div>
 
     <QrScannerModal
