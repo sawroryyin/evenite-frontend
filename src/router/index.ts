@@ -12,7 +12,6 @@ import ProfileCreateView from '../views/profile/ProfileCreateView.vue'
 import EventDetailView from '../views/event/EventDetailView.vue'
 import EventListView from '../views/event/EventListView.vue'
 import DiscussionView from '../views/discussion/DiscussionView.vue'
-import NotificationView from '../views/NotificationView.vue'
 import SearchView from '../views/SearchView.vue'
 import RoleSelectView from '../views/auth/RoleSelectView.vue'
 import LoginView from '../views/auth/LoginView.vue'
@@ -44,7 +43,6 @@ const router = createRouter({
     { path: '/create/manual', name: 'create-manual', component: EventDetailView, meta: { requiresAuth: true } },
     { path: '/event/:id', name: 'event-detail', component: EventDetailView, meta: { requiresAuth: true } },
     { path: '/event', name: 'event-list', component: EventListView, meta: { requiresAuth: true } },
-    { path: '/notifications', name: 'notifications', component: NotificationView, meta: { requiresAuth: true } },
     { path: '/search', name: 'search', component: SearchView, meta: { requiresAuth: true } },
 
     { path: '/discussion', name: 'discussion', component: DiscussionView, meta: { requiresAuth: true } },
