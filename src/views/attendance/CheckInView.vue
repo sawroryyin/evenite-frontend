@@ -35,7 +35,6 @@ const eventId = route.params.eventId as string
 const event = ref<AttendanceEvent | null>(null)
 const items = ref<AttendanceListItem[]>([])
 const isLoading = ref(true)
-const isRefreshing = ref(false)
 const errorMessage = ref('')
 
 const filters = ['All', 'Not Checked In', 'Checked In'] as const
@@ -90,10 +89,11 @@ const visibleItems = computed(() =>
 
 // ---------- Loading ----------
 
-const loadData = async ({ silent = false, quiet = false } = {}) => {
-  if (silent) isRefreshing.value = true
-  else isLoading.value = true
-  if (!silent) errorMessage.value = ''
+const loadData = async ({ silent = false } = {}) => {
+  if (!silent) {
+    isLoading.value = true
+    errorMessage.value = ''
+  }
 
   try {
     const [eventData, list] = await Promise.all([
@@ -108,12 +108,9 @@ const loadData = async ({ silent = false, quiet = false } = {}) => {
       errorMessage.value = isNetworkError(error)
         ? NETWORK_ERROR.message
         : getApiErrorMessage(error, 'Could not load participants for this event.')
-    } else if (!quiet) {
-      showAlert('Error', 'Could not refresh the participant list.', 'red')
     }
   } finally {
     isLoading.value = false
-    isRefreshing.value = false
   }
 }
 
@@ -121,7 +118,7 @@ const loadData = async ({ silent = false, quiet = false } = {}) => {
 let refreshTimer: ReturnType<typeof setTimeout> | null = null
 const scheduleRefresh = () => {
   if (refreshTimer) clearTimeout(refreshTimer)
-  refreshTimer = setTimeout(() => loadData({ silent: true, quiet: true }), 800)
+  refreshTimer = setTimeout(() => loadData({ silent: true }), 800)
 }
 
 const findItem = (registrationId: string) => items.value.find(i => i.registrationId === registrationId)
@@ -359,24 +356,12 @@ onBeforeUnmount(() => {
 
       <!-- Attendance summary -->
       <div class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm mb-5">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="text-xs font-black text-[#131B2B]/70 uppercase tracking-widest">Attendance</h2>
-            <p class="mt-1.5">
-              <span class="text-3xl font-['Nunito'] font-black text-[#131B2B]">{{ checkedInCount }}</span>
-              <span class="text-sm font-bold text-[#131B2B]/60"> / {{ items.length }} checked in</span>
-            </p>
-          </div>
-          <button
-            @click="loadData({ silent: true })"
-            :disabled="isRefreshing"
-            aria-label="Refresh"
-            class="w-9 h-9 rounded-full border border-[#131B2B]/10 bg-white text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5 flex items-center justify-center shadow-sm transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <svg class="w-4 h-4" :class="{ 'animate-spin': isRefreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-          </button>
+        <div>
+          <h2 class="text-xs font-black text-[#131B2B]/70 uppercase tracking-widest">Attendance</h2>
+          <p class="mt-1.5">
+            <span class="text-3xl font-['Nunito'] font-black text-[#131B2B]">{{ checkedInCount }}</span>
+            <span class="text-sm font-bold text-[#131B2B]/60"> / {{ items.length }} checked in</span>
+          </p>
         </div>
         <div class="mt-4 h-2.5 w-full bg-[#131B2B]/10 rounded-full overflow-hidden">
           <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" :style="{ width: `${attendancePercent}%` }"></div>

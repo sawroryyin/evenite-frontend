@@ -30,7 +30,6 @@ const analytics = ref<EventAnalytics | null>(null)
 const range = ref<AnalyticsRange>('24h')
 
 const isLoading = ref(true)
-const isRefreshing = ref(false)
 const isRangeLoading = ref(false)
 const errorMessage = ref('')
 
@@ -60,9 +59,8 @@ const loadAll = async () => {
 
 // refetch analytics only (event header doesn't change)
 let requestId = 0
-const refreshAnalytics = async (mode: 'manual' | 'range' | 'background' = 'manual') => {
+const refreshAnalytics = async (mode: 'range' | 'background' = 'range') => {
   const id = ++requestId
-  if (mode === 'manual') isRefreshing.value = true
   if (mode === 'range') isRangeLoading.value = true
   try {
     const data = await AnalyticsService.getEventAnalytics(eventId, range.value)
@@ -76,7 +74,6 @@ const refreshAnalytics = async (mode: 'manual' | 'range' | 'background' = 'manua
     }
   } finally {
     if (id === requestId) {
-      isRefreshing.value = false
       isRangeLoading.value = false
     }
   }
@@ -199,16 +196,6 @@ onBeforeUnmount(() => {
             <span class="text-xs font-semibold text-[#131B2B]/60">{{ formatEventDate(event.startAt) }}</span>
           </div>
         </div>
-        <button
-          @click="refreshAnalytics('manual')"
-          :disabled="isRefreshing"
-          aria-label="Refresh"
-          class="w-9 h-9 rounded-full border border-[#131B2B]/10 bg-white text-[#131B2B]/70 hover:text-[#131B2B] hover:bg-[#131B2B]/5 flex items-center justify-center shadow-sm transition-colors cursor-pointer disabled:opacity-50 shrink-0"
-        >
-          <svg class="w-4 h-4" :class="{ 'animate-spin': isRefreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-        </button>
       </div>
 
       <!-- Rings -->
