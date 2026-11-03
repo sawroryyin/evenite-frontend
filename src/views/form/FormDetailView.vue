@@ -55,7 +55,7 @@ onMounted(async () => {
 
   try {
     const ev = await EventService.getEventById(eventId);
-    eventStatus.value = ev.status as string;
+    eventStatus.value = String(ev.status ?? '').toUpperCase();
 
     const existingForms = await FormService.getFormsByEventId(eventId);
     const formExists = existingForms.some((f: any) => f.type === formType);
@@ -410,18 +410,18 @@ const formattedFormType = computed(() =>
       <div class="max-w-3xl w-full flex justify-center gap-4 px-5 md:px-0">
         <template v-if="!isEditMode">
           <button 
-            v-if="eventStatus === 'PUBLISHED' || eventStatus === 'COMPLETED'" 
-            @click="router.push(`/events/${eventId}/forms/${formType}/responses`)" 
-            class="flex-1 sm:w-48 bg-white border border-[#131B2B]/10 hover:bg-[#131B2B]/5 text-[#131B2B] py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer shadow-sm"
-          >
-            Responses
-          </button>
-          <button 
             v-if="eventStatus === 'DRAFT'" 
             @click="toggleEdit" 
             class="flex-1 sm:w-48 bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3 rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer"
           >
             Edit Form
+          </button>
+          <button 
+            v-else 
+            @click="router.push(`/events/${eventId}/forms/${formType}/responses`)" 
+            class="flex-1 sm:w-48 bg-white border border-[#131B2B]/10 hover:bg-[#131B2B]/5 text-[#131B2B] py-3 rounded-xl font-bold text-sm transition-colors cursor-pointer shadow-sm"
+          >
+            Responses
           </button>
         </template>
         <template v-else>
