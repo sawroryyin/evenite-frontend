@@ -5,6 +5,7 @@ import { RegistrationService } from '../../services/RegistrationService'
 import { UserService } from '../../services/UserService'
 import ConfirmModal from '../../components/ConfirmModal.vue'
 import { sanitizeId } from '../../services/DiscussionService'
+import { useTicketLiveStatus } from '../../composables/useTicketLiveStatus'
 
 const router = useRouter()
 
@@ -51,8 +52,28 @@ watch(() => props.event?.id, (newId) => {
   }
 }, { immediate: true })
 
+// live: participant's ticket for this event flips to USED on check-in (ACTIVE again on undo)
+useTicketLiveStatus({
+  match: change => !props.isOrganizer && change.eventId === props.event?.id,
+  onChange: change => {
+    if (userTicket.value) userTicket.value.status = change.status
+  },
+  onReconnect: () => { if (!props.isOrganizer && userTicket.value) fetchUserTicket() }
+})
+
+// a checked-in registration can't be cancelled (backend: "Cannot cancel after checking in.")
+const isCheckedIn = computed(() => userTicket.value?.status === 'USED')
+
 const hasRegistration = computed(() => props.availableForms?.some(f => f.type === 'REGISTRATION'))
 const hasFeedback = computed(() => props.availableForms?.some(f => f.type === 'FEEDBACK'))
+
+// analytics/attendance exist for any saved, non-draft event (incl. CONCLUDED / CANCELLED)
+const canViewInsights = computed(() =>
+  !!props.event?.id && props.event?.status && props.event.status !== 'DRAFT'
+)
+
+const goToAnalytics = () =>
+  router.push({ name: 'check-in-analytics', params: { eventId: props.event.id } })
 
 const isEventFull = computed(() => {
   if (props.event.seatLimit === null || props.event.seatLimit === undefined) return false;
@@ -326,7 +347,14 @@ const mapEmbedUrl = computed(() => {
             </div>
 
             <div v-if="userTicket?.registration?.status === 'CONFIRMED'" class="flex flex-col gap-3 mt-4">
-              <p v-if="isEventOver || isEventStarted" class="text-center text-[#131B2B]/80 text-sm font-bold py-2 px-1">
+              <div v-if="isCheckedIn" class="flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl py-2.5 px-3">
+                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <p class="text-sm font-bold text-emerald-700">You're checked in for this event.</p>
+              </div>
+
+              <p v-else-if="isEventOver || isEventStarted" class="text-center text-[#131B2B]/80 text-sm font-bold py-2 px-1">
                 {{ isEventOver ? 'This event is already over.' : 'This event has already started. Cancellation is no longer available.' }}
               </p>
 
@@ -353,11 +381,30 @@ const mapEmbedUrl = computed(() => {
                 Give Feedback
               </button>
 
-              <button v-if="!isEventStarted && !isEventOver" @click="confirmCancelRegistration" 
+              <button v-if="!isEventStarted && !isEventOver && !isCheckedIn" @click="confirmCancelRegistration"
                 class="w-full bg-red-50 hover:bg-red-100 text-red-600 border-red-200 border shadow-sm transform active:scale-95 transition-all py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                 Cancel Registration
               </button>
             </div>
+          </div>
+
+          <div v-if="isOrganizer && canViewInsights" class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-base font-['Nunito'] font-black text-[#131B2B]">Event Insights</h3>
+              <span
+                v-if="event.status === 'CONCLUDED' || event.status === 'CANCELLED'"
+                class="text-[10px] font-black uppercase tracking-widest text-[#131B2B]/60 bg-[#131B2B]/5 border border-[#131B2B]/10 px-2 py-1 rounded-lg"
+              >
+                Final results
+              </span>
+            </div>
+            <button
+              @click="goToAnalytics"
+              class="w-full bg-[#131B2B] hover:bg-[#131B2B]/80 text-white py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              View Analytics
+            </button>
           </div>
 
           <div v-if="isOrganizer" class="bg-white p-5 rounded-2xl border border-[#131B2B]/10 shadow-sm space-y-4">
